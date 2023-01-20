@@ -27,7 +27,7 @@ Project summary
 - Sequenced libraries were demultiplexed at STRI by Marta Vargas using the MiSeq Reporter Software
 - These libraries were sent to me (Laura Lardinois) and trimmed with Cutadapt to remove primers before being read into R to start the DADA2 pipeline (following tutorial v 1.16) 
 - Silva version 138.1 (mar 10, 2021 update) used for taxonomic assignments
-- See "RRR Fish 16S Sequences Summer 2022" document for pipeline and processing up to the creation of the initial phyloseq object
+- See "Gut Pre Processing RRR Fish 16S Sequences Summer 2022" document for pipeline and processing up to the creation of the initial phyloseq object
 
 - This document follows the steps outlined in "OPEN & REPRODUCIBLE MICROBIOME DATA ANALYSIS SPRING SCHOOL 2018 v3.0 (Updated 11-Apr-2020)", created by Sudarshan A. Shetty, Leo Lahti, and Gerben DA. Hermes, as well as other sources (linked below)
 
