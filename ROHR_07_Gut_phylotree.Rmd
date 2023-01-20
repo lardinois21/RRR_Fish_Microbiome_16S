@@ -1,0 +1,358 @@
+---
+title: "ROHR_07_Gut_phylotree"
+author: "LLL"
+date: "2023-01-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Phylogenetic Tree
+
+To calculate phylogenetic diversity, we will need to create a phylogenetic tree with our microbiome data. We can use this site: Workflow for Microbiome Data Analysis: from raw reads to community analyses, by Benjamin J Callahan, Kris Sankaran, Julia A Fukuyama, Paul Joey McMurdie and Susan P Holmes to help with tree creation. (It also includes information on many other steps in the microbiome processing and data visualization pipeline) https://bioconductor.org/help/course-materials/2017/BioC2017/Day1/Workshops/Microbiome/MicrobiomeWorkflowII.html#construct_phylogenetic_tree
+
+Since the DADA2 method used to assign taxonomy (ASVs) to our 16S reads is reference free, we need to connect the ASVs to their phylogenies de novo. The multiple-alignment step will be done using the DECIPHER R package (3.16); Wright (2016): http://bioconductor.org/packages/release/bioc/html/DECIPHER.html
+
+This script begins with the RRR fish gut microbiome dataset that has already gone through pre-processing (see "Gut Pre Processing RRR Fish 16S Sequences Summer 2022") and been separated into gut and skin (given that this sequencing run included both fish gut samples from the Tropical Eastern Pacific and fish skin samples from pilot sampling the the Caribbean). See "ROHR_07_Gut_stats_alpha.Rmd" for code on how this was done. 
+
+####Read in phyloseq objects####
+```{r read subsetted (gut & skin) data}
+ROHR_07_Gut <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_gut_samples_only.rds")
+
+ROHR_07_Skin <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_skin_swabs_only.rds")
+```
+
+Building phylogenetic tree for 16S microbiome samples
+
+####Start with gut samples####
+
+```{r Gut multiple alignment using DECIPHER package}
+tax_silva_tax_G  = tax_table(ROHR_07_Gut)
+
+seqs <- getSequences(tax_silva_tax_G)
+names(seqs) <- seqs # This propagates to the tip labels of the tree
+alignment <- AlignSeqs(DNAStringSet(seqs), anchor=NA,verbose=FALSE)
+```
+
+Once multiple alignment has been done using DECIPHER, we can use the phangorn package to build a phylogenetic tree.
+The code below first builds a neighbor-joining tree, then fits a GTR+G+I maximum likelihood tree ( Generalized time-reversible with Gamma rate variation) using the neighbor-joining tree. Note that the maximum likelihood tree step requires considerable computational power - best to run on cluster (ran on laptop local hard drive for 27 hrs). 
+
+Helpful lecture on different tree types and how they're constructed: https://si.biostat.washington.edu/sites/default/files/modules/2018-SISMID-04.pdf
+
+CRAN documentation for phangorn: https://cran.r-project.org/web/packages/phangorn/vignettes/Trees.html
+***this is the most thorough documentation, with steps for distance based methods, parsimony, and maximum likelihood trees
+
+The Molecular Ecologist - "Quick and Dirty Tree Building in R": https://www.molecularecologist.com/2016/02/26/quick-and-dirty-tree-building-in-r/
+
+
+```{r build NJ tree, then GTR+G+I maximum likelihood tree}
+
+phangAlign <- phyDat(as(alignment, "matrix"), type="DNA")
+dm <- dist.ml(phangAlign)
+treeNJ <- NJ(dm) #Neighbor joining tree ### Note, tip order != sequence order
+#plot(treeNJ, "unrooted", main="NJ") #plot unrooted Neighbor Joining tree - given the number of tips and the fact that each   tip is currently labeled with a sequence, this just gives us a big, unreadable block of black ink 
+treeUPGMA  <- upgma(dm) #UPGMA (unweighted pair group method with arithmetic mean)
+
+#check parsimony score --> the min number of changes needed to describe data for the tree: best tree = lower score
+parsimony(treeUPGMA, phangAlign)
+#32712 for UPGMA tree
+
+parsimony(treeNJ, phangAlign)
+#31827 for NJ tree (better - improve upon this one with maximum likelihood (ML) method below)
+
+#prior to producing a distance matrix, best to test which model best fits data, using a likelihood ratio test
+mt <- modelTest(phangAlign, model = c("GTR", "JC", "F81", "K80", "HKY", "SYM")) #test a subset of models to limit run time, GTR + G(4) likely best based on best models from prior (TEP skin microbiome) full set
+print(mt)
+
+#looking at the different models and sorting them from lowest (best) AIC to highest, we can see that the models with the lowest AIC scores are:
+# Model Name         AIC        BIC
+# GTR + G(4)      285164.5    312810.8
+# TVM + G(4)      285164.5    312815.1
+# SYM + G(4)      285164.5    313291.3
+
+as.pml(mt, "BIC") #best model according to BIC --> AIC & BIC agree for top models
+
+#model: GTR+G(4) 
+#loglikelihood: -136140.3 
+#unconstrained loglikelihood: -3146.976 
+#Discrete gamma model
+#Number of rate categories: 4 
+#Shape parameter: 0.5292531 
+
+#Rate matrix:
+#         a         c         g        t
+#a 0.000000 0.8622420 3.0415538 1.520776
+#c 0.862242 0.0000000 0.6251062 3.752043
+#g 3.041554 0.6251062 0.0000000 1.000000
+#t 1.520776 3.7520434 1.0000000 0.000000
+
+#Base frequencies:  
+#        a         c         g         t 
+#0.2548873 0.1853841 0.2735152 0.2862134 
+
+#save model test results as plain text file (to avoid having to run again)
+write.table(mt, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR07_distance_models.txt")
+
+fit = pml(treeNJ, data=phangAlign) #pml object contains the data + tree + many parameters of the model, inc. likelihood
+fit 
+fitGTR <- update(fit, k=4, inv=0.2)
+fitGTR <- optim.pml(fitGTR, model="GTR", optInv=TRUE, optGamma=TRUE,
+                    rearrangement = "stochastic", control = pml.control(trace = 0)) #rearrangement = "stochastic" helps escape local optima by performing stochastic rearrangements
+fitGTR
+
+#model: GTR+G(4)+I 
+#loglikelihood: -136459.4 
+#unconstrained loglikelihood: -3146.976 
+#Proportion of invariant sites: 0.1080756 
+#Discrete gamma model
+#Number of rate categories: 4 
+#Shape parameter: 0.510925 
+
+#Rate matrix:
+#          a         c         g        t
+#a 0.0000000 0.8295277 3.4377983 1.493780
+#c 0.8295277 0.0000000 0.6666211 3.670326
+#g 3.4377983 0.6666211 0.0000000 1.000000
+#t 1.4937796 3.6703258 1.0000000 0.000000
+
+#Base frequencies:  
+#        a         c         g         t 
+#0.2526507 0.1884068 0.2520519 0.3068907 
+
+AIC(fitGTR)
+#285804.7
+BIC(fitGTR)
+#313455.3
+
+#bootstrap to test how well edges of tree are supported
+bs <- bootstrap.pml(fitGTR, bs=100, optNni=TRUE,
+    control = pml.control(trace = 0)) #####have not run this yet - supposed to be computationally demanding - will wait until not running other analyses
+
+cnet <- consensusNet(bs, p=0.2) ######have not run this yet
+plot(cnet, show.edge.label=TRUE) ####have not run this yet
+
+#alternative function to do this which hides a few steps (starting from :
+# fitGTR <- pml_bb(treeNJ, model="GTR+G(4)+I", control = pml.control(trace = 0))
+#fitGTR
+
+```
+
+This phylogenetic tree will be added to a phyloseq object with (1) a sample-by-sequence table, (2) sample metadata, and (3) sequence taxonomies (see code below)
+
+```{r write & read phylogenetic tree (unrooted)}
+tree_NJ_tree = phy_tree(fitGTR$tree)
+
+#save tree (on its own) in Newick format
+ape::write.tree(tree_NJ_tree, file='~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR07_Gut_phylo_tree.tre')
+
+tree_NJ_tree <- read.tree('~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR07_Gut_phylo_tree.tre')
+
+#merge phylogenetic tree with phyloseq object
+
+ROHR_07_obj_phylo <- merge_phyloseq(ROHR_07_Gut, tree_NJ_tree)
+ROHR_07_obj_phylo
+
+#otu_table()   OTU Table:         [ 3218 taxa and 312 samples ]
+#sample_data() Sample Data:       [ 312 samples by 45 sample variables ]
+#tax_table()   Taxonomy Table:    [ 3218 taxa by 6 taxonomic ranks ]
+#phy_tree()    Phylogenetic Tree: [ 3218 tips and 3216 internal nodes ]
+
+saveRDS(ROHR_07_obj_phylo, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_Gut_with_phylogenetic_tree.rds")
+
+#read RDS file (if not re-running code from start)
+
+ROHR_07_obj_phylo <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_Gut_with_phylogenetic_tree.rds")
+
+```
+
+```{r Root phylogenetic tree}
+
+tree.unrooted <- phy_tree(ROHR_07_obj_phylo)
+
+# Function to root the tree
+pick_new_outgroup <- function(tree.unrooted){
+  require("magrittr")
+  require("data.table")
+  require("ape") # ape::Ntip
+  # tablify parts of tree that we need.
+  treeDT <-
+    cbind(
+      data.table(tree.unrooted$edge),
+      data.table(length = tree.unrooted$edge.length)
+    )[1:Ntip(tree.unrooted)] %>%
+    cbind(data.table(id = tree.unrooted$tip.label))
+  # Take the longest terminal branch as outgroup
+  new.outgroup <- treeDT[which.max(length)]$id
+  return(new.outgroup)
+}
+
+new.outgroup = pick_new_outgroup(tree.unrooted)
+new.outgroup
+
+#new outgroup - that is the new root to be added to our tree = 
+#TACGTAGGTGGCGAGCGTTGTTCGGATTTATTGGGCGTAAAGGGTCTGTAGGAGGTTTATTAAAATTGGGGTGAAATCCCGGAGCTCAACTCCGGAACTGCCTTGATGACTGATAGACTAGAGTATTGGAGAGGTAAGCGGAATATCAGGTGTAGCGGTGGAATGCGTAGATATCTGATAGAACACCAAAAGCGTAGGCAGCTTACTGGACAATAACTGACTCTGAAAGACGAAAGCGTGGGGAGCAAACAGG
+
+rootedTree = ape::root(tree.unrooted, outgroup=new.outgroup, resolve.root=TRUE)
+
+#plot(rootedTree) #don't plot rooted tree given the number of ASVs - at this stage plotting will not give informative results
+
+#check that tree is, indeed, rooted
+is.rooted(rootedTree) #TRUE! Yay, finally!
+
+#make new phyloseq object with ROOTED tree
+ROHR_07_obj_phylo_root <- merge_phyloseq(ROHR_07_Gut, rootedTree)
+ROHR_07_obj_phylo_root
+
+#save rooted tree
+saveRDS(ROHR_07_obj_phylo_root, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_Gut_with_phylogenetic_tree_rooted.rds")
+
+#read RDS file (if not re-running code from start)
+
+ROHR_07_obj_phylo_root <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_Gut_with_phylogenetic_tree_rooted.rds")
+```
+
+###Repeat w/ Skin####
+
+```{r Skin multiple alignment using DECIPHER package}
+tax_silva_tax_S  = tax_table(ROHR_07_Skin)
+
+seqs <- getSequences(tax_silva_tax_S)
+names(seqs) <- seqs # This propagates to the tip labels of the tree
+alignmentS <- AlignSeqs(DNAStringSet(seqs), anchor=NA,verbose=FALSE)
+```
+
+```{r Skin build NJ tree, then GTR+G+I maximum likelihood tree}
+phangAlign <- phyDat(as(alignmentS, "matrix"), type="DNA")
+dm <- dist.ml(phangAlign)
+treeNJ <- NJ(dm) #Neighbor joining tree ### Note, tip order != sequence order
+#plot(treeNJ, "unrooted", main="NJ") #plot unrooted Neighbor Joining tree - given the number of tips and the fact that each   tip is currently labeled with a sequence, this just gives us a big, unreadable block of black ink 
+treeUPGMA  <- upgma(dm) #UPGMA (unweighted pair group method with arithmetic mean)
+
+#check parsimony score --> the min number of changes needed to describe data for the tree: best tree = lower score
+parsimony(treeUPGMA, phangAlign)
+#32712 for UPGMA tree
+
+parsimony(treeNJ, phangAlign)
+#31827 for NJ tree (better - improve upon this one with maximum likelihood (ML) method below)
+
+
+fitS = pml(treeNJ, data=phangAlign) #pml object contains the data + tree + many parameters of the model, inc. likelihood
+fitS 
+fitGTR_S <- update(fitS, k=4, inv=0.2)
+fitGTR_S <- optim.pml(fitGTR_S, model="GTR", optInv=TRUE, optGamma=TRUE,
+                    rearrangement = "stochastic", control = pml.control(trace = 0)) #rearrangement = "stochastic" helps escape local optima by performing stochastic rearrangements
+fitGTR_S
+
+#model: GTR+G(4)+I 
+#loglikelihood: -136459.4 
+#unconstrained loglikelihood: -3146.976 
+#Proportion of invariant sites: 0.1080756 
+#Discrete gamma model
+#Number of rate categories: 4 
+#Shape parameter: 0.510925 
+
+#Rate matrix:
+#          a         c         g        t
+#a 0.0000000 0.8295277 3.4377983 1.493780
+#c 0.8295277 0.0000000 0.6666211 3.670326
+#g 3.4377983 0.6666211 0.0000000 1.000000
+#t 1.4937796 3.6703258 1.0000000 0.000000
+
+#Base frequencies:  
+#        a         c         g         t 
+#0.2526507 0.1884068 0.2520519 0.3068907 
+
+AIC(fitGTR_S)
+#285804.7
+BIC(fitGTR_S)
+#313455.3
+
+#bootstrap to test how well edges of tree are supported
+bs <- bootstrap.pml(fitGTR_S, bs=100, optNni=TRUE,
+    control = pml.control(trace = 0)) #####have not run this yet - supposed to be computationally demanding - will wait until not running other analyses
+
+cnet <- consensusNet(bs, p=0.2) ######have not run this yet
+plot(cnet, show.edge.label=TRUE) ####have not run this yet
+
+#alternative function to do this which hides a few steps (starting from :
+# fitGTR <- pml_bb(treeNJ, model="GTR+G(4)+I", control = pml.control(trace = 0))
+#fitGTR
+
+```
+
+This phylogenetic tree will be added to a phyloseq object with (1) a sample-by-sequence table, (2) sample metadata, and (3) sequence taxonomies (see code below)
+
+```{r Skin - write & read phylogenetic tree (unrooted)}
+tree_NJ_tree_S = phy_tree(fitGTR_S$tree)
+
+#save tree (on its own) in Newick format
+ape::write.tree(tree_NJ_tree_S, file='~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR07_Skin_phylo_tree.tre')
+
+tree_NJ_tree <- read.tree('~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR07_Skin_phylo_tree.tre')
+
+#merge phylogenetic tree with phyloseq object
+
+ROHR_07_skin_phylo <- merge_phyloseq(ROHR_07_Skin, tree_NJ_tree_S)
+ROHR_07_skin_phylo
+
+
+saveRDS(ROHR_07_skin_phylo, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_skin_with_phylogenetic_tree.rds")
+
+#read RDS file (if not re-running code from start)
+
+ROHR_07_skin_phylo <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_skin_with_phylogenetic_tree.rds")
+
+```
+
+```{r Skin - Root phylogenetic tree}
+
+tree.unrooted.S <- phy_tree(ROHR_07_skin_phylo)
+
+# Function to root the tree
+pick_new_outgroup <- function(tree.unrooted.S){
+  require("magrittr")
+  require("data.table")
+  require("ape") # ape::Ntip
+  # tablify parts of tree that we need.
+  treeDT <-
+    cbind(
+      data.table(tree.unrooted.S$edge),
+      data.table(length = tree.unrooted.S$edge.length)
+    )[1:Ntip(tree.unrooted.S)] %>%
+    cbind(data.table(id = tree.unrooted.S$tip.label))
+  # Take the longest terminal branch as outgroup
+  new.outgroup <- treeDT[which.max(length)]$id
+  return(new.outgroup)
+}
+
+new.outgroup = pick_new_outgroup(tree.unrooted.S)
+new.outgroup
+
+#new outgroup - that is the new root to be added to our tree = 
+#
+
+rootedTree.S = ape::root(tree.unrooted.S, outgroup=new.outgroup, resolve.root=TRUE)
+
+#plot(rootedTree) #don't plot rooted tree given the number of ASVs - at this stage plotting will not give informative results
+
+#check that tree is, indeed, rooted
+is.rooted(rootedTree.S) #TRUE! Yay, finally!
+
+#root:
+#TACGGAGGGTGCAAGCGTTGTTCGGAATTATTGGGCGTAAAGCGGGTGTAGGCGGCTTTGCAAGTCAAGTGTGAAATCCCAGGGCCCAACCCTGGAACTGCACTCGATACTGCATCGCTAGAGTCCCGGAGAGGATGGCGGAATTCCAGGTGTAGAGGTGAAATTCGTAGATATCTGGAGGAACACCAGTGGCGAAGGCGGCCATCTGGACGGTGACTGACGCTCAGACCCGAAAGCGTGGGGAGCAAACAGG
+
+#make new phyloseq object with ROOTED tree
+ROHR_07_skin_phylo_root <- merge_phyloseq(ROHR_07_Skin, rootedTree.S)
+ROHR_07_skin_phylo_root
+
+#save rooted tree
+saveRDS(ROHR_07_skin_phylo_root, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_skin_with_phylogenetic_tree_rooted.rds")
+
+#read RDS file (if not re-running code from start)
+
+ROHR_07_skin_phylo_root <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_skin_with_phylogenetic_tree_rooted.rds")
+
+```
+
