@@ -1,0 +1,1756 @@
+---
+title: "ROHR_07_Gut_stats_Beta_div"
+author: "LLL"
+date: "2022-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Project summary
+
+- Fish were collected from 2 sites in the Tropical Eastern Pacific: Las Perlas & Coiba. 
+- Sampling during both upwelling & non-upwelling seasons (collections done 2021-22). 
+- 12 target species, 10 of which are represented in this dataset. 
+- Gut = 8 per species.
+- Control swabs (swabs exposed to air in field) collected at each site and season
+- Swabs were stored in liquid nitrogen for transport from field to lab, then at -80ºC
+- DNA was extracted using ZymoBIOMICS 96 well DNA kit - 4 plates total (per sample type = skin & gut)
+- DNA was amplified following a modified version of the Earth Microbiome Project 16S protocol using phased primers (1 set per plate)
+- Negative PCR controls and extraction controls included in each plate
+- Index PCR performed to attach unique barcodes, then all four plates (384 samples) pooled for sequencing on the Illumina MiSeq sequencing platform of the Smithsonian Tropical Research Institute's (STRI) Naos facilities in Panama (courtesy of Marta Vargas)
+- Sequenced libraries were demultiplexed at STRI by Marta Vargas using the MiSeq Reporter Software
+- These libraries were sent to me (Laura Lardinois) and trimmed with Cutadapt to remove primers before being read into R to start the DADA2 pipeline (following tutorial v 1.16) 
+- Silva version 138.1 (mar 10, 2021 update) used for taxonomic assignments
+- See "RRR Fish 16S Sequences Summer 2022" document for pipeline and processing up to the creation of the initial phyloseq object
+
+- This code was adapted from various source files including Matt Leray's BCS work, the Bocasbiome project, and several tutorial pages
+
+
+
+Loading our phyloseq object - filtered & trimmed (not rarefied) with phylogenetic tree - from "ROHR_07_Gut_stats_alpha.Rmd"
+```{r read phyloseq object - Gut only, echo=FALSE}
+ROHR_07_obj_phylo_root <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_Gut_with_phylogenetic_tree_rooted.rds")
+```
+
+
+```{r load required packages, echo=FALSE}
+library(dada2)
+library(ggplot2)
+library(ff)
+library(phyloseq)
+library(gridExtra)
+library(dplyr)
+library(decontam)
+library(ape)
+library(reltools)
+library(ampvis2)
+library(edgeR)
+library(PathoStat)
+library(ape)
+library(phangorn)
+library(seqinr)
+library(paco)
+library(MCMCglmm)
+library(phytools)
+library(vegan)
+library(reshape2)
+library(pairwiseAdonis) #for pairwise comparisons following PERMANOVA (adonis2 function in vegan)
+library(GUniFrac) #to perform Generalized UniFrac Distance calculation
+library(hillR) #hill numbers package - calculate taxonomic, functional, and phylogenetic diversity via Hill's #s
+library(forcats) #to reorder samples for visualization (e.g., by trophic group)
+```
+
+
+############Beta Diversity Metrics
+
+To calculate Beta diversity, we need to normalize for sample depth - many ways to do this, including transforming counts into relative abundances (may not be the best way - see https://astrobiomike.github.io/amplicon/dada2_workflow_ex#assigning-taxonomy)
+
+Beta diversity workflow from Bocasbiome project: https://bocasbiome.github.io/wf5.html
+
+```{r counts to relative abundances}
+####### Transform counts to relative abundance per sample
+ROHR_07_obj_clean_prop = transform_sample_counts(ROHR_07_obj_phylo_root, function(x) x/sum(x))
+```
+
+PERMANOVA (Permutational Multivariate Analysis of Variance)
+
+source: https://archetypalecology.wordpress.com/2018/02/21/permutational-multivariate-analysis-of-variance-permanova-in-r-preliminary/
+
+- non-parametric, multivariate statistical test
+- compares groups of objects
+H0 (general) = centroids & dispersion of groups are equivalent for all groups
+H0 (specific to this case) = There are no differences in the relative abundances of microbial taxa in the fish gut microbiome across all sites, species and seasons in the Tropical Eastern Pacific. 
+
+-test statistic = pseudo-F ratio
+"It compares the total sum of squared dissimilarities (or ranked dissimilarities) among objects belonging to different groups to that of objects belonging to the same group. Larger F-ratios indicate more pronounced group separation, however, the significance of this ratio is usually of more interest than its magnitude." 
+
+Assumptions:
+- objects in dataset are exchangeable under the null hypothesis
+- exchangeable objects (sites, samples, observations) are independent ***** (need to account for this assumption NOT being met in test setup)
+- exchangeable objects have similar multivariate dispersion (betadisper --> multivariate analogue to Levene's test for homogeneity of variances) (see code chunk below)
+
+```{r Permanova fish gut microbiome full dataset - Bray-Curtis distances}
+#before running PERMANOVA, make sure DESeq2 is not loaded, as it causes an issue
+#detach(package:DESeq2, unload=TRUE)
+
+####running the PERMANOVA
+metadata <- as(sample_data(ROHR_07_obj_clean_prop), "data.frame")
+
+######### by species ######
+
+###species (fish host species) (unconstrained permutations)
+adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ species,
+        data = metadata)
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ species, data = metadata)
+#          Df SumOfSqs      R2      F Pr(>F)    
+#species    9   49.327 0.35184 18.215  0.001 ***
+#Residual 302   90.869 0.64816                  
+#Total    311  140.196 1.00000
+
+# species = highly significant (p < 0.001), R2 = 0.36184
+
+
+####constraining permutations w/ strata to only run within a region (control for effect of region --> see if relative abundances are different w/in sites between species)
+with( metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ species,
+        data = metadata, strata = region)) ##no effect of using strata --> is this actually working??? may need to use "permute" package to do this
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ species, data = metadata, strata = region)
+#          Df SumOfSqs      R2      F Pr(>F)    
+#species    9   49.327 0.35184 18.215  0.001 ***
+#Residual 302   90.869 0.64816                  
+#Total    311  140.196 1.00000               
+
+######## by region #######
+            
+###region (collection region - Coiba or Las Perlas)
+adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ region,
+        data = metadata)
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ region, data = metadata)
+#          Df SumOfSqs      R2      F Pr(>F)
+#region     1    0.604 0.00431 1.3408  0.124
+#Residual 310  139.592 0.99569              
+#Total    311  140.196 1.00000 
+                  
+
+####by site nested within region (collection region - Coiba or Las Perlas) --> accounting for nestedness (sampling sites found w/in regions)
+
+##confirm correct order for nestedness --> region/site or site/region?
+
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ region/site,
+        data = metadata, by = "margin"))
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ region/site, data = metadata, by = "margin")
+#             Df SumOfSqs      R2      F Pr(>F)    
+#region:site   9    6.693 0.04774 1.6843  0.001 ***
+#Residual    301  132.899 0.94795                  
+#Total       311  140.196 1.00000  
+
+##significant interaction between region and site
+
+####### by season ######### 
+adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ season,
+        data = metadata, strata = metadata$region) #need to constrain permutations w/in region? 
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ season, data = metadata, strata = metadata$region)
+#          Df SumOfSqs      R2      F Pr(>F)
+#season     1    0.413 0.00294 0.9151  0.566
+#Residual 310  139.783 0.99706              
+#Total    311  140.196 1.00000  
+
+#season alone = NSD
+
+#### by date nested within season
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ season/date,
+        data = metadata, strata = season)) 
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ season/date, data = metadata, strata = season)
+#             Df SumOfSqs      R2      F Pr(>F)    
+#season        1    0.413 0.00294 0.9566  0.001 ***
+#season:date  24   16.421 0.11713 1.5863  0.001 ***
+#Residual    286  123.362 0.87993                  
+#Total       311  140.196 1.00000 
+
+####season*region/site
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ region/site*season,
+        data = metadata, strata = region, by = "margin"))
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ region/site * season, data = metadata, by = "margin", strata = region)
+#                    Df SumOfSqs      R2      F Pr(>F)    
+#region:site:season   3    2.605 0.01858 1.9856  0.001 ***
+#Residual           296  129.442 0.92329                  
+#Total              311  140.196 1.00000 
+
+#significant interaction between region, site, and season  
+
+####season*region/site + species
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ region/site*season + species,
+        data = metadata, strata = region, by = "margin"))
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ region/site * season + species, data = metadata, by = "margin", strata = region)
+#                    Df SumOfSqs      R2       F Pr(>F)    
+#species              9   44.453 0.31707 16.6791  0.001 ***
+#region:site:season   3    1.100 0.00784  1.2379  0.091 .  
+#Residual           287   84.989 0.60622                   
+#Total              311  140.196 1.00000   
+
+#testing for interactions b/w species, region (w/ site nested w/in region), and season
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ species*region/site*season,
+        data = metadata, strata = region))
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ species * region/site * season, data = metadata, strata = region)
+#                            Df SumOfSqs      R2       F Pr(>F)    
+#species                      9   49.327 0.35184 19.7543  0.001 ***
+#region                       1    0.638 0.00455  2.2984  0.001 ***
+#season                       1    0.414 0.00295  1.4909  0.058 .  
+#species:region               9    4.133 0.02948  1.6551  0.001 ***
+#species:season               9    3.582 0.02555  1.4347  0.001 ***
+#region:season                1    0.498 0.00355  1.7963  0.010 ** 
+#species:region:site         38   12.186 0.08692  1.1558  0.002 ** 
+#species:region:season        8    2.634 0.01879  1.1868  0.033 *  
+#species:region:site:season   9    4.082 0.02912  1.6348  0.001 ***
+#Residual                   226   62.703 0.44725                   
+#Total                      311  140.196 1.00000 
+
+
+####season/date*region/site + species
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ region/site*season/date*species,
+        data = metadata, strata = region))
+
+#adonis2(formula = distance(ROHR_07_obj_clean_prop, method = "bray") ~ region/site * season/date * species, data = metadata, strata = region)                                 
+#                                 Df SumOfSqs      R2       F Pr(>F)    
+#region                            1    0.604 0.00431  2.1599  0.001 ***
+#season                            1    0.413 0.00294  1.4759  0.065 .  
+#species                           9   49.362 0.35209 19.6212  0.001 ***
+#region:site                       9    3.286 0.02344  1.3063  0.002 ** 
+#region:season                     1    0.443 0.00316  1.5832  0.030 *  
+#region:species                    9    3.921 0.02797  1.5587  0.001 ***
+#season:species                    9    3.472 0.02476  1.3800  0.001 ***
+#region:site:season                3    1.142 0.00815  1.3622  0.022 *  
+#region:site:species              29    9.410 0.06712  1.1609  0.002 ** 
+#region:season:species             8    3.084 0.02200  1.3793  0.001 ***
+#region:site:season:date          19    5.415 0.03862  1.0195  0.325    
+#region:site:season:species        6    2.240 0.01598  1.3358  0.003 ** 
+#region:site:season:date:species  31    8.208 0.05854  0.9472  0.865    
+#Residual                        176   49.197 0.35091                   
+#Total                           311  140.196 1.00000  
+
+##how to deal with all these interactions in the post-hoc tests?                
+```
+
+```{r betadisper - check dispersion}
+ROHR_07_bray <- phyloseq::distance(ROHR_07_obj_clean_prop, method = "bray")
+
+#homogeneity of dispersion test
+dispersion <- betadisper(ROHR_07_bray, metadata$species)
+permutest(dispersion) #see that P <0.001, meaning that betadisper results ARE significant and we can reject our null hypothesis that the species have the same centroid --> means that the PERMANOVA results may be influenced by differences in group dispersion, rather than truly reporting significant differences between group centroids
+
+plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
+#this shows us that A. concolor is a big outlier in terms of dispersion, with much greater dispersion than any of the other species
+```
+
+For certain b-diversity analyses such as Jaccard, we will begin by rarefying (normalizing) our data to at least 1,000 reads (this will exclude 9 more samples). This cutoff can be modified to exclude fewer/more samples with low sequencing depth
+
+```{r normalizing data}
+#check current reads/sample
+reads_per_sample <- sample_sums(ROHR_07_obj_phylo_root)
+
+#how many samples with fewer than 1000 reads?
+print(length(reads_per_sample[reads_per_sample < 1000])) #2 samples will be excluded under this criterion
+
+set.seed(9242)  # This will help in reproducing the filtering and normalisation. 
+
+ROHR07.rar.P <- rarefy_even_depth(ROHR_07_obj_phylo_root, sample.size = 1000)
+
+#1143OTUs were removed because they are no longer present in any sample after random subsampling
+
+```
+
+```{r save rarefied data as new phyloseq object}
+# Save rarefied data
+saveRDS(ROHR07.rar.P, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_rarefied_1000_P.rds")
+
+#read rarefied data
+ROHR07.rar.P <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_rarefied_1000_P.rds")
+
+#check how much data post-rarefaction
+print(ROHR07.rar.P) # 2075 taxa, 310 samples
+```
+```{r Permanova - Bray Curtis & Jaccard distances comparison}
+
+####running the PERMANOVA
+metadata <- as(sample_data(ROHR_07_obj_clean_prop), "data.frame")
+metadataJac <- as(sample_data(ROHR07.rar.P), "data.frame")
+
+######### by species ######
+
+####Bray-Curtis
+###species (fish host species) (unconstrained permutations)
+adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ species,
+        data = metadata)
+
+
+####Jaccard
+
+####can Jaccard be run with relative abundance data? or do we need to use raw count or rarefied count data?
+
+###species (fish host species) (unconstrained permutations)
+adonis2(distance(ROHR07.rar.P, method="jaccard") ~ species,
+        data = metadataJac)
+
+
+######## by region #######
+
+####Bray-Curtis            
+###region (collection region - Coiba or Las Perlas)
+adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ region,
+        data = metadata)
+
+
+####Jaccard
+###region (collection region - Coiba or Las Perlas)
+adonis2(distance(ROHR07.rar.P, method="jaccard") ~ region,
+        data = metadataJac)                  
+
+
+
+####### by season ######### 
+
+####Bray-Curtis 
+adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ season,
+        data = metadata)
+
+
+####Jaccard 
+adonis2(distance(ROHR07.rar.P, method="jaccard") ~ season,
+        data = metadataJac)
+
+
+
+####Bray-Curtis
+####species + season*region/site
+with(metadata, adonis2(distance(ROHR_07_obj_clean_prop, method="bray") ~ species + region/site*season,
+        data = metadata))
+
+
+####Jaccard
+####species + season*region/site
+with(metadata, adonis2(distance(ROHR07.rar.P, method="jaccard") ~ species + region/site*season,
+        data = metadataJac))  
+
+     
+```
+
+
+
+#########Looking at suite of Beta diversity metrics##########
+
+- Bray-Curtis
+- Jaccard
+- UniFrac
+- Generalized UniFrac (GUniFrac)
+- Weighted UniFrac
+
+```{r Bray Curtis distances full dataset}
+
+####dissimilarity matrix####
+set.seed(1911)
+type.bray <- phyloseq::distance(ROHR_07_obj_clean_prop, method = "bray")
+sampledf <- data.frame(sample_data(ROHR_07_obj_clean_prop))
+
+####beta dispersion####
+
+###by species
+beta.bray.species <- betadisper(type.bray, sampledf$species,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.bray.species, pairwise = TRUE, permutations = 10000) # P <0.001 - variance is not homogeneous
+
+plot(beta.bray.species, hull=FALSE, ellipse=TRUE)
+
+###by region
+beta.bray.region <- betadisper(type.bray, sampledf$region,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.bray.region, pairwise = TRUE, permutations = 10000) # P = 0.24 - variance is homogeneous
+
+plot(beta.bray.region, hull=FALSE, ellipse=TRUE)
+
+###by season
+beta.bray.season <- betadisper(type.bray, sampledf$season,
+                         type = "centroid", bias.adjust = TRUE) # P = 0.46 - variance is homogeneous
+permutest(beta.bray.season, pairwise = TRUE, permutations = 10000)
+
+plot(beta.bray.season, hull=FALSE, ellipse=TRUE)
+
+####see code chunks above for PERMANOVAs####
+
+####pairwise comparisons#### 
+
+###by species
+set.seed(1911)
+pairwise.adonis(type.bray, factors = sampledf$species) # significant differences in relative abundances of taxa for certain pairwise comparisons (e.g., A. concolor:C. colonus, A. concolor:C. panamensis, M. dorsalis & A. concolor/A. troschelii/C. humeralis/E. labriformis/J. nigrirostris) but not others (e.g., C. colonus:C. panamensis, P. laticlavius:A. xanthopterus). In general, it seems that trophic group and/or host family may be correlated with similar relative abundances of taxa (with M. dorsalis as a notable exception to this). Among the interesting results, the very high P value between C. colonus (planktivore) and its carnivorous relative, C. panamensis, may hint at the importance of shared evolutionary history over feeding strategy, at least for these hosts (& this specific microbial diversity metric)
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.bray, factors = sampledf$region) #NSD b/w regions (p = 0.24)
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.bray, factors = sampledf$season) #NSD b/w seasons (p = 0.46)
+```
+
+```{r Jaccard dissimilarity full dataset}
+
+####dissimilarity matrix####
+
+set.seed(1911)
+type.jaccard <- phyloseq::distance(ROHR07.rar.P, method = "jaccard", binary = T)
+sampledf <- data.frame(sample_data(ROHR07.rar.P))
+
+####beta dispersion####
+
+###by species
+beta.jaccard.species <- betadisper(type.jaccard, sampledf$species,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.jaccard.species, pairwise = TRUE, permutations = 10000) # P < 0.001 - variance is not homogeneous across species
+
+plot(beta.jaccard.species, hull=FALSE, ellipse=TRUE) #visually, clear differences in dispersion, with P. laticlavius & E. labriformis standing out
+
+###by region
+beta.jaccard.region <- betadisper(type.jaccard, sampledf$region,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.jaccard.region, pairwise = TRUE, permutations = 10000) # P = 0.927 
+
+plot(beta.jaccard.region, hull=FALSE, ellipse=TRUE)
+
+###by season
+beta.jaccard.season <- betadisper(type.jaccard, sampledf$season,
+                         type = "centroid", bias.adjust = TRUE) # P = 0.766
+permutest(beta.jaccard.season, pairwise = TRUE, permutations = 10000)
+
+plot(beta.jaccard.season, hull=FALSE, ellipse=TRUE)
+
+####PERMANOVAs####
+##currently, have not included strata to constrain permutations
+
+###by species
+adonis.jaccard.species <- adonis2(type.jaccard ~ species, data = sampledf,
+                          permutations = 10000)
+adonis.jaccard.species #R2 = 0.21471, P < 0.001
+
+###by region
+adonis.jaccard.region <- adonis2(type.jaccard ~ region, data = sampledf,
+                          permutations = 10000)
+adonis.jaccard.region #R2 = 0.0055, P = 0.003
+
+###by site nested within region
+adonis.jaccard.sitereg <- adonis2(type.jaccard ~ site/region, data = sampledf,
+                          permutations = 10000) 
+adonis.jaccard.sitereg 
+
+###by season
+adonis.jaccard.season <- adonis2(type.jaccard ~ season, data = sampledf,
+                          permutations = 10000)
+adonis.jaccard.season
+
+####pairwise comparisons#### 
+
+###by species
+
+set.seed(1911)
+pairwise.adonis(type.jaccard, factors = sampledf$species) 
+
+# significant differences in relative abundances of taxa for certain pairwise comparisons, but fewer than for Bray-Curtis.
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.jaccard, factors = sampledf$region) #NSD b/w regions (p = 0.34)
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.jaccard, factors = sampledf$season) #NSD b/w seasons (p = 0.54)
+```
+
+
+```{r UniFrac distances full dataset}
+
+####dissimilarity matrix####
+
+set.seed(1911)
+type.unifrac <- phyloseq::distance(ROHR07.rar.P, method = "unifrac", weighted = F)
+sampledf <- data.frame(sample_data(ROHR07.rar.P))
+
+####beta dispersion####
+
+###by species
+beta.unifrac.species <- betadisper(type.unifrac, sampledf$species,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.unifrac.species, pairwise = TRUE, permutations = 10000) # P =
+
+plot(beta.unifrac.species, hull=FALSE, ellipse=TRUE)
+
+
+###by region
+beta.unifrac.region <- betadisper(type.unifrac, sampledf$region,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.unifrac.region, pairwise = TRUE, permutations = 10000) # P =
+
+plot(beta.unifrac.region, hull=FALSE, ellipse=TRUE)
+
+###by season
+beta.unifrac.season <- betadisper(type.unifrac, sampledf$season,
+                         type = "centroid", bias.adjust = TRUE) # P =
+permutest(beta.unifrac.season, pairwise = TRUE, permutations = 10000)
+
+plot(beta.unifrac.season, hull=FALSE, ellipse=TRUE)
+
+####PERMANOVAs####
+
+###by species
+
+set.seed(1911)
+
+adonis.unifrac.species <- adonis2(type.unifrac ~ species, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.species
+
+###by region
+adonis.unifrac.region <- adonis2(type.unifrac ~ region, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.region
+
+###by site nested within region
+adonis.unifrac.sitereg <- adonis2(type.unifrac ~ site/region, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.sitereg
+
+###by season
+adonis.unifrac.season <- adonis2(type.unifrac ~ season, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.season
+
+####pairwise comparisons#### 
+
+###by species
+
+set.seed(1911)
+pairwise.adonis(type.unifrac, factors = sampledf$species) #significant differences (p-adj) b/w almost all host species (except A. conc; A. xanth, A. conc; A. trosch, A. xanth: A. trosh, J. nigri; A. trosh)
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.unifrac, factors = sampledf$region) # p-adj = 0.003
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.unifrac, factors = sampledf$season) # p-adj = 0.002
+```
+
+```{r GUniFrac distances full dataset}
+
+####dissimilarity matrix####
+
+#whole dataset
+asv.tab<-otu_table(ROHR07.rar.P)
+tree.fish<-phy_tree(ROHR07.rar.P)
+fish.sample<-sample_data(ROHR07.rar.P)
+
+groups.region.whole <- fish.sample$region
+groups.season.whole <- fish.sample$season
+species.whole <- fish.sample$species
+
+unifracs <- GUniFrac(asv.tab, tree.fish,
+                     alpha=c(0, 0.5, 1))$unifracs
+d5.all <- unifracs[, , "d_0.5"]
+type.gunifrac <- as.dist(d5.all)
+
+
+####beta dispersion####
+
+###by species
+set.seed(1911)
+beta.gunifrac.species <- betadisper(as.dist(d5.all), species.whole,
+                             type = "centroid", bias.adjust = TRUE)
+permutest(beta.gunifrac.species, pairwise = TRUE, permutations = 10000)
+
+plot(beta.gunifrac.species, hull=FALSE, ellipse=TRUE)
+
+
+###by region
+set.seed(1911)
+beta.gunifrac.region <- betadisper(as.dist(d5.all), groups.region.whole,
+                             type = "centroid", bias.adjust = TRUE)
+permutest(beta.gunifrac.region, pairwise = TRUE, permutations = 10000)
+
+plot(beta.gunifrac.region, hull=FALSE, ellipse=TRUE)
+
+
+###by season
+set.seed(1911)
+beta.gunifrac.season <- betadisper(as.dist(d5.all), groups.season.whole,
+                             type = "centroid", bias.adjust = TRUE)
+permutest(beta.gunifrac.season, pairwise = TRUE, permutations = 10000)
+
+plot(beta.gunifrac.season, hull=FALSE, ellipse=TRUE)
+
+
+####PERMANOVAs####
+
+sampledf <- data.frame(sample_data(ROHR07.rar.P))
+
+###by species
+
+adonis.gunifrac.species <- adonis(type.gunifrac ~ species, data = sampledf,
+                           permutations = 10000)
+adonis.gunifrac.species
+
+###by region
+adonis.gunifrac.region <- adonis(type.gunifrac ~ region, data = sampledf,
+                          permutations = 10000)
+adonis.gunifrac.region
+
+###by site nested within region
+adonis.gunifrac.sitereg <- adonis(type.gunifrac ~ site/region, data = sampledf,
+                          permutations = 10000)
+adonis.gunifrac.sitereg
+
+###by season
+adonis.gunifrac.season <- adonis(type.gunifrac ~ season, data = sampledf,
+                          permutations = 10000)
+adonis.gunifrac.season
+
+
+####pairwise comparisons#### 
+
+###by species
+
+set.seed(1911)
+pairwise.adonis(type.gunifrac, factors = sampledf$species, p.adjust.m = "bonferroni") 
+
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.gunifrac, factors = sampledf$region, p.adjust.m = "bonferroni") 
+###by season
+set.seed(1911)
+pairwise.adonis(type.gunifrac, factors = sampledf$season, p.adjust.m = "bonferroni") 
+```
+
+```{r WUniFrac distances full dataset}
+
+####dissimilarity matrix####
+
+set.seed(1911)
+type.wunifrac <- phyloseq::distance(ROHR07.rar.P, method = "wunifrac")
+sampledf <- data.frame(sample_data(ROHR07.rar.P))
+
+####beta dispersion####
+
+###by species
+set.seed(1911)
+beta.wunifrac.species <- betadisper(type.wunifrac, sampledf$species,
+                             type = "centroid", bias.adjust = TRUE)
+permutest(beta.wunifrac.species, pairwise = TRUE, permutations = 10000)
+
+plot(beta.wunifrac.species, hull=FALSE, ellipse=TRUE)
+
+
+###by region
+set.seed(1911)
+beta.wunifrac.region <- betadisper(type.wunifrac, sampledf$region,
+                             type = "centroid", bias.adjust = TRUE)
+permutest(beta.wunifrac.region, pairwise = TRUE, permutations = 10000)
+
+plot(beta.wunifrac.region, hull=FALSE, ellipse=TRUE)
+
+
+###by season
+set.seed(1911)
+beta.wunifrac.season <- betadisper(type.wunifrac, sampledf$season,
+                             type = "centroid", bias.adjust = TRUE)
+permutest(beta.wunifrac.season, pairwise = TRUE, permutations = 10000)
+
+plot(beta.wunifrac.season, hull=FALSE, ellipse=TRUE)
+
+
+####PERMANOVAs####
+
+sampledf <- data.frame(sample_data(ROHR_07_obj_clean_prop))
+
+###by species
+
+set.seed(1911)
+adonis.wunifrac.species <- adonis(type.wunifrac ~ species, data = sampledf,
+                           permutations = 10000)
+adonis.wunifrac.species
+
+
+###by region
+adonis.wunifrac.region <- adonis(type.wunifrac ~ region, data = sampledf,
+                          permutations = 10000)
+adonis.wunifrac.region
+
+###by site nested within region
+adonis.wunifrac.sitereg <- adonis(type.wunifrac ~ site/region, data = sampledf,
+                          permutations = 10000)
+adonis.wunifrac.sitereg
+
+###by season
+adonis.wunifrac.season <- adonis(type.wunifrac ~ season, data = sampledf,
+                          permutations = 10000)
+adonis.wunifrac.season
+
+
+####pairwise comparisons#### 
+
+###by species
+set.seed(1911)
+pairwise.adonis(type.wunifrac, factors = sampledf$species) 
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.wunifrac, factors = sampledf$region) 
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.wunifrac, factors = sampledf$season) 
+```
+
+
+Hill numbers - a framework to look at taxonomic, functional, and phylogenetic diversity
+
+R package to do this: 
+Li, (2018). hillR: taxonomic, functional, and phylogenetic diversity and similarity through Hill Numbers. Journal of Open Source Software, 3(31), 1041. https://doi.org/10.21105/joss.01041
+
+```{r Hill Numbers - Full Dataset}
+##note that with Hill #s, can account for species abundance w/ q =  (higher q = more sensitive to common species)
+# q = 0; ignores species abundance, q = 1; weighs all species by abundance equally (Shannon's div), q = 2; common species get more weight (inverse Simpson)...
+
+####Alpha diversity - Calculate taxonomic, functional, and phylogenetic diversity of each site####
+
+# taxonomic alpha diversity
+
+hill_taxa()
+
+# functional alpha diversity
+
+hill_func()
+
+# phylogenetic alpha diversity
+
+hill_phylo()
+
+####Beta diversity - Calculate taxonomic, functional, and phylogenetic diversity across multiple sites####
+
+# taxonomic beta diversity
+hill_taxa_parti()
+
+# functional beta diversity
+hill_func_parti()
+
+# phylogenetic beta diversity
+hill_phylo_parti()
+
+####Calculate pairwise taxonomic, functional, and phylogenetic diversity####
+
+# pairwise taxonomic diversity
+hill_taxa_parti_pairwise()
+
+# pairwise functional diversity
+hill_func_parti_pairwise()
+
+# pairwise phylogenetic diversity
+hill_phylo_parti_pairwise()
+```
+Following the full-dataset PERMANOVAs, we want to look more closely at our data, breaking the samples up by season/region/species to get a better idea of how the microbiome communities compare
+
+
+```{r subsetting full gut dataset by season}
+
+####subsetting data by season
+
+
+#non-upwelling
+ROHR_07_non_upwelling <- subset_samples(ROHR_07_obj_phylo_root, season == "non-upwelling")
+ROHR_07_non_upwelling #155 samples (out of 312 samples total & 3218 taxa)
+
+#upwelling
+ROHR_07_upwelling <- subset_samples(ROHR_07_obj_phylo_root, season == "upwelling")
+ROHR_07_upwelling #157 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_07_non_upwelling <- prune_taxa(taxa_sums(ROHR_07_non_upwelling) > 0, ROHR_07_non_upwelling)
+ROHR_07_non_upwelling #2029 taxa and 155 samples
+
+ROHR_07_upwelling <- prune_taxa(taxa_sums(ROHR_07_upwelling) > 0, ROHR_07_upwelling)
+ROHR_07_upwelling #2131 taxa and 157 samples
+
+##transforming to counts
+ROHR_07_non_upwelling_prop = transform_sample_counts(ROHR_07_non_upwelling, function(x) x/sum(x))
+ROHR_07_upwelling_prop = transform_sample_counts(ROHR_07_upwelling, function(x) x/sum(x))
+
+# Save Phyloseq objects
+saveRDS(ROHR_07_non_upwelling_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_non_upwelling_prop.rds")
+
+saveRDS(ROHR_07_upwelling_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_upwelling_prop.rds")
+
+# Read Phyloseq object
+ROHR_07_non_upwelling_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_non_upwelling_prop.rds")
+ROHR_07_upwelling_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_upwelling_prop.rds")
+
+```
+
+```{r PERMANOVA - samples broken down by season}
+####running the PERMANOVA
+metadata_seasonN <- as(sample_data(ROHR_07_non_upwelling), "data.frame")
+metadata_seasonU <- as(sample_data(ROHR_07_upwelling), "data.frame")
+
+####region/site + species
+
+#non-upwelling
+with(metadata_seasonN, adonis2(distance(ROHR_07_non_upwelling_prop, method="bray") ~ region/site + species,
+        data = metadata_seasonN, strata = region))
+
+#adonis2(formula = distance(ROHR_07_non_upwelling_prop, method = "bray") ~ region/site + species, data = metadata_seasonN, strata = region)
+#             Df SumOfSqs      R2      F Pr(>F)    
+#region        1    0.416 0.00598 1.3273  0.001 ***
+#species       9   23.780 0.34136 8.4228  0.001 ***
+#region:site   5    1.862 0.02672 1.1869  0.069 .  
+#Residual    139   43.605 0.62594                  
+#Total       154   69.663 1.00000 
+
+#upwelling
+with(metadata_seasonU, adonis2(distance(ROHR_07_upwelling_prop, method="bray") ~ region/site + species,
+        data = metadata_seasonU, strata = region))
+
+#adonis2(formula = distance(ROHR_07_upwelling_prop, method = "bray") ~ region/site + species, data = metadata_seasonU, strata = region)
+#             Df SumOfSqs      R2       F Pr(>F)    
+#region        1    0.696 0.00993  2.5509  0.001 ***
+#species       9   29.176 0.41609 11.8816  0.001 ***
+#region:site   7    2.322 0.03312  1.2159  0.035 *  
+#Residual    139   37.925 0.54086                   
+#Total       156   70.120 1.00000 
+```
+
+```{r subsetting full swab dataset by region}
+
+####subsetting data by region
+
+#Coiba (non-upwelling region)
+ROHR_07_coiba <- subset_samples(ROHR_07_obj_phylo_root, region == "Coiba")
+ROHR_07_coiba #158 samples
+
+#Las Perlas (upwelling region)
+ROHR_07_lasperlas <- subset_samples(ROHR_07_obj_phylo_root, region == "Las Perlas")
+ROHR_07_lasperlas #154 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_07_coiba <- prune_taxa(taxa_sums(ROHR_07_coiba) > 0, ROHR_07_coiba)
+ROHR_07_coiba #1624 taxa and 158 samples
+
+ROHR_07_lasperlas <- prune_taxa(taxa_sums(ROHR_07_lasperlas) > 0, ROHR_07_lasperlas)
+ROHR_07_lasperlas #2195 taxa and 154 samples
+
+##transforming to counts
+ROHR_07_coiba_prop = transform_sample_counts(ROHR_07_coiba, function(x) x/sum(x))
+ROHR_07_lasperlas_prop = transform_sample_counts(ROHR_07_lasperlas, function(x) x/sum(x))
+
+# Save Phyloseq objects
+saveRDS(ROHR_07_coiba_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_coiba_prop.rds")
+
+saveRDS(ROHR_07_lasperlas_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_lasperlas_prop.rds")
+
+# Read Phyloseq object
+ROHR_07_coiba_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_coiba_prop.rds")
+ROHR_07_lasperlas_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_lasperlas_prop.rds")
+
+```
+
+```{r PERMANOVA - samples broken down by region}
+####running the PERMANOVA
+metadata_coiba <- as(sample_data(ROHR_07_coiba), "data.frame")
+metadata_lasperlas <- as(sample_data(ROHR_07_lasperlas), "data.frame")
+
+####season*site + species
+
+#Coiba
+with(metadata_coiba, adonis2(distance(ROHR_07_coiba_prop, method="bray") ~ season*site + species,
+        data = metadata_coiba, strata = season))
+
+#adonis2(formula = distance(ROHR_07_coiba_prop, method = "bray") ~ season * site + species, data = metadata_coiba, strata = season)
+#             Df SumOfSqs      R2      F Pr(>F)    
+#season        1    0.391 0.00550 1.3561  0.001 ***
+#site          6    4.245 0.05962 2.4516  0.001 ***
+#species       9   25.686 0.36075 9.8886  0.001 ***
+#season:site   2    0.762 0.01070 1.3198  0.067 .  
+#Residual    139   40.118 0.56343                  
+#Total       157   71.203 1.00000 
+
+#Las Perlas
+with(metadata_lasperlas, adonis2(distance(ROHR_07_lasperlas_prop, method="bray") ~ season*site + species,
+        data = metadata_lasperlas, strata = season))
+#             Df SumOfSqs      R2      F Pr(>F)    
+#season        1    1.309 0.01933 3.5861  0.001 ***
+#site          2    1.198 0.01769 1.6412  0.001 ***
+#species       9    9.347 0.13798 2.8447  0.001 ***
+#season:site   1    0.397 0.00586 1.0865  0.280    
+#Residual    152   55.491 0.81915                  
+#Total       165   67.741 1.00000 
+
+#adonis2(formula = distance(ROHR_07_lasperlas_prop, method = "bray") ~ season * site + species, data = metadata_lasperlas, strata = season)
+#             Df SumOfSqs      R2      F Pr(>F)    
+#season        1    0.530 0.00775 1.8009  0.001 ***
+#site          3    2.379 0.03478 2.6950  0.001 ***
+#species       9   24.193 0.35375 9.1364  0.001 ***
+#season:site   1    0.392 0.00573 1.3322  0.133    
+#Residual    139   40.896 0.59799                  
+#Total       153   68.389 1.00000 
+
+```
+
+```{r subsetting season dataset by region}
+
+####subsetting season data by region
+
+
+#Coiba (non-upwelling)
+ROHR_07_coiba_N <- subset_samples(ROHR_07_non_upwelling, region == "Coiba")
+ROHR_07_coiba_N # 79 samples
+
+#Coiba (upwelling)
+ROHR_07_coiba_U <- subset_samples(ROHR_07_upwelling, region == "Coiba")
+ROHR_07_coiba_U # 79 samples
+
+#Las Perlas (non-upwelling)
+ROHR_07_lasperlas_N <- subset_samples(ROHR_07_non_upwelling, region == "Las Perlas")
+ROHR_07_lasperlas_N # 76 samples
+
+#Las Perlas (upwelling)
+ROHR_07_lasperlas_U <- subset_samples(ROHR_07_upwelling, region == "Las Perlas")
+ROHR_07_lasperlas_U # 78 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_07_coiba_N <- prune_taxa(taxa_sums(ROHR_07_coiba_N) > 0, ROHR_07_coiba_N)
+ROHR_07_coiba_N # 1256 taxa and 79 samples (out of full dataset --> 2131 taxa)
+
+ROHR_07_coiba_U <- prune_taxa(taxa_sums(ROHR_07_coiba_U) > 0, ROHR_07_coiba_U)
+ROHR_07_coiba_U # 1325 taxa and 79 samples
+
+ROHR_07_lasperlas_N <- prune_taxa(taxa_sums(ROHR_07_lasperlas_N) > 0, ROHR_07_lasperlas_N)
+ROHR_07_lasperlas_N #1721 taxa and 76 samples
+
+ROHR_07_lasperlas_U <- prune_taxa(taxa_sums(ROHR_07_lasperlas_U) > 0, ROHR_07_lasperlas_U)
+ROHR_07_lasperlas_U #1812 taxa and 78 samples
+
+##transforming to counts
+ROHR_07_coiba_N_prop = transform_sample_counts(ROHR_07_coiba_N, function(x) x/sum(x))
+ROHR_07_coiba_U_prop = transform_sample_counts(ROHR_07_coiba_U, function(x) x/sum(x))
+ROHR_07_lasperlas_N_prop = transform_sample_counts(ROHR_07_lasperlas_N, function(x) x/sum(x))
+ROHR_07_lasperlas_U_prop = transform_sample_counts(ROHR_07_lasperlas_U, function(x) x/sum(x))
+
+# Save Phyloseq objects
+saveRDS(ROHR_07_coiba_N_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_coiba_N_prop.rds")
+
+saveRDS(ROHR_07_lasperlas_N_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_lasperlas_N_prop.rds")
+
+saveRDS(ROHR_07_coiba_U_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_coiba_U_prop.rds")
+
+saveRDS(ROHR_07_lasperlas_U_prop, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_lasperlas_U_prop.rds")
+
+# Read Phyloseq object
+ROHR_07_coiba_N_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_coiba_N_prop.rds")
+ROHR_07_lasperlas_N_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_lasperlas_N_prop.rds")
+ROHR_07_coiba_U_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_coiba_U_prop.rds")
+ROHR_07_lasperlas_U_prop = readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_lasperlas_U_prop.rds")
+```
+
+```{r PERMANOVA - samples broken down by region & season}
+####running the PERMANOVA
+metadata_coiba_N <- as(sample_data(ROHR_07_coiba_N), "data.frame")
+metadata_coiba_U <- as(sample_data(ROHR_07_coiba_U), "data.frame")
+metadata_lasperlas_N <- as(sample_data(ROHR_07_lasperlas_N), "data.frame")
+metadata_lasperlas_U <- as(sample_data(ROHR_07_lasperlas_U), "data.frame")
+
+####species + site
+
+#Coiba - non-upwelling
+with(metadata_coiba_N, adonis2(distance(ROHR_07_coiba_N_prop, method="bray") ~ species + site,
+        data = metadata_coiba_N))
+
+#adonis2(formula = distance(ROHR_07_coiba_N_prop, method = "bray") ~ species + site, data = metadata_coiba_N)
+#         Df SumOfSqs      R2      F Pr(>F)    
+#species   9   14.099 0.39644 5.0445  0.001 ***
+#site      2    0.658 0.01851 1.0598  0.330    
+#Residual 67   20.806 0.58505                  
+#Total    78   35.563 1.00000 
+
+#Coiba - upwelling
+with(metadata_coiba_U, adonis2(distance(ROHR_07_coiba_U_prop, method="bray") ~ species + site,
+        data = metadata_coiba_U))
+
+#adonis2(formula = distance(ROHR_07_coiba_U_prop, method = "bray") ~ species + site, data = metadata_coiba_U)
+#         Df SumOfSqs      R2      F Pr(>F)    
+#species   9   16.937 0.48051 7.2411  0.001 ***
+#site      6    1.938 0.05497 1.2427  0.035 *  
+#Residual 63   16.373 0.46451                  
+#Total    78   35.249 1.00000 
+
+#Las Perlas - non-upwelling
+with(metadata_lasperlas_N, adonis2(distance(ROHR_07_lasperlas_N_prop, method="bray") ~ species + site,
+        data = metadata_lasperlas_N))
+
+#adonis2(formula = distance(ROHR_07_lasperlas_N_prop, method = "bray") ~ species + site, data = metadata_lasperlas_N)
+#         Df SumOfSqs      R2      F Pr(>F)    
+#species   9   13.085 0.38847 4.6891  0.001 ***
+#site      3    1.065 0.03161 1.1445  0.163    
+#Residual 63   19.534 0.57992                  
+#Total    75   33.684 1.00000  
+
+#Las Perlas - upwelling
+with(metadata_lasperlas_U, adonis2(distance(ROHR_07_lasperlas_U_prop, method="bray") ~ species + site,
+        data = metadata_lasperlas_U))
+
+#adonis2(formula = distance(ROHR_07_lasperlas_U_prop, method = "bray") ~ species + site, data = metadata_lasperlas_U)
+#         Df SumOfSqs      R2     F Pr(>F)    
+#species   9   16.316 0.47741 6.893  0.001 ***
+#site      1    0.239 0.00699 0.908  0.556    
+#Residual 67   17.621 0.51560                 
+#Total    77   34.175 1.00000  
+
+```
+
+
+Using unconstrained ordinations to visualize our data, following:
+https://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html
+```{r unconstrained ordinations - full dataset}
+theme_set(theme_bw())
+
+# Ordinate
+ROHR_07_pcoa <- ordinate(
+  physeq = ROHR_07_obj_clean_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = region (coiba or las perlas)
+plot_ordination(
+  physeq = ROHR_07_obj_clean_prop,
+  ordination = ROHR_07_pcoa,
+  color = "species",
+  shape = "season",
+  title = "PCoA of Tropical Eastern Pacific Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 3) +
+  geom_point(colour = "grey90", size = 1)
+
+# Same plot as above, except faceted by season & region
+#Plot - color = fish host species
+plot_ordination(
+  physeq = ROHR_07_obj_clean_prop,
+  ordination = ROHR_07_pcoa,
+  color = "species",
+  title = "PCoA of Tropical Eastern Pacific Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 3) +
+  geom_point(colour = "grey90", size = 1) +
+  facet_wrap(~region_season)
+
+# Plot with both species & taxa - color = fish host species, shape = region (coiba or las perlas)
+plot_ordination(
+  physeq = ROHR_07_obj_clean_prop,
+  ordination = ROHR_07_pcoa,
+  color = "species",
+  shape = "region",
+  type = "split",
+  title = "PCoA of Tropical Eastern Pacific Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 3) +
+  geom_point(colour = "grey90", size = 1)
+
+
+  
+```
+
+```{r unconstrained ordinations - Coiba}
+
+# Ordinate
+ROHR_07_pcoa_coiba <- ordinate(
+  physeq = ROHR_07_coiba_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = season
+plot_ordination(
+  physeq = ROHR_07_coiba_prop,
+  ordination = ROHR_07_pcoa_coiba,
+  color = "species",
+  shape = "season",
+  title = "PCoA of Coiba Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+
+# Plot - color = fish host species, shape = site
+plot_ordination(
+  physeq = ROHR_07_coiba_prop,
+  ordination = ROHR_07_pcoa_coiba,
+  color = "species",
+  shape = "site",
+  title = "PCoA of Coiba Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+```
+
+
+```{r unconstrained ordinations - Las Perlas}
+# Ordinate
+ROHR_07_pcoa_lasperlas <- ordinate(
+  physeq = ROHR_07_lasperlas_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = season
+plot_ordination(
+  physeq = ROHR_07_lasperlas_prop,
+  ordination = ROHR_07_pcoa_lasperlas,
+  color = "species",
+  shape = "season",
+  title = "PCoA of Las Perlas Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+
+# Plot - color = fish host species, shape = site
+plot_ordination(
+  physeq = ROHR_07_lasperlas_prop,
+  ordination = ROHR_07_pcoa_lasperlas,
+  color = "species",
+  shape = "site",
+  title = "PCoA of Las Perlas Fish Gut Microbiome Communities"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+```
+
+
+
+```{r unconstrained ordinations - Coiba - by season}
+
+# Ordinate - Non-upwelling
+ROHR_07_pcoa_coiba_N <- ordinate(
+  physeq = ROHR_07_coiba_N_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = site
+plot_ordination(
+  physeq = ROHR_07_coiba_N_prop,
+  ordination = ROHR_07_pcoa_coiba_N,
+  color = "species",
+  shape = "site",
+  title = "PCoA of Coiba Fish Gut Microbiome Communities During Non-Upwelling Season"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+
+
+# Ordinate - Upwelling
+ROHR_07_pcoa_coiba_U <- ordinate(
+  physeq = ROHR_07_coiba_U_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = site
+plot_ordination(
+  physeq = ROHR_07_coiba_U_prop,
+  ordination = ROHR_07_pcoa_coiba_U,
+  color = "species",
+  shape = "site",
+  title = "PCoA of Coiba Fish Gut Microbiome Communities During Upwelling Season"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+```
+```{r unconstrained ordinations - Las Perlas - by season}
+# Ordinate - non-upwelling
+ROHR_07_pcoa_lasperlas_N <- ordinate(
+  physeq = ROHR_07_lasperlas_N_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = site
+plot_ordination(
+  physeq = ROHR_07_lasperlas_N_prop,
+  ordination = ROHR_07_pcoa_lasperlas_N,
+  color = "species",
+  shape = "site",
+  title = "PCoA of Las Perlas Fish Gut Microbiome Communities During Non-Upwelling Season"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+
+# Ordinate - upwelling
+ROHR_07_pcoa_lasperlas_U <- ordinate(
+  physeq = ROHR_07_lasperlas_U_prop, 
+  method = "PCoA", 
+  distance = "bray"
+)
+
+# Plot - color = fish host species, shape = site
+plot_ordination(
+  physeq = ROHR_07_lasperlas_U_prop,
+  ordination = ROHR_07_pcoa_lasperlas_U,
+  color = "species",
+  shape = "site",
+  title = "PCoA of Las Perlas Fish Gut Microbiome Communities During Upwelling Season"
+) + 
+  scale_color_brewer(palette = "Paired" ) +
+  geom_point(aes(color = species), alpha = 0.7, size = 4) +
+  geom_point(colour = "grey90", size = 1.5)
+
+
+```
+
+
+
+NMDS (Non-metric multidimensional scaling)
+- another ordination technique
+- calculates limited # of axes (iterative approach - tries to find best solution)
+- important to look at stress = goodness of fit of the regression - i.e., how close the plotted points in ordination space are to the rank order of distances in the original distance matrix
+
+more NMDS info: http://strata.uga.edu/8370/lecturenotes/multidimensionalScaling.html
+
+```{r NMDS}
+set.seed(1)
+
+# Ordinate
+ROHR_07_nmds <- ordinate(
+  physeq = ROHR_07_obj_clean_prop, 
+  method = "NMDS", 
+  distance = "bray"
+)
+
+plot_ordination(
+  physeq = ROHR_07_obj_clean_prop,
+  ordination = ROHR_07_nmds,
+  color = "species",
+  shape = "region",
+  title = "NMDS of Tropical Eastern Pacific Fish Gut Microbial Communities") + 
+  scale_color_brewer(palette = "Paired") +
+  geom_point(aes(color = species), alpha = 0.7, size = 3) +
+  geom_point(colour = "grey90", size = 1) 
+
+##stress ~0.27 (relatively high, from what I understand - but makes sense since we are working with the full dataset)
+```
+
+```{r NMDS - by region - Coiba}
+set.seed(1)
+
+# Ordinate
+ROHR_07_nmds_coiba <- ordinate(
+  physeq = ROHR_07_coiba_prop, 
+  method = "NMDS", 
+  distance = "bray"
+)
+
+plot_ordination(
+  physeq = ROHR_07_coiba_prop,
+  ordination = ROHR_07_nmds_coiba,
+  color = "species",
+  shape = "season",
+  title = "NMDS of Coiba Fish Gut Microbial Communities") + 
+  scale_color_brewer(palette = "Paired") +
+  geom_point(aes(color = species), alpha = 0.7, size = 3) +
+  geom_point(colour = "grey90", size = 1) 
+
+#still seeing similarly high (0.26) levels of stress
+```
+```{r NMDS - by region - Las Perlas}
+set.seed(1)
+
+# Ordinate
+ROHR_07_nmds_lasperlas <- ordinate(
+  physeq = ROHR_07_lasperlas_prop, 
+  method = "NMDS", 
+  distance = "bray"
+)
+
+plot_ordination(
+  physeq = ROHR_07_lasperlas_prop,
+  ordination = ROHR_07_nmds_lasperlas,
+  color = "species",
+  shape = "season",
+  title = "NMDS of Las Perlas Fish Gut Microbial Communities") + 
+  scale_color_brewer(palette = "Paired") +
+  geom_point(aes(color = species), alpha = 0.7, size = 3) +
+  geom_point(colour = "grey90", size = 1) 
+
+#still seeing similarly high (0.27) levels of stress
+```
+
+Now, do constrained ordinations to look at how environmental variables are associated with these changes in community composition
+(following https://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html)
+
+```{r constrained ordination - full dataset}
+ ###fix this so that the arrows are more legible (remove arrows for species & multiple sites w/in region (perhaps would help to merge dataset by region first?))   
+
+ROHR_07_bray <- phyloseq::distance(physeq = ROHR_07_obj_clean_prop, method = "bray")
+
+                            
+# CAP ordinate
+cap_ord <- ordinate(
+    physeq = ROHR_07_obj_clean_prop, 
+    method = "CAP",
+    distance = ROHR_07_bray,
+    formula = ~ species*region:site*season
+)
+
+# CAP plot
+cap_plot <- plot_ordination(
+  physeq = ROHR_07_obj_clean_prop, 
+  ordination = cap_ord, 
+    color = "species", 
+    axes = c(1,2)
+) + 
+    aes(shape = region) + 
+    geom_point(aes(colour = species), alpha = 0.4, size = 4) + 
+    geom_point(colour = "grey90", size = 1.5) + 
+    scale_color_brewer(palette = "Paired"
+    )
+
+
+# Now add the environmental variables as arrows
+arrowmat <- vegan::scores(cap_ord, display = "bp")
+
+# Add labels, make a data.frame
+arrowdf <- data.frame(labels = rownames(arrowmat), arrowmat)
+
+# Define the arrow aesthetic mapping
+arrow_map <- aes(xend = CAP1, 
+    yend = CAP2, 
+    x = 0, 
+    y = 0, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+label_map <- aes(x = 1.3 * CAP1, 
+    y = 1.3 * CAP2, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+arrowhead = arrow(length = unit(0.02, "npc"))
+
+# Make a new graphic
+cap_plot + 
+  geom_segment(
+    mapping = arrow_map, 
+    size = .5, 
+    data = arrowdf, 
+    color = "gray", 
+    arrow = arrowhead
+  ) + 
+  geom_text(
+    mapping = label_map, 
+    size = 4,  
+    data = arrowdf, 
+    show.legend = FALSE
+  )
+
+#anova of constrained axes used in ordination
+anova(cap_ord)
+```
+
+
+Following https://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html
+```{r prep data visualize most abundant taxa}
+
+# melt to long format (for ggploting) 
+# prune out phyla below 2% in each sample
+
+ROHR_07_phylum <- ROHR_07_obj_phylo_root %>%
+  tax_glom(taxrank = "Phylum") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long format
+  filter(Abundance > 0.02) %>%                         # Filter out low abundance taxa (remove those that contribute less                                                          than 2% of relative abundance of each sample)
+  arrange(Phylum)                                      # Sort data frame alphabetically by phylum
+
+```
+
+
+```{r stacked barplot to visualize most abundant taxa - broken into regions}
+#pick colors for bars
+c25 <- c(
+  "dodgerblue2", "#E31A1C", # red
+  "green4",
+  "#6A3D9A", # purple
+  "#FF7F00", # orange
+  "black", "gold1",
+  "skyblue2", "#FB9A99", # lt pink
+  "palegreen2",
+  "#CAB2D6", # lt purple
+  "#FDBF6F", # lt orange
+  "gray70", "khaki2",
+  "maroon", "orchid1", "deeppink1", "blue1", "steelblue4",
+  "darkturquoise", "green1", "yellow4", "yellow3",
+  "darkorange4", "brown")
+
+###use colors assigned to ROHR_06 (skin) to match --> but add color for those unique to gut
+c3 <- c("yellow3","darkorange4", "brown")
+
+unique(ROHR_06_phylum$Phylum) #skin (from ROHR_06_Swab_stats.Rmd --> need to run this code first --> will add code chunk to this doc later so they can be run independently)
+unique(ROHR_07_phylum$Phylum) #gut
+#unique to gut
+#"WPS-2", "Spirochaetota", "Deferribacterota"
+
+names(c25) = c(unique(ROHR_06_phylum$Phylum), "WPS-2", "Spirochaetota", "Deferribacterota")
+c25
+
+# Plot 
+##can add --> position = "fill" to geom_bar() to make bars take up full height
+
+ggplot(ROHR_07_phylum, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  facet_grid(region~.) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25) +
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Prionurus laticlavius", "Chaetodon humeralis", "Acanthurus xanthopterus", "Cephalopholis panamensis", "Johnrandallia nigrirostris", "Abudefduf troschelii", "Microspathodon dorsalis", "Epinephelus labriformis", "Cephalopholis colonus"),
+    labels = c("A. concolor", "P. laticlavius", "C. humeralis", "A. xanthopterus", "C. panamensis", "J. nigrirostris", "A. troschelii", "M. dorsalis", "E. labriformis", "C. colonus"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  ggtitle("Phylum Composition of TEP Fish Gut Microbial Communities by Region") 
+
+
+#stacked barplot to visualize most abundant taxa - broken into seasons
+##can add --> position = "fill" to geom_bar() to make bars take up full height
+
+ggplot(ROHR_07_phylum, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  facet_grid(season~.) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25) +
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Prionurus laticlavius", "Chaetodon humeralis", "Acanthurus xanthopterus", "Cephalopholis panamensis", "Johnrandallia nigrirostris", "Abudefduf troschelii", "Microspathodon dorsalis", "Epinephelus labriformis", "Cephalopholis colonus"),
+    labels = c("A. concolor", "P. laticlavius", "C. humeralis", "A. xanthopterus", "C. panamensis", "J. nigrirostris", "A. troschelii", "M. dorsalis", "E. labriformis", "C. colonus"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  ggtitle("Phylum Composition of TEP Fish Gut Microbial Communities by Season") 
+
+#stacked barplot to visualize most abundant taxa - broken into seasons & regions
+##can add --> position = "fill" to geom_bar() to make bars take up full height
+
+ggplot(ROHR_07_phylum, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  facet_grid(region_season~.) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25) +
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Prionurus laticlavius", "Chaetodon humeralis", "Acanthurus xanthopterus", "Cephalopholis panamensis", "Johnrandallia nigrirostris", "Abudefduf troschelii", "Microspathodon dorsalis", "Epinephelus labriformis", "Cephalopholis colonus"),
+    labels = c("A. concolor", "P. laticlavius", "C. humeralis", "A. xanthopterus", "C. panamensis", "J. nigrirostris", "A. troschelii", "M. dorsalis", "E. labriformis", "C. colonus"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  ggtitle("Phylum Composition of TEP Fish Gut Microbial Communities by Season & Region ")
+
+##glammed up version of plot above
+#same plot w/o title
+
+ggplot(ROHR_07_phylum, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  facet_grid(region_season~.) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25, name="Microbial Phyla")+
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Prionurus laticlavius", "Chaetodon humeralis", "Acanthurus xanthopterus", "Cephalopholis panamensis", "Johnrandallia nigrirostris", "Abudefduf troschelii", "Microspathodon dorsalis", "Epinephelus labriformis", "Cephalopholis colonus"),
+    labels = c("A. concolor", "P. laticlavius", "C. humeralis", "A. xanthopterus", "C. panamensis", "J. nigrirostris", "A. troschelii", "M. dorsalis", "E. labriformis", "C. colonus"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1, ncol = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  xlab("Host Species") +
+  scale_y_continuous(labels = scales::percent)+
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, size = 14, face = "italic"), #change size & orientation of species names (x-axis) & fix overlap
+        axis.title.x = element_text(size = 16), #change size of x-axis label (Species)
+        axis.text.y = element_text(size = 10), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 16), #change size of legend title (microbial phyla)
+        legend.text = element_text(size = 11), #change size of legend text (microbial taxa)
+        strip.text.y = element_text(size = 13)) #change size of each box's label (e.g., Coiba upwelling)
+
+# stacked barplot to visualize most abundant taxa - broken into site
+
+ggplot(ROHR_07_phylum, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  facet_grid(site~.) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25) +
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Prionurus laticlavius", "Chaetodon humeralis", "Acanthurus xanthopterus", "Cephalopholis panamensis", "Johnrandallia nigrirostris", "Abudefduf troschelii", "Microspathodon dorsalis", "Epinephelus labriformis", "Cephalopholis colonus"),
+    labels = c("A. concolor", "P. laticlavius", "C. humeralis", "A. xanthopterus", "C. panamensis", "J. nigrirostris", "A. troschelii", "M. dorsalis", "E. labriformis", "C. colonus"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  ggtitle("Phylum Composition of TEP Fish Gut Microbial Communities by Sampling Site") 
+
+```
+
+From these abudance graphs, it is quite clear that each fish hosts a significantly different gut microbiome, with certain species such as P. laticlavius having a particularly rich and relatively even microbiome while most are dominated by bacteria from a few main phyla, namely Proteobacteria (20-80% relative abundance), Fusobacteriota, Firmicutes, and Bacteroidota (only highly represented in P. laticlavius & J. nigrirostris). Compared to the skin samples, there is less taxonomic diversity: while the most abundant (>2% rel abund) gut microbes of these fish come from 16 phyla, the skin of these same fish had 22 phyla represented. In both skin & gut, Proteobacteria dominated, but contrary to the gut microbiome, the other top phyla for skin were Bacteroidota (across all fish), Cyanobacteria, and Actinobacteriota. Additionally, interspecific differences appear to be larger for the gut microbiome than the skin microbiome. There seem to be some region-specific differences (e.g., presence of deinococcota in Coiba M. dorsalis)
+
+
+
+Taking a quick look at the Caribbean fish skin microbiome
+```{r Caribbean skin microbiome preliminary visualizations}
+#read RDS file
+
+ROHR_07_skin_phylo_root <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_skin_with_phylogenetic_tree_rooted.rds")
+
+```
+
+```{r prep data visualize most abundant taxa - Caribbean skin}
+
+# melt to long format (for ggploting) 
+# prune out phyla below 2% in each sample
+
+ROHR_07_phylum_skin <- ROHR_07_skin_phylo_root %>%
+  tax_glom(taxrank = "Phylum") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long format
+  filter(Abundance > 0.02) %>%                         # Filter out low abundance taxa (remove those that contribute less                                                          than 2% of relative abundance of each sample)
+  arrange(Phylum)                                      # Sort data frame alphabetically by phylum
+
+```
+
+
+```{r Caribbean skin stacked barplot to visualize most abundant taxa}
+
+unique(ROHR_06_phylum$Phylum) #skin (from ROHR_06_Swab_stats.Rmd --> need to run this code first --> will add code chunk to this doc later so they can be run independently)
+unique(ROHR_07_phylum_skin$Phylum) #skin Car
+#unique to Caribbean skin = none
+
+#rename SAR324 clade, as done for TEP samples
+ROHR_07_phylum_skin["Phylum"][ROHR_07_phylum_skin["Phylum"] == "SAR324 clade(Marine group B)"] <- "SAR324 clade"
+
+#check this worked
+unique(ROHR_07_phylum_skin$Phylum)
+
+#look at species names for Caribbean
+unique(ROHR_07_phylum_skin$species)
+
+#"Anisotremus virginicus", "Abudefduf taurus", "Abudefduf saxatilis", "Microspathodon chrysurus", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus" 
+
+#reorder samples so that fish are grouped by diet
+ROHR_07_phylum_skin <- ROHR_07_phylum_skin %>%
+  mutate(species = fct_relevel(species, "Abudefduf taurus", "Microspathodon chrysurus", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus", "Anisotremus virginicus", "Abudefduf saxatilis"))
+
+##glammed up version of plot
+#w/o title
+
+ggplot(ROHR_07_phylum_skin, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25, name="Microbial Phyla")+
+  scale_x_discrete(
+    breaks = c("Abudefduf taurus", "Microspathodon chrysurus", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus", "Anisotremus virginicus", "Abudefduf saxatilis"),
+    labels = c("A. taurus", "M. chrysurus", "C. ocellatus", "C. capistratus", "C. striatus", "A. virginicus", "A. saxatilis"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1, ncol = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  xlab("Host Species") +
+  scale_y_continuous(labels = scales::percent)+
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, size = 14, face = "italic"), #change size & orientation of species names (x-axis) & fix overlap
+        axis.title.x = element_text(size = 16), #change size of x-axis label (Species)
+        axis.text.y = element_text(size = 10), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 16), #change size of legend title (microbial phyla)
+        legend.text = element_text(size = 11)) #change size of legend text (microbial taxa)
+```
+
+```{prelim sister species pairs comparison}
+
+##read in new metadata for ROHR07 to match ROHR06 (remove two columns)
+#creating path to the .csv 
+ROHR_07_sam <- "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_7_metadata_new.csv"
+#reading the sample data sheet
+ROHR_07_metadata <- read.csv(ROHR_07_sam, header = TRUE, sep = ",", row.names = 1)
+
+CAR_skin_samples <- sample_data(ROHR_07_metadata)
+
+CAR_skin_tax <- tax_table(ROHR_07_skin_phylo_root)
+
+CAR_skin_OTU <- otu_table(ROHR_07_skin_phylo_root)
+
+#new phyloseq object
+CARsis <- phyloseq(CAR_skin_samples, CAR_skin_OTU, CAR_skin_tax)
+
+#remove non-sister species (no porkfish in TEP dataset for now)
+ROHR_07_Sisters <- prune_samples(sample_data(CARsis)$species != "Anisotremus virginicus", CARsis)
+
+#creating path to the .csv 
+ROHR_06_sam <- "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_6_metadata.csv"
+#reading the sample data sheet
+ROHR_06_metadata <- read.csv(ROHR_06_sam, header = TRUE, sep = ",", row.names = 1)
+
+
+TEP_skin_samples <- sample_data(ROHR_06_metadata)
+
+TEP_skin_tax <- tax_table(ROHR_06_obj_phylo_root)
+
+TEP_skin_OTU <- otu_table(ROHR_06_obj_phylo_root)
+
+TEPsis <- phyloseq(TEP_skin_samples, TEP_skin_OTU, TEP_skin_tax)
+
+
+ROHR_06_Sisters <- prune_samples(sample_data(TEPsis)$species == c("Abudefduf concolor", "Abudefduf troschelii", "Chaetodon humeralis", "Microspathodon dorsalis"), TEPsis)
+
+#merge TEP & CAr datasets
+merged_skin_TEP_CAR = merge_phyloseq(ROHR_07_Sisters, ROHR_06_Sisters)
+
+#save merged data
+saveRDS(merged_skin_TEP_CAR, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/sisters_merged_TEP_CAR_prelim.rds")
+
+#save subsetted data
+saveRDS(ROHR_06_Sisters, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_sister_only.rds")
+saveRDS(ROHR_07_Sisters, "~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_sisters_only.rds")
+
+#read subsetted data
+ROHR_06_Sisters <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_sisters_only.rds")
+
+ROHR_07_Sisters <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_07_trimmed/ROHR_07_Sisters_only.rds")
+
+```
+
+
+
+```{r prep data visualize most abundant taxa - sister pairs}
+
+# melt to long format (for ggploting) 
+# prune out phyla below 2% in each sample
+
+ROHR_sisters_phylum_skin <- merged_skin_TEP_CAR %>%
+  tax_glom(taxrank = "Phylum") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long format
+  filter(Abundance > 0.02) %>%                         # Filter out low abundance taxa (remove those that contribute less                                                          than 2% of relative abundance of each sample)
+  arrange(Phylum)                                      # Sort data frame alphabetically by phylum
+
+```
+
+
+```{r Caribbean skin stacked barplot to visualize most abundant taxa}
+
+unique(ROHR_sisters_phylum_skin$Phylum)
+
+
+#rename SAR324 clade & marinimicrobia
+ROHR_sisters_phylum_skin["Phylum"][ROHR_sisters_phylum_skin["Phylum"] == "SAR324 clade(Marine group B)"] <- "SAR324 clade"
+
+ROHR_sisters_phylum_skin["Phylum"][ROHR_sisters_phylum_skin["Phylum"] == "Marinimicrobia (SAR406 clade)"] <- "Marinimicrobia"
+
+#check this worked
+unique(ROHR_sisters_phylum_skin$Phylum)
+
+#look at species names
+unique(ROHR_sisters_phylum_skin$species)
+
+# "Abudefduf concolor", "Microspathodon dorsalis", "Abudefduf troschelii", "Chaetodon humeralis", "Abudefduf taurus", "Abudefduf saxatilis", "Microspathodon chrysurus", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus" 
+
+#reorder samples so that fish are grouped by diet & sister pairs
+ROHR_sisters_phylum_skin <- ROHR_sisters_phylum_skin %>%
+  mutate(species = fct_relevel(species, "Abudefduf concolor", "Abudefduf taurus", "Microspathodon dorsalis", "Microspathodon chrysurus", "Chaetodon humeralis", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus", "Abudefduf troschelii", "Abudefduf saxatilis"))
+
+#pick colors for bars
+c25 <- c(
+  "dodgerblue2", "#E31A1C", # red
+  "green4",
+  "#6A3D9A", # purple
+  "#FF7F00", # orange
+  "black", "gold1",
+  "skyblue2", "#FB9A99", # lt pink
+  "palegreen2",
+  "#CAB2D6", # lt purple
+  "#FDBF6F", # lt orange
+  "gray70", "khaki2",
+  "maroon", "orchid1", "deeppink1", "blue1", "steelblue4",
+  "darkturquoise", "green1", "yellow4", "yellow3",
+  "darkorange4", "brown")
+
+##assign names to this vector of hex color values: names have to correspond to the labels of the groups that we want to colorize
+
+names(c25) = unique(ROHR_sisters_phylum_skin$Phylum)
+print(c25)
+
+#Plot w/o title
+
+ggplot(ROHR_sisters_phylum_skin, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c25, name="Microbial Phyla")+
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Abudefduf taurus", "Microspathodon dorsalis", "Microspathodon chrysurus", "Chaetodon humeralis", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus", "Abudefduf troschelii", "Abudefduf saxatilis"),
+    labels = c("A. concolor", "A. taurus", "M. dorsalis","M. chrysurus", "C. humeralis","C. ocellatus", "C. capistratus", "C. striatus", "A. troschelii", "A. saxatilis"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1, ncol = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  xlab("Host Species") +
+  scale_y_continuous(labels = scales::percent)+
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, size = 14, face = "italic"), #change size & orientation of species names (x-axis) & fix overlap
+        axis.title.x = element_text(size = 16), #change size of x-axis label (Species)
+        axis.text.y = element_text(size = 10), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 16), #change size of legend title (microbial phyla)
+        legend.text = element_text(size = 11)) #change size of legend text (microbial taxa)
+
+#Plot w/o title --> facet by ocean
+
+ggplot(ROHR_sisters_phylum_skin, aes(x = species, y = Abundance, fill = fct_reorder(Phylum, Abundance))) + 
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(ocean~.) +
+  scale_fill_manual(values = c25, name="Microbial Phyla")+
+  scale_x_discrete(
+    breaks = c("Abudefduf concolor", "Abudefduf taurus", "Microspathodon dorsalis", "Microspathodon chrysurus", "Chaetodon humeralis", "Chaetodon ocellatus", "Chaetodon capistratus", "Chaetodon striatus", "Abudefduf troschelii", "Abudefduf saxatilis"),
+    labels = c("A. concolor", "A. taurus", "M. dorsalis","M. chrysurus", "C. humeralis","C. ocellatus", "C. capistratus", "C. striatus", "A. troschelii", "A. saxatilis"), 
+    drop = FALSE
+  ) +
+  #
+  guides(fill = guide_legend(reverse = TRUE, keywidth = 1, keyheight = 1, ncol = 1)) +
+  ylab("Relative Abundance (Phyla > 2%) \n") +
+  xlab("Host Species") +
+  scale_y_continuous(labels = scales::percent)+
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, size = 14, face = "italic"), #change size & orientation of species names (x-axis) & fix overlap
+        axis.title.x = element_text(size = 16), #change size of x-axis label (Species)
+        axis.text.y = element_text(size = 10), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 16), #change size of legend title (microbial phyla)
+        legend.text = element_text(size = 11)) #change size of legend text (microbial taxa)
+
+
+####will want to re-run this having "rarefied" or otherwise standardized the # of samples across oceans (or limited to just Gulf of Panama) as there are many more replicates (>2X) for TEP than Caribbean
+```
