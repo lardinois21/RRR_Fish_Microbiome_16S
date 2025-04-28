@@ -1,0 +1,486 @@
+---
+title: "Skin Species by Species B-div tests"
+author: "LLL"
+date: "2025-02-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load required packages}
+library(phyloseq) #work with phyloseq data format
+library(vegan) #run stats 
+library(pairwiseAdonis) #run stats
+library(writexl) #convert results to excel file
+library(tibble) #better table formatting
+library(dplyr) #modifying data structure
+```
+
+This script runs the species-by-species beta diversity analyses (PERMANOVAs with 3 different dissimilarity/distance metrics: Bray-Curtis, Jaccard, and UniFrac). It matches the code run for "Skin Beta Diversity 16S Version 1" with the whole (all fish species) dataset, but loops through all the subset datasets (from "Skin Species by Species Version 1") as well as the water dataset and returns a table with all results. I first ran code for each individual metric on one of the host species, to confirm the looped code returned the same values as the separate code chunks. Refer to the whole dataset code for additional documetation and details on the analyses run.
+
+#Whole dataset
+```{r read subset dataset}
+#temporarily set working directory
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed")
+
+#A. concolor
+ROHR_06_Aconcolor <- readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_concolor.rds")
+
+#A. troschelii
+ROHR_06_Atroschelii <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_troschelii.rds")
+
+#A. xanthopterus
+ROHR_06_Axanthopterus <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_xanthopterus.rds")
+
+#C. colonus
+ROHR_06_Ccolonus <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_colonus.rds")
+
+#C. panamensis
+ROHR_06_Cpanamensis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_panamensis.rds")
+
+#C. humeralis
+ROHR_06_Chumeralis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_humeralis.rds")
+
+#E. labriformis
+ROHR_06_Elabriformis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_E_labriformis.rds")
+
+#J. nigrirostris
+ROHR_06_Jnigrirostris <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_J_nigrirostris.rds")
+
+#M. dorsalis
+ROHR_06_Mdorsalis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_M_dorsalis.rds")
+
+#P. laticlavius
+ROHR_06_Platiclavius <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_laticlavius.rds")
+
+```
+```{r read water dataset as well}
+#temporarily set directory to water file location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed")
+
+ROHR_08_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree_rooted.rds")
+```
+
+#template code for bray-curtis, jaccard, and unifrac PERMANOVAs
+
+Running just A. concolor to be able to compare the function's results to the individually-run code for a single species.
+
+```{r transform to counts}
+##transforming to counts - for Bray-Curtis
+ROHR_06_Aconcolor_prop = transform_sample_counts(ROHR_06_Aconcolor, function(x) x/sum(x))
+```
+
+# A. concolor PERMANOVAs (Bray-Curtis, Jaccard, UniFrac)
+```{r PERMANOVA A. concolor  - Bray-Curtis Distances, echo = FALSE}
+####dissimilarity matrix####
+set.seed(1911)
+type.bray.Aconc <- phyloseq::distance(ROHR_06_Aconcolor_prop, method = "bray")
+sampledf.Aconc <- data.frame(sample_data(ROHR_06_Aconcolor_prop))
+
+####beta dispersion####
+
+###by region
+set.seed(1911)
+beta.bray.region.Aconc <- betadisper(type.bray.Aconc, sampledf.Aconc$region,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.bray.region.Aconc, pairwise = TRUE, permutations = 10000) # P =  0.0371 variance is not homogeneous
+
+plot(beta.bray.region.Aconc, hull=FALSE, ellipse=TRUE)
+
+###by season
+set.seed(1911)
+beta.bray.season.Aconc <- betadisper(type.bray.Aconc, sampledf.Aconc$season,
+                         type = "centroid", bias.adjust = TRUE) # P = 0.0104 variance is not homogeneous
+permutest(beta.bray.season.Aconc, pairwise = TRUE, permutations = 10000)
+
+plot(beta.bray.season.Aconc, hull=FALSE, ellipse=TRUE)
+
+####PERMANOVAs####
+
+####running the PERMANOVA
+metadata.Aconc <- as(sample_data(ROHR_06_Aconcolor_prop), "data.frame")
+
+####by region####
+           
+#region (collection region - Coiba or Las Perlas)
+set.seed(1911)
+adonis2(distance(ROHR_06_Aconcolor_prop, method="bray") ~ region,
+        data = metadata.Aconc,
+                          permutations = 10000) #significant, but very small R2 --> p = 0.005399, R2 = 0.044
+
+####by season####
+#season = upwelling/non-upwelling
+set.seed(1911)
+adonis2(distance(ROHR_06_Aconcolor_prop, method="bray") ~ season,
+        data = metadata.Aconc,
+                          permutations = 10000) #significant, p = 3e-04, R2 = 0.057
+
+####testing for interactions between region & season####
+set.seed(1911)
+adonis2(distance(ROHR_06_Aconcolor_prop, method="bray") ~ region*season,
+        data = metadata.Aconc,
+                          permutations = 10000) #no significant interaction b/w region & season (p = 0.1355 ), but both have significant independent effects for A. concolor (0.0037 & 9.999e-05)
+
+
+####pairwise comparisons#### 
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.bray.Aconc, factors = sampledf.Aconc$region) #p = 0.006, R2 = 0.0445
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.bray.Aconc, factors = sampledf.Aconc$season) #p = 0.001, R2 = 0.057
+```
+
+```{r PERMANOVA A. concolor  - Jaccard Distances, echo = FALSE}
+####dissimilarity matrix####
+
+set.seed(1911)
+type.jaccard <- phyloseq::distance(ROHR_06_Aconcolor, method = "jaccard", binary = T)
+sampledf <- data.frame(sample_data(ROHR_06_Aconcolor))
+
+####beta dispersion####
+
+###by region
+set.seed(1911)
+beta.jaccard.region <- betadisper(type.jaccard, sampledf$region,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.jaccard.region, pairwise = TRUE, permutations = 10000) # P = 0.1718 is homogeneous across regions
+
+###by season
+set.seed(1911)
+beta.jaccard.season <- betadisper(type.jaccard, sampledf$season,
+                         type = "centroid", bias.adjust = TRUE) # P = 0.421 is homogeneous across seasons
+permutest(beta.jaccard.season, pairwise = TRUE, permutations = 10000)
+
+####PERMANOVAs####
+
+###by region
+set.seed(1911)
+adonis.jaccard.region <- adonis2(type.jaccard ~ region, data = sampledf,
+                          permutations = 10000) # p = 0.0023, r2 = 0.03736
+adonis.jaccard.region
+
+###by season
+set.seed(1911)
+adonis.jaccard.season <- adonis2(type.jaccard ~ season, data = sampledf,
+                          permutations = 10000) # p = 0.00009999, R2 = 0.04386
+adonis.jaccard.season
+
+###by region*season
+set.seed(1911)
+adonis.jaccard.regseason <- adonis2(type.jaccard ~ region*season, data = sampledf,
+                          permutations = 10000)
+adonis.jaccard.regseason
+
+#adonis2(formula = type.jaccard ~ region * season, data = sampledf, permutations = 10000)
+#              Df SumOfSqs      R2      F     Pr(>F)    
+#region         1   0.5503 0.03736 1.4368  0.0012 ** 
+#season         1   0.6461 0.04386 1.6869 9.999e-05 ***
+#region:season  1   0.5120 0.03476 1.3367  0.0041 ** 
+#Residual      34  13.0226 0.88403                      
+#Total         37  14.7310 1.00000 
+
+####pairwise comparisons#### 
+
+###by region
+set.seed(1911)
+pairwise.adonis(type.jaccard, factors = sampledf$region) # p = 0.002
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.jaccard, factors = sampledf$season) # p = 0.001
+```
+
+```{r PERMANOVA A. concolor  - UniFrac Distances, echo = FALSE}
+####dissimilarity matrix####
+
+set.seed(1911)
+type.unifrac <- phyloseq::distance(ROHR_06_Aconcolor, method = "unifrac", weighted = F)
+sampledf <- data.frame(sample_data(ROHR_06_Aconcolor))
+
+####beta dispersion####
+###by region
+set.seed(1911)
+beta.unifrac.region <- betadisper(type.unifrac, sampledf$region,
+                         type = "centroid", bias.adjust = TRUE)
+permutest(beta.unifrac.region, pairwise = TRUE, permutations = 10000) # P = 0.1708
+
+plot(beta.unifrac.region, hull=FALSE, ellipse=TRUE)
+
+###by season
+set.seed(1911)
+beta.unifrac.season <- betadisper(type.unifrac, sampledf$season,
+                         type = "centroid", bias.adjust = TRUE) # P = 0.4654
+permutest(beta.unifrac.season, pairwise = TRUE, permutations = 10000)
+
+plot(beta.unifrac.season, hull=FALSE, ellipse=TRUE)
+
+####PERMANOVAs####
+
+###by region
+set.seed(1911)
+adonis.unifrac.region <- adonis2(type.unifrac ~ region, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.region
+
+#adonis2(formula = type.unifrac ~ region, data = sampledf, permutations = 10000)
+#         Df SumOfSqs      R2      F Pr(>F)
+#region    1   0.2094 0.02594 0.9586 0.4056
+#Residual 36   7.8623 0.97406              
+#Total    37   8.0717 1.00000 
+
+###by season
+set.seed(1911)
+adonis.unifrac.season <- adonis2(type.unifrac ~ season, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.season
+
+#adonis2(formula = type.unifrac ~ season, data = sampledf, permutations = 10000)
+#         Df SumOfSqs      R2      F Pr(>F)  
+#season    1   0.3986 0.04938 1.8702 0.039 *
+#Residual 36   7.6731 0.95062                
+#Total    37   8.0717 1.00000  
+
+###by region*season
+set.seed(1911)
+adonis.unifrac.regseason <- adonis2(type.unifrac ~ region*season, data = sampledf,
+                          permutations = 10000)
+adonis.unifrac.regseason
+
+#adonis2(formula = type.unifrac ~ region * season, data = sampledf, permutations = 10000)
+#              Df SumOfSqs      R2      F Pr(>F)  
+#region         1   0.2094 0.02594 0.9877 0.3829 
+#season         1   0.3986 0.04938 1.8805 0.0387 *
+#region:season  1   0.2568 0.03182 1.2117 0.2067  
+#Residual      34   7.2069 0.89286                
+#Total         37   8.0717 1.00000 
+
+####pairwise comparisons#### 
+###by region
+set.seed(1911)
+pairwise.adonis(type.unifrac, factors = sampledf$region) # p-adj = 0.414	
+
+###by season
+set.seed(1911)
+pairwise.adonis(type.unifrac, factors = sampledf$season) # p-adj = 0.045
+```
+
+
+```{r all species permanovas}
+
+# List of datasets: fish + water (ROHR_08...)
+datasets <- c("ROHR_06_Aconcolor", "ROHR_06_Atroschelii", "ROHR_06_Axanthopterus", 
+              "ROHR_06_Ccolonus", "ROHR_06_Cpanamensis", "ROHR_06_Chumeralis", 
+              "ROHR_06_Elabriformis", "ROHR_06_Jnigrirostris", "ROHR_06_Mdorsalis", 
+              "ROHR_06_Platiclavius", "ROHR_08_obj_phylo_root")
+
+# Define function to run beta diversity analyses
+run_beta_diversity <- function(dataset_name) {
+  set.seed(1911)  # Set seed for reproducibility
+  
+  dataset <- get(dataset_name)  # Load dataset dynamically
+  sampledf <- data.frame(sample_data(dataset))
+  
+  # Apply transformation only for Bray-Curtis
+  dataset_prop <- transform_sample_counts(dataset, function(x) x / sum(x))
+  
+  # Create distance matrices
+  dist_br <- phyloseq::distance(dataset_prop, method = "bray")  # Bray-Curtis with transformation
+  dist_jac <- phyloseq::distance(dataset, method = "jaccard", binary = TRUE)  # Jaccard
+  dist_unifrac <- phyloseq::distance(dataset, method = "unifrac", weighted = FALSE)  # UniFrac
+  
+  # Function for beta dispersion and PERMANOVA
+  beta_dispersion_permanova <- function(dist_matrix, sampledf, method_name, dataset_name) {
+    set.seed(1911)  # Ensure seed is set before permutation tests
+    
+    # PERMANOVA tests for region, season, and interaction (region*season)
+    adonis_region <- adonis2(dist_matrix ~ region, data = sampledf, permutations = 10000)
+    adonis_season <- adonis2(dist_matrix ~ season, data = sampledf, permutations = 10000)
+    adonis_regseason <- adonis2(dist_matrix ~ region * season, data = sampledf, permutations = 10000)
+
+    # Extract PERMANOVA results for region, season, and region:season
+    extract_permanova <- function(adonis_result, term_name) {
+      df <- as.data.frame(adonis_result)  # Convert PERMANOVA matrix to data frame
+      df$Term <- rownames(df)  # Add term names
+      df$Residual_R2 <- df["Residual", "R2"] #extract R2 for residuals as well
+      df <- df[df$Term == term_name, ]  # Filter for the term of interest
+      return(df)
+    }
+
+    # Extract results for region, season, and region*season
+    region_df <- extract_permanova(adonis_region, "region")
+    season_df <- extract_permanova(adonis_season, "season")
+    regseason_df <- extract_permanova(adonis_regseason, "region:season")
+
+    # Combine the results into a single dataframe
+    results_df <- bind_rows(
+      tibble(Dataset = dataset_name, Method = method_name, Term = "Region",
+             Df = region_df[["Df"]], SumOfSqs = region_df[["SumOfSqs"]], R2 = region_df[["R2"]], 
+             F = region_df[["F"]], `Pr(>F)` = region_df[["Pr(>F)"]], `Residual R2` = region_df[["Residual_R2"]]),
+      tibble(Dataset = dataset_name, Method = method_name, Term = "Season",
+             Df = season_df[["Df"]], SumOfSqs = season_df[["SumOfSqs"]], R2 = season_df[["R2"]], 
+             F = season_df[["F"]], `Pr(>F)` = season_df[["Pr(>F)"]], `Residual R2` = season_df[["Residual_R2"]]),
+      tibble(Dataset = dataset_name, Method = method_name, Term = "Region:Season",
+             Df = regseason_df[["Df"]], SumOfSqs = regseason_df[["SumOfSqs"]], R2 = regseason_df[["R2"]], 
+             F = regseason_df[["F"]], `Pr(>F)` = regseason_df[["Pr(>F)"]], `Residual R2` = regseason_df[["Residual_R2"]])
+    )
+
+    return(results_df)
+  }
+
+  # Run analysis for each distance method
+  br_results <- beta_dispersion_permanova(dist_br, sampledf, "Bray-Curtis", dataset_name)
+  jac_results <- beta_dispersion_permanova(dist_jac, sampledf, "Jaccard", dataset_name)
+  unifrac_results <- beta_dispersion_permanova(dist_unifrac, sampledf, "UniFrac", dataset_name)
+
+  # Combine results into a single data frame
+  combined_results <- bind_rows(br_results, jac_results, unifrac_results)
+  
+  return(combined_results)
+}
+
+# Run analysis on all datasets and store results in a single data frame
+all_results_df <- bind_rows(lapply(datasets, run_beta_diversity))
+
+# Display results
+print(all_results_df)
+
+# Save results to an Excel file
+write_xlsx(all_results_df, "beta_diversity_results.xlsx")
+
+```
+
+### Rarefied to 2500 dataset
+
+```{r read rarefied 2500 subset dataset}
+#temporarily set working directory
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed")
+
+#A. concolor
+ROHR_06_Aconcolor.rar <- readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_concolor_rar.rds")
+
+#A. troschelii
+ROHR_06_Atroschelii.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_troschelii_rar.rds")
+
+#A. xanthopterus
+ROHR_06_Axanthopterus.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_xanthopterus_rar.rds")
+
+#C. colonus
+ROHR_06_Ccolonus.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_colonus_rar.rds")
+
+#C. panamensis
+ROHR_06_Cpanamensis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_panamensis_rar.rds")
+
+#C. humeralis
+ROHR_06_Chumeralis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_humeralis_rar.rds")
+
+#E. labriformis
+ROHR_06_Elabriformis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_E_labriformis_rar.rds")
+
+#J. nigrirostris
+ROHR_06_Jnigrirostris.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_J_nigrirostris_rar.rds")
+
+#M. dorsalis
+ROHR_06_Mdorsalis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_M_dorsalis_rar.rds")
+
+#P. laticlavius
+ROHR_06_Platiclavius.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_laticlavius_rar.rds")
+```
+
+```{r read rarefied water dataset}
+#temporarily set directory to water file location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed")
+
+#read rarefied data
+ROHR08.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_2500_tree.rds")
+```
+
+```{r all species RAREFIED permanovas}
+
+# List of datasets: fish + water (ROHR_08...) all rarefied to 2500 reads
+datasets.rar <- c("ROHR_06_Aconcolor.rar", "ROHR_06_Atroschelii.rar", "ROHR_06_Axanthopterus.rar", 
+              "ROHR_06_Ccolonus.rar", "ROHR_06_Cpanamensis.rar", "ROHR_06_Chumeralis.rar", 
+              "ROHR_06_Elabriformis.rar", "ROHR_06_Jnigrirostris.rar", "ROHR_06_Mdorsalis.rar", 
+              "ROHR_06_Platiclavius.rar", "ROHR08.rar")
+
+
+# Define function to run beta diversity analyses
+run_beta_diversity <- function(dataset_name) {
+  set.seed(1911)  # Set seed for reproducibility
+  
+  dataset <- get(dataset_name)  # Load dataset dynamically
+  sampledf <- data.frame(sample_data(dataset))
+  
+  # Apply transformation only for Bray-Curtis
+  dataset_prop <- transform_sample_counts(dataset, function(x) x / sum(x))
+  
+  # Create distance matrices
+  dist_br <- phyloseq::distance(dataset_prop, method = "bray")  # Bray-Curtis with transformation
+  dist_jac <- phyloseq::distance(dataset, method = "jaccard", binary = TRUE)  # Jaccard
+  dist_unifrac <- phyloseq::distance(dataset, method = "unifrac", weighted = FALSE)  # UniFrac
+  
+  # Function for beta dispersion and PERMANOVA
+  beta_dispersion_permanova <- function(dist_matrix, sampledf, method_name, dataset_name) {
+    set.seed(1911)  # Ensure seed is set before permutation tests
+    
+    # PERMANOVA tests for region, season, and interaction (region*season)
+    adonis_region <- adonis2(dist_matrix ~ region, data = sampledf, permutations = 10000)
+    adonis_season <- adonis2(dist_matrix ~ season, data = sampledf, permutations = 10000)
+    adonis_regseason <- adonis2(dist_matrix ~ region * season, data = sampledf, permutations = 10000)
+
+    # Extract PERMANOVA results for region, season, and region:season
+    extract_permanova <- function(adonis_result, term_name) {
+      df <- as.data.frame(adonis_result)  # Convert PERMANOVA matrix to data frame
+      df$Term <- rownames(df)  # Add term names
+      df$Residual_R2 <- df["Residual", "R2"] #extract R2 for residuals as well
+      df <- df[df$Term == term_name, ]  # Filter for the term of interest
+      return(df)
+    }
+
+    # Extract results for region, season, and region*season
+    region_df <- extract_permanova(adonis_region, "region")
+    season_df <- extract_permanova(adonis_season, "season")
+    regseason_df <- extract_permanova(adonis_regseason, "region:season")
+
+    # Combine the results into a single dataframe
+    results_df <- bind_rows(
+      tibble(Dataset = dataset_name, Method = method_name, Term = "Region",
+             Df = region_df[["Df"]], SumOfSqs = region_df[["SumOfSqs"]], R2 = region_df[["R2"]], 
+             F = region_df[["F"]], `Pr(>F)` = region_df[["Pr(>F)"]], `Residual R2` = region_df[["Residual_R2"]]),
+      tibble(Dataset = dataset_name, Method = method_name, Term = "Season",
+             Df = season_df[["Df"]], SumOfSqs = season_df[["SumOfSqs"]], R2 = season_df[["R2"]], 
+             F = season_df[["F"]], `Pr(>F)` = season_df[["Pr(>F)"]], `Residual R2` = season_df[["Residual_R2"]]),
+      tibble(Dataset = dataset_name, Method = method_name, Term = "Region:Season",
+             Df = regseason_df[["Df"]], SumOfSqs = regseason_df[["SumOfSqs"]], R2 = regseason_df[["R2"]], 
+             F = regseason_df[["F"]], `Pr(>F)` = regseason_df[["Pr(>F)"]], `Residual R2` = regseason_df[["Residual_R2"]])
+    )
+
+    return(results_df)
+  }
+
+  # Run analysis for each distance method
+  br_results <- beta_dispersion_permanova(dist_br, sampledf, "Bray-Curtis", dataset_name)
+  jac_results <- beta_dispersion_permanova(dist_jac, sampledf, "Jaccard", dataset_name)
+  unifrac_results <- beta_dispersion_permanova(dist_unifrac, sampledf, "UniFrac", dataset_name)
+
+  # Combine results into a single data frame
+  combined_results <- bind_rows(br_results, jac_results, unifrac_results)
+  
+  return(combined_results)
+}
+
+# Run analysis on all datasets and store results in a single data frame
+all_results_df <- bind_rows(lapply(datasets.rar, run_beta_diversity))
+
+# Display results
+print(all_results_df)
+
+# Save results to an Excel file
+write_xlsx(all_results_df, "rarefied_2500_beta_diversity_results.xlsx")
+
+```
+

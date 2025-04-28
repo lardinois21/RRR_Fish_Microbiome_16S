@@ -1,0 +1,1491 @@
+---
+title: "Skin Differential Abundance 16S Version 1"
+author: "LLL"
+date: "2024-08-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Script N. 4.1 - Differential abundance analyses - water & merged skin & water
+
+Most recent updates: 
+
+December 11, 2024 - LLL - DA analyses --> split by gulf - water
+November 20, 2024 - LLL - test DA analyses (water & whole dataset)
+August 29, 2024 - LLL - intro questions
+
+Following alpha and beta diversity estimates (see scripts # 2 & 3: "Skin Alpha Diversity..." and "Skin Beta Diversity..."), we are interested in identifying the differentially abundant ASVs/groups of ASVs between seasons & gulfs in cases where PERMANOVA results were significant. 
+
+There are multiple ways of calculating differential abundance, including SIMPER, Indicator Species analysis, DESEQ2, MaAsLin(2)
+
+**Note that normalized data should not be used for DESeq2, as the model internally corrects for library size
+
+[We'll test several DA methods, to reach a general consensus on DA microbes between our treatment groups]
+
+We are looking for differentially abundant (DA) microbes - that is, microbes that significantly change in abundance between our target groups. Specifically, we want to know:
+
+(1) Are the changes we're seeing in fish microbial communities [between seasons] driven by changes in the water microbiome (i.e., the surrounding environment)?
+    --> we'll thus need to look at the merged fish skin & water dataset and look at differentially abundant microbes
+    --> from the PERMANOVAs we ran in the beta diversity analyses, we know that there were only significant differences between seasons for certain groups of fish, notably the herbivores, carnivores, and planktivore
+    --> we also know that the Las Perlas (upwelling site) water samples differed significantly during upwelling in both alpha and beta diversity from the Coiba samples as well as from the non-upwelling Las Perlas samples
+    --> given this, it may make sense to first look at DA microbes in the water, to see what is changing in the environment between upwelling and non-upwelling (while we can look at all sites and seasons, comparing Las Perlas upwelling & non-upwelling may be the most informative when asking how microbial communities are responding to environmental change)
+
+(2) Given the influence of the host on microbial community composition, what are the differentially abundant microbes between fish species? 
+
+
+Loading our phyloseq object - filtered & trimmed (not rarefied) with phylogenetic tree - from "ROHR_06_Swab_stats_alpha.Rmd"
+```{r read phyloseq object, echo=FALSE}
+ROHR_06_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_with_rooted_phylogenetic_tree.rds")
+```
+
+We'll also load our water phyloseq object, which contains water samples from both gulfs during both seasons
+```{r also loading our water phyloseq, echo = FALSE}
+#unrarefied dataset
+ROHR_08_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree_rooted.rds")
+```
+
+```{r load required packages}
+#make sure to load DESeq2 FIRST (& start new R session, as it bugs otherwise)
+library(DESeq2) #DA analyses - differential gene expression analysis based on negative binomial distribution
+library(Maaslin2) #DA analyses - microbiome multivariable association with linear models
+library(phyloseq) #working with phyloseq objects
+library(apeglm) #DESeq used with this: "apeglm provides Bayesian shrinkage estimators for effect sizes for a variety of GLM models, using approximation of the posterior for individual coefficients"
+library(tidyverse)
+library(pheatmap) #make heatmaps of count data
+```
+
+Looking at our data
+```{r summarize data}
+summary(ROHR_06_obj_phylo_root@sam_data) #fish
+summary(ROHR_06_obj_phylo_root@sam_data) #water
+```
+#Clean up fish and skin data
+
+Before we do our differential abundance analyses, we want to remove some of the extra columns in both the fish skin and water phyloseq objects, ensure that the nomenclature and class assignment of each column is appropriate and matches the other dataset, and then merge the two to be able to explicitly test differential abundance between fish skin and water microbiomes.
+
+```{r select columns of interest - fish}
+# Extract sample_data
+ROHR_06_data_df <- as.data.frame(sample_data(ROHR_06_obj_phylo_root))
+
+# Select specific columns (e.g., "Site" and "Depth")
+subset_ROHR_06 <- ROHR_06_data_df[, c("RRR", "ocean", "region", "site", "date", "season", "sample", "species", "sister_pair", "totalWT", "guttedWT", "totalLength", "standardLength", "gutLength", "gonadWT", "liverWT", "sex", "region_season")]
+
+# Convert the subset back to a sample_data object
+new_ROHR_06sample_data <- sample_data(subset_ROHR_06)
+
+# Create a new phyloseq object with the modified sample data
+ROHR06_new <- phyloseq(
+  otu_table(ROHR_06_obj_phylo_root),
+  tax_table(ROHR_06_obj_phylo_root),
+  new_ROHR_06sample_data,
+  phy_tree(ROHR_06_obj_phylo_root)
+)
+
+# View the new phyloseq object
+ROHR06_new
+```
+```{r select columns of interest - water}
+# Extract sample_data
+ROHR_08_data_df <- as.data.frame(sample_data(ROHR_08_obj_phylo_root))
+
+# Select specific columns (e.g., "Site" and "Depth")
+subset_ROHR_08 <- ROHR_08_data_df[, c("RRR", "ocean", "region", "site", "date", "season", "sample", "species", "sister_pair", "totalWT", "guttedWT", "totalLength", "standardLength", "gutLength", "gonadWT", "liverWT", "sex", "region_season")]
+
+# Convert the subset back to a sample_data object
+new_ROHR_08sample_data <- sample_data(subset_ROHR_08)
+
+# Create a new phyloseq object with the modified sample data
+ROHR08_new <- phyloseq(
+  otu_table(ROHR_08_obj_phylo_root),
+  tax_table(ROHR_08_obj_phylo_root),
+  new_ROHR_08sample_data,
+  phy_tree(ROHR_08_obj_phylo_root)
+)
+
+# View the new phyloseq object
+ROHR08_new
+```
+
+```{r save modified dataset with new taxa names}
+#Save phyloseq object with filtered taxa - fish
+saveRDS(ROHR06_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+
+#read if not starting from top
+ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+
+#Save phyloseq object with filtered taxa - water
+saveRDS(ROHR08_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+
+#read if not starting from top
+ROHR08_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+```
+
+Now that we have the same columns and column names, we can begin merging the two datasets. However, before this, we'll want to change the "species" column in the water dataset from "NA" to "Water", so that when we call for comparisons between fish species, we also compare against the water samples.
+
+```{r change species to "Water"}
+# Extract the sample_data as a data frame
+ROHR08_df <- as.data.frame(sample_data(ROHR08_new))
+
+# Replace NA values in the "species" column with "Water"
+ROHR08_df$species[is.na(ROHR08_df$species)] <- "Water"
+
+# Update the sample_data in the phyloseq object
+sample_data(ROHR08_new) <- sample_data(ROHR08_df)
+
+# Check if the replacement worked
+head(sample_data(ROHR08_new))
+```
+We'll also add "RRR" in front of the "RRR" unique identifiers, so that R stops mistaking these for numeric values.
+
+```{r change unique sample IDs to numeric}
+#make sure to only run this once, otherwise you'll affix multiple names
+sample_names(ROHR06_new) <- paste("RRR", gsub("-", "_", sample_names(ROHR06_new)), sep = "_")
+
+# Check if the replacement worked
+head(sample_data(ROHR06_new))
+
+#make sure to only run this once, otherwise you'll affix multiple names
+sample_names(ROHR08_new) <- paste("RRR", gsub("-", "_", sample_names(ROHR08_new)), sep = "_")
+
+# Check if the replacement worked
+head(sample_data(ROHR08_new))
+```
+```{r change non-upwelling to remove dash}
+# DESeq2 doesn't like there being a dash in "non-upwelling", so we'll need to update both the season and region_season columns of both datasets
+
+# Convert sample_data to a data frame and replace "-" with "_"
+sample_data_df <- as.data.frame(sample_data(ROHR06_new))  # Extract as data frame
+sample_data_df[] <- lapply(sample_data_df, function(x) gsub("-", "_", x))  # Replace "-" with "_"
+
+# Convert back to sample_data and assign to phyloseq object
+sample_data(ROHR06_new) <- sample_data(sample_data_df)
+
+# Verify the changes
+head(sample_data(ROHR06_new))
+
+# Convert sample_data to a data frame and replace "-" with "_"
+sample_data_df <- as.data.frame(sample_data(ROHR08_new))  # Extract as data frame
+sample_data_df[] <- lapply(sample_data_df, function(x) gsub("-", "_", x))  # Replace "-" with "_"
+
+# Convert back to sample_data and assign to phyloseq object
+sample_data(ROHR08_new) <- sample_data(sample_data_df)
+
+# Verify the changes
+head(sample_data(ROHR08_new))
+```
+```{r replace any spaces with _}
+# Convert sample_data to a data frame
+sample_data_df <- as.data.frame(sample_data(ROHR06_new))  # Extract as data frame
+
+# Replace spaces with underscores in all columns
+sample_data_df[] <- lapply(sample_data_df, function(x) gsub(" ", "_", x))
+
+# Convert back to sample_data and assign to the phyloseq object
+sample_data(ROHR06_new) <- sample_data(sample_data_df)
+
+# Verify the changes
+head(sample_data(ROHR06_new))
+
+# Convert sample_data to a data frame
+sample_data_df <- as.data.frame(sample_data(ROHR08_new))  # Extract as data frame
+
+# Replace spaces with underscores in all columns
+sample_data_df[] <- lapply(sample_data_df, function(x) gsub(" ", "_", x))
+
+# Convert back to sample_data and assign to the phyloseq object
+sample_data(ROHR08_new) <- sample_data(sample_data_df)
+
+# Verify the changes
+head(sample_data(ROHR08_new))
+
+```
+##Start here for individual cleaned fish and water datasets
+```{r save modified dataset with new ID names}
+#Save phyloseq object with filtered taxa - fish
+saveRDS(ROHR06_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+
+#read if not starting from top
+ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+
+#Save phyloseq object with filtered taxa - water
+saveRDS(ROHR08_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+
+#read if not starting from top
+ROHR08_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+```
+
+#Merge fish skin and water microbiome datasets
+
+We'll need to remove the phylogenetic trees before doing this (or, alternatively, prune the trees to only have shared tips), to avoid getting an error when merging datasets.
+```{r merge datasets}
+# Remove phylogenetic trees
+ROHR08_no_tree <- phyloseq(otu_table(ROHR08_new), tax_table(ROHR08_new), sample_data(ROHR08_new))
+ROHR06_no_tree <- phyloseq(otu_table(ROHR06_new), tax_table(ROHR06_new), sample_data(ROHR06_new))
+
+# Merge the two objects
+ROHR_merged <- merge_phyloseq(ROHR08_no_tree, ROHR06_no_tree)
+
+# Check the merged object
+ROHR_merged
+```
+```{r save phyloseq merged datasets}
+#Save phyloseq object with filtered taxa - fish
+saveRDS(ROHR_merged, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_skin_and_water_NO_TREE.rds")
+
+#read if not starting from top
+ROHR_merged = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_skin_and_water_NO_TREE.rds")
+```
+
+Beautiful! We now have a single merged dataset with both our fish skin samples and our water samples, which includes a "species" column that we can call to compare DA across fish species & water samples, as well as a "sample" column that defines the fish ("Swab") vs water ("Water) samples, if we're only interested in checking DA between the whole pool of fish skin samples & the surrounding seawater microbiome. We can also still work with the individual datasets to check out what microbes are differentially abundant between/among fish OR water samples. We'll start with the water dataset, which is the smallest AND the most responsive to seasonal changes.
+
+#DA analyses
+Starting off following tutorial by Nicholas Ollberding (2021):
+https://www.nicholas-ollberding.com/post/identifying-differentially-abundant-features-in-microbiome-data/
+as well as the reference files for both DESeq2 and MaAsLin2
+
+DESeq2:
+https://joey711.github.io/phyloseq-extensions/DESeq2.html
+https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#control-features-for-estimating-size-factors
+
+MaAsLin2:
+https://github.com/biobakery/biobakery/wiki/maaslin2#41-interactions
+https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442#sec002
+https://huttenhower.sph.harvard.edu/maaslin/
+https://docs.cosmosid.com/docs/running-maaslin2
+
+#Prep Water Data for DA analysis
+
+We want to filter out some of the rarer taxa, as these can impact model assumptions and FDR penalty applied due to the lower powered taxa seen across few samples (Ollberding recommends filtering for taxa present in 10-50% of samples; given the high diversity & variability of our microbiomes, we'll use the 10%). Interestingly, when comparing the number of DA microbes found, at 10% cutoff, there are fewer DA microbes than when we filter out more rare taxa (e.g., setting this first step to 50%)
+
+**NOTE: our water sample sizes are very low for these sorts of tests (we have ~5 samples/region/season) --> >10 samples would be preferable
+
+```{r filter species found in <10% of samples}
+(ROHR_08_filt <- filter_taxa(ROHR08_new, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples
+```
+This brings us down to 1298 taxa in 19 water samples (out of an original 2624 taxa = aka ~50% of taxa were kept)
+
+```{r number of samples per group (region season)}
+sample_data(ROHR_08_filt)$region_season <- factor(sample_data(ROHR_08_filt)$region_season, levels = c("Coiba_non_upwelling", "Las_Perlas_non_upwelling", "Coiba_upwelling", "Las_Perlas_upwelling"))
+table(sample_data(ROHR_08_filt)$region_season) 
+
+#here, we can see that we're unfortunately working with only 4 upwelling samples from Las Perlas, our upwelling site
+#on the flip side, having fewer samples will speed up the process of running these trial DA tests
+```
+
+Right now the "Species" names are the sequence letter codes rather than a genus or species name(note that we have only assigned to genus level, and there may be unassigned at Order level and below (we filtered out samples unassigned at Phylum level & above previously))
+
+--> we'll work on cleaning this up a bit
+
+```{r check tax}
+# Taxonomy table
+tax_tab <- phyloseq::tax_table(ROHR_08_filt)
+# check 
+tax_tab[1:5,1:6] # for my table show me [1 to 5 otu ids, 1 to 6 first six ranks]
+```
+
+Again, as we noticed before, the OTU IDs are currently the sequences, not names of taxa --> this is left over from the phylogenetic tree addition step, where we propagated sequences to tree tips, but did not switch the names back to assigned taxonomy --> will need to find a workaround to fix this 
+
+```{r attempt to change OTU IDs}
+# Extract the tax_table
+tax_table_data <- tax_table(ROHR_08_filt)
+
+# Create a vector of new taxa names
+new_taxa_names <- apply(tax_table_data, 1, function(row) {
+  # Extract the phylum
+  phylum <- row["Phylum"]
+  
+  # Find the highest taxonomic rank that is not NA
+  highest_resolved <- tail(row[!is.na(row)], 1)
+  
+  # If all ranks are NA, default to the original taxa_name (OTU sequence)
+  if (length(highest_resolved) == 0) {
+    return(rownames(row)) # Use OTU sequence (original rowname)
+  } else {
+    # Combine phylum with the highest resolved rank
+    return(paste(phylum, highest_resolved, sep = "; "))
+  }
+})
+
+# Make taxa names unique
+new_taxa_names <- make.unique(new_taxa_names)
+
+# Assign the new taxa names to the taxa_names
+taxa_names(ROHR_08_filt) <- new_taxa_names
+
+# Verify the updated taxa_names
+head(taxa_names(ROHR_08_filt))
+
+```
+Beautiful, this worked! We now have the phylum followed by the highest taxonomic resolution assigned to a given taxa, and, if multiple versions of this occur (since we're not going to species level right now), a sequential number (.1, .2, .3 etc) that indicates that two taxa are different members of the same genus.
+
+###START Here if already filtered data 12/6/24
+```{r save modified dataset with new taxa names}
+#Save phyloseq object with filtered taxa
+saveRDS(ROHR_08_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_10percent_newTaxanames.rds")
+
+#read if not starting from top
+ROHR_08_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_10percent_newTaxanames.rds")
+```
+
+# DESeq2 with apeglm - water
+
+```{r DESeq2}
+dds <- phyloseq_to_deseq2(ROHR_08_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds <- DESeq(dds, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+```{r look at count distribution heatmap}
+# log transform: this gives log2(n + 1)
+ntd <- normTransform(dds)
+
+select <- order(rowMeans(counts(dds,normalized=TRUE)),
+                decreasing=TRUE)[1:20]
+df <- as.data.frame(colData(dds)[,c("region_season", "season")])
+pheatmap(assay(ntd)[select,], cluster_rows=FALSE, show_rownames=FALSE,
+         cluster_cols=FALSE, annotation_col=df)
+```
+
+# looking over "Multi-factor designs" section of DESeq2 tutorial
+https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#control-features-for-estimating-size-factors
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r DESeq2 specify contrasts}
+	contrast1 <- c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling")
+	contrast2 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling")
+	contrast3 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_upwelling")
+	contrast4 <- c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling")
+	contrast5 <- c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
+	contrast6 <- c("region_season", "Las_Perlas_upwelling", "Coiba_non_upwelling")
+```
+```{r results of DESeq2}
+resDeSeq <- results(dds, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq
+
+resDeSeq_LC_n <- results(dds, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n
+
+resDeSeq_LC_nU <- results(dds, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU
+
+resDeSeq_LC_up <- results(dds, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up
+
+resDeSeq_CC <- results(dds, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC
+
+resDeSeq_LC_Un <- results(dds, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un
+```
+
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #524
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #116
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #459
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #465
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #350
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #540
+```
+#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+
+adjusted p-value < 0.05
+LFC > 0 (up)       : 318, 24%
+LFC < 0 (down)     : 206, 16%
+outliers [1]       : 16, 1.2%
+low counts [2]     : 126, 9.7%
+(mean count < 1)
+
+--> total significant p-adj values (Wald test results)
+524
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+
+adjusted p-value < 0.05
+LFC > 0 (up)       : 79, 6.1%
+LFC < 0 (down)     : 37, 2.9%
+outliers [1]       : 16, 1.2%
+low counts [2]     : 371, 29%
+(mean count < 3)
+
+--> total significant p-adj values (Wald test results)
+116
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+
+adjusted p-value < 0.05
+LFC > 0 (up)       : 258, 20%
+LFC < 0 (down)     : 201, 15%
+outliers [1]       : 16, 1.2%
+low counts [2]     : 76, 5.9%
+(mean count < 1)
+
+--> total significant p-adj values (Wald test results)
+459
+
+#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+
+adjusted p-value < 0.05
+LFC > 0 (up)       : 188, 14%
+LFC < 0 (down)     : 277, 21%
+outliers [1]       : 16, 1.2%
+low counts [2]     : 200, 15%
+(mean count < 1)
+
+--> total significant p-adj values (Wald test results)
+465
+
+#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+adjusted p-value < 0.05
+LFC > 0 (up)       : 208, 16%
+LFC < 0 (down)     : 142, 11%
+outliers [1]       : 16, 1.2%
+low counts [2]     : 200, 15%
+(mean count < 1)
+
+--> total significant p-adj values (Wald test results)
+350
+
+#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+adjusted p-value < 0.05
+LFC > 0 (up)       : 230, 18%
+LFC < 0 (down)     : 310, 24%
+outliers [1]       : 16, 1.2%
+low counts [2]     : 150, 12%
+(mean count < 1)
+
+--> total significant p-adj values (Wald test results)
+540
+
+Looking across these 6 comparisons, we can see that the highest number of significant log2-fold changes between taxa are between Las Perlas dry and Coiba wet (upwelling; Wald p-adj of 540; of which 230, 18% increase b/w LP upwelling & C wet, and 310, 24% decrease). This makes sense, since we are expecting to see both differences between regions AND upwelling-linked differences in Las Perlas that we don't see at the same scale for Coiba.
+Second in line is the comparison between Las Perlas wet (non-upwelling) and Las Perlas dry (upwelling; Wald p-adj of 524; of which 318, 24% increase b/w non-up & up, and 206, 16% decrease b/w non-up & up seasons). The most similar are Las Perlas non-up vs. Coiba non-up (116 DA taxa), whereas Coiba also appears to have some signal of seasonal change, given that the wet vs. dry season comparison returns 350 significant DA taxa. Interestingly, it seems like the changes in microbial communities seen during the dry season (upwelling) are different between Coiba and Las Perlas: the number of DA taxa found when comparing LP wet vs. C dry (which we would expect to be ~116, if Coiba's community remains stable), is instead 459, and for LP dry vs. C dry (which, if remaining stable in C, should be either close to ~408 (524-116; LP seasonal change - inter-gulf changes, if upwelling reduces inter-gulf differences) or ~640 (524+116; LP seasonal change + inter-gulf changes) OR, if changing in similar ways, should be equal to or slightly greater than 116) is instead 465, which almost exactly matches the change in Coiba between seasons + the inter-gulf differences in the wet season. These exact values matching may be a coincidence, but what seems clear is that the wet season communities in both gulfs are more or less equal in terms of number of taxa changing when comparing to LP-up, yet the changes in communities from wet to dry seasons occur in different taxa, given that the number of DA taxa between LP wet - C dry is almost the same as the number of DA taxa between LP dry and C dry.
+
+```{r create single list of contrasts}
+# List of contrasts
+contrasts <- list(
+  c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_non_upwelling")
+)
+
+contrasts2 <- list(
+  c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
+)
+
+# Extract DESeq2 results for each contrast
+results_list <- lapply(contrasts2, function(contrast) {
+  res <- results(dds, contrast = contrast, alpha = 0.05)
+  res <- as.data.frame(res)
+  res$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  res$Species <- rownames(res)  # Add species names
+  res
+})
+
+# Combine all results into one data frame
+all_results <- do.call(rbind, results_list)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_results$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_results$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_results$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_results$Species
+)
+
+# Verify the replacement
+unique(all_results$Species)
+```
+
+```{r filter top 25 DA taxa per group}
+# Filter top 25 DA species per contrast
+top_results <- all_results %>%
+  filter(!is.na(padj)) %>%  # Remove rows with NA adjusted p-values
+  group_by(contrast) %>%
+  slice_min(order_by = padj, n = 25) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_counts <- top_results %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_results <- top_results %>%
+  left_join(species_counts[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_results <- top_results %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_results$contrast <- factor(top_results$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_water <- ggplot(top_results, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_water
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change Top 25 DA microbes 4 pairwise comparisons DESeq2.pdf", plot = Deseq2_water, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change Top 25 DA microbes 4 pairwise comparisons DESeq2.png", plot = Deseq2_water, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+
+```{r add padj values to points}
+
+#Create the plot with size adjusted by facet_count and reordered species by padj
+ggplot(top_results, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y") +  # 2x2 facet grid
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(size = 8, color = "black"),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6)) +  # Adjust point size range to make it clearer
+  geom_text(
+    aes(label = sprintf("%.1e", padj)),  # Format padj values in scientific notation
+    size = 3, hjust = -0.1, vjust = 0.5,  # Adjust text position
+    color = "black"  # Adjust label color for visibility
+  )
+```
+
+--> we'll check to see if these results hold true for MaAsLin2 as well. 
+
+```{r plot dds}
+plotDispEsts(dds)
+```
+We can shrink the effect size (LFC estimates, using apeglm method) to visualize & rank taxa
+```{r residuals apeglm}
+res <- lfcShrink(dds, coef=2, type="apeglm") 
+```
+
+MA-plot: shows the log2 fold changes linked to a given variable over the mean of normalized counts for all samples in the dataset
+--> points RED if p adj <0.1 (default), points outside of window show as triangles
+```{r MA-plot from base means and log fold changes}
+plotMA(dds) #"shows the mean of the normalized counts versus the log2 foldchanges"
+```
+Can make a cleaner, more informative plot with the "shrunken log2 fold changes, which remove the noise associated with log2 fold changes from low count genes without requiring arbitrary filtering thresholds"
+```{r shrunken log2 fold change plot}
+plotMA(res, ylim=c(-2,2))
+
+```
+
+```{r Deseq residuals}
+deseq_res_df <- data.frame(res) %>%
+  rownames_to_column(var = "Species") %>%
+  dplyr::arrange(padj)                                 
+
+fdr_deseq <- deseq_res_df %>%
+    dplyr::filter(padj < 0.05)
+
+dim(fdr_deseq) #113, 6 season (controlling for region)
+
+head(fdr_deseq)
+```
+```{r visualize DA w DESeq2}
+ggplot(fdr_deseq, aes(x = Species, y = log2FoldChange, color = Species)) +
+    geom_point(size = 4) +
+    labs(y = "\nLog2 Fold-Change for Wet vs. Dry Seasons DESeq2", x = "") +
+    theme(axis.text.x = element_text(color = "black", size = 12),
+          axis.text.y = element_text(color = "black", size = 12),
+          axis.title.y = element_text(size = 14),
+          axis.title.x = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.position = "none") +
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype="dotted")
+
+```
+```{r facet by region_season}
+ggplot(fdr_deseq, aes(x = Species, y = log2FoldChange, color = Species)) +
+  geom_point(size = 4) +
+  labs(y = "\nLog2 Fold-Change for Wet vs. Dry Seasons", x = "") +
+  theme(
+    axis.text.x = element_text(color = "black", size = 12),
+    axis.text.y = element_text(color = "black", size = 12),
+    axis.title.y = element_text(size = 14),
+    axis.title.x = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.position = "none"
+  ) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  facet_wrap(~ region_season)
+
+```
+
+# Testing just Gulf of Panama - up vs. non-up - DESeq2
+```{r subset dataset to Gulf of Panama}
+# Subset the phyloseq object to include only samples where region is "Las Perlas"
+ROHR_08_Perlas <- subset_samples(ROHR08_new, region == "Las_Perlas")
+
+# Remove taxa longer present in the subset
+ROHR_08_Perlas <- prune_taxa(taxa_sums(ROHR_08_Perlas) > 0, ROHR_08_Perlas)
+
+# Verify the subset worked by checking the sample_data
+sample_data(ROHR_08_Perlas)$region
+
+# Check that no taxa have zero abundance
+any(taxa_sums(ROHR_08_Perlas) == 0)  # FALSE
+
+```
+
+```{r filter species found in <20% of samples}
+(ROHR_08_filt_Perlas <- filter_taxa(ROHR_08_Perlas, function(x) sum(x > 0) > (.2*length(x)), TRUE))   #removing species not seen > 20% of samples
+```
+This brings us down to 1018 taxa in 10 water samples --> compared to the full dataset, we increased this value to 20%, given that we are no longer comparing across two different gulfs and have halved the total number of samples (basically, the taxa need to be found in at least 2 samples with this cutoff). We can adjust this as needed downstream.
+
+```{r number of samples per group (region season)}
+sample_data(ROHR_08_Perlas)$region_season <- factor(sample_data(ROHR_08_Perlas)$season, levels = c("Las_Perlas_non_upwelling", "Las_Perlas_upwelling"))
+table(sample_data(ROHR_08_Perlas)$season) 
+
+#here, we can see that we're unfortunately working with only 4 upwelling samples from Las Perlas, our upwelling site, and 6 non-upwelling
+#on the flip side, having fewer samples will speed up the process of running these trial DA tests
+```
+
+Right now the "Species" names are the sequence letter codes rather than a genus or species name(note that we have only assigned to genus level, and there may be unassigned at Order level and below (we filtered out samples unassigned at Phylum level & above previously))
+
+--> we'll work on cleaning this up a bit
+
+```{r check tax}
+# Taxonomy table
+tax_tab <- phyloseq::tax_table(ROHR_08_filt_Perlas)
+# check 
+tax_tab[1:5,1:6] # for my table show me [1 to 5 otu ids, 1 to 6 first six ranks]
+```
+
+Again, as we noticed before, the OTU IDs are currently the sequences, not names of taxa --> this is left over from the phylogenetic tree addition step, where we propagated sequences to tree tips, but did not switch the names back to assigned taxonomy --> will need to find a workaround to fix this 
+
+```{r attempt to change OTU IDs}
+# Extract the tax_table
+tax_table_data <- tax_table(ROHR_08_filt_Perlas)
+
+# Create a vector of new taxa names
+new_taxa_names <- apply(tax_table_data, 1, function(row) {
+  # Extract the phylum
+  phylum <- row["Phylum"]
+  
+  # Find the highest taxonomic rank that is not NA
+  highest_resolved <- tail(row[!is.na(row)], 1)
+  
+  # If all ranks are NA, default to the original taxa_name (OTU sequence)
+  if (length(highest_resolved) == 0) {
+    return(rownames(row)) # Use OTU sequence (original rowname)
+  } else {
+    # Combine phylum with the highest resolved rank
+    return(paste(phylum, highest_resolved, sep = "; "))
+  }
+})
+
+# Make taxa names unique
+new_taxa_names <- make.unique(new_taxa_names)
+
+# Assign the new taxa names to the taxa_names
+taxa_names(ROHR_08_filt_Perlas) <- new_taxa_names
+
+# Verify the updated taxa_names
+head(taxa_names(ROHR_08_filt_Perlas))
+
+```
+
+```{r save modified dataset with new taxa names}
+#Save phyloseq object with filtered taxa
+saveRDS(ROHR_08_filt_Perlas, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_PERLAS_20percent_newTaxanames.rds")
+
+#read if not starting from top
+ROHR_08_filt_Perlas = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_PERLAS_20percent_newTaxanames.rds")
+```
+
+DESeq2 with apeglm
+
+For tutorial interpreting DESeq2 results:
+https://hbctraining.github.io/DGE_workshop_salmon_online/lessons/05b_wald_test_results.html#:~:text=LFC%20shrinkage%20uses%20information%20from,likely%20(lower)%20LFC%20estimates.
+
+
+```{r DESeq2}
+dds <- phyloseq_to_deseq2(ROHR_08_filt_Perlas, ~ season)  #convert to DESeq2 object
+
+dds <- DESeq(dds, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+```{r plot dds}
+plotDispEsts(dds)
+```
+```{r residuals apeglm}
+res <- lfcShrink(dds, coef=2, type="apeglm") 
+```
+```{r reorder by p-val}
+resOrdered2 <- resDeSeq[order(res$pvalue),]
+resOrdered2
+```
+
+```{r summarize results DESeq}
+summary(resOrdered2)
+
+#we can see that there were 202 (20%) taxa (?) with an LFC > 0 (went up)
+# and 313 (31%) with an LFC <0 (went down) when comparing upwelling to non-upwelling (adj p-val < 0.05)
+
+#it finds 13 outliers (1.3%) --> how is this calculated?
+# and 0 (0%) taxa with low counts --> likely since for this we removed all taxa not present in at least 50% of samples
+```
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered2$padj < 0.05, na.rm=TRUE) #515
+```
+
+
+```{r MA-plot from base means and log fold changes}
+plotMA(dds) #"shows the mean of the normalized counts versus the log2 foldchanges"
+```
+```{r Deseq residuals}
+deseq_res_df <- data.frame(res) %>%
+  rownames_to_column(var = "Species") %>%
+  dplyr::arrange(padj)                                 
+
+fdr_deseq <- deseq_res_df %>%
+    dplyr::filter(padj < 0.05)
+
+dim(fdr_deseq) #615, 6 (this would make 60% of the 1018 original filtered taxa "differentially abundant" under these criteria, which seems a bit much)
+
+head(fdr_deseq)
+```
+```{r visualize DA w DESeq2}
+ggplot(fdr_deseq, aes(x = Species, y = log2FoldChange, color = Species)) +
+    geom_point(size = 4) +
+    labs(y = "\nLog2 Fold-Change for Wet vs. Dry Seasons Perlas", x = "") +
+    theme(axis.text.x = element_text(color = "black", size = 12),
+          axis.text.y = element_text(color = "black", size = 12),
+          axis.title.y = element_text(size = 14),
+          axis.title.x = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.position = "none") +
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype="dotted")
+
+```
+re-run Las PErlas water plot with top-50 DA microbes
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+fdr_deseq$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  fdr_deseq$Species
+)
+
+# Verify the replacement
+unique(fdr_deseq$Species)
+```
+
+```{r visualize DESeq Las Perlas water top 50}
+
+# Filter for top 50 most significant features and reorder by padj value
+top_Species <- fdr_deseq %>%
+  arrange(padj) %>%  # FDR-adjusted p-value
+  head(50) %>%
+  mutate(Species = factor(Species, levels = rev(Species[order(padj)])))  # Reorder by pval
+
+LPDESeqTop50 <- ggplot(top_Species, aes(x = Species, y = log2FoldChange, color = Species)) +
+    geom_point(size = 6) +
+    labs(y = "\nLog2 Fold-Change for Wet vs. Dry Seasons Gulf of Panama", x = "") +
+    theme(axis.text.x = element_text(color = "black", size = 12),
+          axis.text.y = element_text(color = "black", size = 12),
+          axis.title.y = element_text(size = 14),
+          axis.title.x = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.position = "none",
+          panel.background = element_blank(),      # Remove background color
+    panel.grid = element_blank(),            # Remove grid lines
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1) # Add axis lines
+  )+
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype="dotted")
+LPDESeqTop50
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change Top 50 DA microbes LAS PERLAS ONLY DESeq2.pdf", plot = LPDESeqTop50, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change Top 50 DA microbes LAS PERLAS ONLY DESeq2.png", plot = LPDESeqTop50, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+
+#MaAsLin2
+
+For tutorial interpreting MaAsLin2 results:
+https://github.com/biobakery/biobakery/wiki/maaslin2#33-maaslin-2-output
+
+#in progress 12/18/24 - 8:23 am
+
+```{r MaAsLin water}
+mas_1 <- Maaslin2(
+  input_data = data.frame(otu_table(ROHR_08_filt)),
+  input_metadata = data.frame(sample_data(ROHR_08_filt)),
+  output = "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output_Water",
+  min_abundance = 0.0,
+  min_prevalence = 0.0,
+  normalization = "TSS", #total sum scaling (ASV read count/total # reads in each sample)
+  transform = "LOG", #log transform the data
+  analysis_method = "LM", #apply a linear model with effects defined below
+  max_significance = 0.05,
+  fixed_effects = "region_season",
+  reference = "region_season,Las_Perlas_non_upwelling",
+  correction = "BH", #apply Benjamini-Hochberg multiple comparison correction for false positives
+  standardize = FALSE,
+  cores = 1)
+```
+
+```{r read in maaslin results if not starting from top}
+#filepath to results folder
+results_folder <- "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output_Water"
+
+# List all TSV files in the folder
+tsv_files <- list.files(path = results_folder, pattern = "\\.tsv$", full.names = TRUE)
+
+# Read each TSV file into a named list
+maaslin2_results <- lapply(tsv_files, function(file) {
+  read.delim(file, header = TRUE, sep = "\t")
+})
+
+# Name each element of the list by the corresponding file name (without the path)
+names(maaslin2_results) <- basename(tsv_files)
+
+# Access the 'all_results.tsv' file
+all_results <- maaslin2_results[["all_results.tsv"]]
+significant_results <- maaslin2_results[["significant_results.tsv"]]
+
+# Preview the first few rows of the 'all_results.tsv'
+head(all_results)
+head(significant_results)
+
+```
+```{r count unique significant DA taxa per comparison}
+
+# Count the number of "features" for each unique "value"
+feature_counts <- significant_results %>%
+  group_by(value) %>%
+  summarise(feature_count = n_distinct(feature)) %>%
+  arrange(desc(feature_count))
+
+# View the results
+print(feature_counts)
+
+```
+```{r within these categories count up and down regulated taxa}
+# Group by "value" and summarize increases and decreases
+value_summary <- significant_results %>%
+  group_by(value) %>%
+  summarise(
+    increased = sum(coef > 0),  # Count features with positive coefficients
+    decreased = sum(coef < 0),  # Count features with negative coefficients
+    total_features = n()       # Total number of features in each group
+  ) %>%
+  arrange(desc(total_features))
+
+# View the summarized results
+print(value_summary)
+```
+```{r Maaaslin DA results}
+mas_res_df <- mas_1$results
+
+fdr_mas <- mas_res_df %>%
+    dplyr::filter(qval < 0.05)
+
+dim(fdr_mas) #1295 10
+
+head(fdr_mas, n = 10)
+tail(fdr_mas, n = 10)
+```
+```{r count unique taxa names}
+# unique taxa names in the "feature" column
+num_unique_taxa <- fdr_mas %>%
+  summarize(unique_taxa = n_distinct(feature))
+
+# Print the result
+print(num_unique_taxa) #we get 785, which is quite a bit less than the 1295 we get by looking at the dimensions of the fdr_mas table
+```
+```{r look for repeats}
+
+# Count occurrences of each taxon
+taxa_counts <- fdr_mas %>%
+  group_by(feature) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+
+# View the counts
+print(taxa_counts) #as we'd expect from the discrepancy above, it's obvious that there are repeats, likey because the full table is giving you any differentially abundant taxa 
+
+ggplot(taxa_counts, aes(x = count)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  geom_text(
+    stat = "bin",
+    aes(label = after_stat(count)),
+    binwidth = 1,
+    vjust = -0.5,
+    size = 4
+  ) +
+  labs(
+    title = "Distribution of Taxa Counts in DA Water",
+    x = "Number of Occurrences",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold")
+  )
+```
+
+With the same 10% cutoff as DESeq2, MaAsLin2 finds 785 differentially abundant microbes between seasons across the full dataset ("region_season" put as a fixed effect), whereas DESeq2 finds 502. Among the MaAsLin results, there are 399 that only occur once across regions_seasons, 262 that occur twice, and 124 that occur 3X (i.e., in all comparisons, since this test sets Las Perlas non-upwelling as the reference and compares the other 3 region_season pairs to this)
+
+```{r visualize DA w Maaslin2}
+ggplot(fdr_mas, aes(x = feature, y = coef, color = feature)) +
+    geom_point(size = 4) +
+    labs(y = "\nLog2 Fold-Change for Wet vs. Dry Seasons", x = "") +
+    theme(axis.text.x = element_text(color = "black", size = 12),
+          axis.text.y = element_text(color = "black", size = 12),
+          axis.title.y = element_text(size = 14),
+          axis.title.x = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.position = "none") +
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype="dotted")
+
+```
+We'll re-run this figure, filtering to only include the top 50 differentially abundant taxa to be better able to visualize the points when plotted (note that this only shows about an eigth of the DA taxa)
+
+We'll also remove repeat features (those that appeared in multiple comparisons), but keep track of them in a new "repeats" columns
+
+```{r filter out repeated features}
+# Remove duplicate features and add a "repeats" column
+fdr_mas_unique <- fdr_mas %>%
+  group_by(feature) %>%
+  summarize(
+    repeats = n(),  # Count occurrences of each feature
+    across(everything(), ~ first(.)) # Retain the first occurrence of other columns
+  ) %>%
+  ungroup()
+
+# View the updated dataset
+print(fdr_mas_unique)
+```
+```{r replace long marinimicrobia name}
+# Replace the specific string in the feature column
+fdr_mas_unique <- fdr_mas_unique %>%
+  mutate(feature = gsub(
+    "Marinimicrobia\\.\\.SAR406\\.clade\\.\\.\\.Marinimicrobia\\.\\.SAR406\\.clade\\.",
+    "Marinimicrobia.SAR406.clade",
+    feature
+  ))
+
+# View the updated dataset
+print(fdr_mas_unique$feature)
+```
+
+```{r visualize TOP 50 DA w Maaslin2 - Water }
+# Filter for top 50 most significant features and reorder by qval
+top_features <- fdr_mas_unique %>%
+  arrange(qval) %>%  # Replace `qval` with your column for FDR-adjusted p-value
+  head(50) %>%
+  mutate(feature = factor(feature, levels = rev(feature[order(qval)])))  # Reorder by qval
+
+# Plot using ggplot with adjusted order and size scale
+ggplot(top_features, aes(x = feature, y = coef, color = feature, size = repeats)) +
+  geom_point(show.legend = FALSE) +  # Remove legend for color
+  scale_size_continuous(
+    range = c(3, 10),  # Adjust the range of sizes
+    breaks = c(min(top_features$repeats), median(top_features$repeats), max(top_features$repeats)),  # Add meaningful size breaks
+    name = "Repeats"
+  ) +
+  labs(
+    y = "\nLog2 Fold-Change for Wet vs. Dry Seasons TOP 50 Water",
+    x = ""
+  ) +
+  theme(
+    axis.text.x = element_text(color = "black", size = 12),
+    axis.text.y = element_text(color = "black", size = 12),
+    axis.title.y = element_text(size = 14),
+    axis.title.x = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.position = "right"  # Place the legend to the right of the plot
+  ) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  scale_color_discrete(guide = "none")  # Ensures no legend for the color aesthetic 
+
+
+```
+####12/17/24 JUMP TO HERE, work on plot below to match DESeq2 plot
+
+###Work on adapting code for this & get exact DA numbers for all DA pairwise comparisons of interest to report in manuscript
+```{r create single list of contrasts}
+# List of contrasts
+contrasts_MaAsLin2 <- list(
+  c("value", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("value", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("value", "Las_Perlas_non_upwelling", "Coiba_upwelling")
+)
+
+# Extract DESeq2 results for each contrast
+results_list <- lapply(contrasts_MaAsLin2, function(contrast) {
+  res <- results(fdr_mas, contrast = contrast, alpha = 0.05)
+  res <- as.data.frame(res)
+  res$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  res$Species <- rownames(res)  # Add species names
+  res
+})
+
+# Combine all results into one data frame
+all_results_Maas <- do.call(rbind, results_list)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the specific string in the feature column
+fdr_mas <- fdr_mas %>%
+  mutate(feature = gsub(
+    "Marinimicrobia\\.\\.SAR406\\.clade\\.\\.\\.Marinimicrobia\\.\\.SAR406\\.clade\\.",
+    "Marinimicrobia.SAR406.clade",
+    feature
+  ))
+
+# View the updated dataset
+print(fdr_mas$feature)
+```
+
+```{r filter top 25 DA taxa per group}
+# Filter top 25 DA species per contrast
+top_results_Maas <- fdr_mas %>%
+  filter(!is.na(qval)) %>%  # Remove rows with NA adjusted p-values
+  group_by(value) %>%
+  slice_min(order_by = qval, n = 25) %>%
+  ungroup()
+```
+
+```{r define comparisons}
+contrasts_Maas
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_counts <- top_results %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_results <- top_results %>%
+  left_join(species_counts[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_results <- top_results %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_results$contrast <- factor(top_results$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_water <- ggplot(top_results, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_water
+
+# Identify which species appear in multiple contrasts
+species_counts_Maas <- top_results_Maas %>%
+  group_by(feature) %>%
+  summarise(facet_count = n_distinct(value)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_results_Maas <- top_results_Maas %>%
+  left_join(species_counts_Maas[, c("feature", "bold_label", "facet_count")], by = "feature")
+
+#Reorder species by qval within each contrast/facet
+top_results_Maas <- top_results_Maas %>%
+  arrange(feature, qval) %>%
+  mutate(Species = factor(feature, levels = rev(unique(feature))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_results_Maas$value <- factor(top_results_Maas$value,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+MaAsLin2_water <- ggplot(top_results_Maas, aes(x = feature, y = coef, color = feature, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ value, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+MaAsLin2_water
+```
+
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change Top 25 DA microbes 4 pairwise comparisons MaAsLin2.pdf", plot = MaAsLin2_water, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change Top 25 DA microbes 4 pairwise comparisons MaAsLin2.png", plot =MaAsLin2_water, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+
+### Merged Fish and Water DA analyses
+
+#Prep Merged Data for DA analysis
+
+We want to filter out some of the rarer taxa, as these can impact model assumptions and FDR penalty applied due to the lower powered taxa seen across few samples (Ollberding recommends filtering for taxa present in 10-50% of samples; given the high diversity & variability of our microbiomes, we'll use 10% at first, since this means that at least 36 samples have to have these taxa (out of our 360 fish + water)). 
+
+**NOTE: our water sample sizes are very low for these sorts of tests (we have ~5 samples/region/season) --> >10 samples would be preferable
+
+```{r filter species found in <10% of samples}
+(ROHR_merged_filt <- filter_taxa(ROHR_merged, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples
+```
+10% brings us down to 525 taxa in 360 fish & water samples, (5% brings us to 1098 taxa)
+
+```{r number of samples per group (region season)}
+sample_data(ROHR_merged_filt)$region_season <- factor(sample_data(ROHR_merged_filt)$region_season, levels = c("Coiba_non_upwelling", "Las_Perlas_non_upwelling", "Coiba_upwelling", "Las_Perlas_upwelling"))
+table(sample_data(ROHR_merged_filt)$region_season) 
+
+#here, we can see that we're unfortunately working with only 4 upwelling samples from Las Perlas, our upwelling site
+#on the flip side, having fewer samples will speed up the process of running these trial DA tests
+```
+
+Right now the "Species" names are the sequence letter codes rather than a genus or species name(note that we have only assigned to genus level, and there may be unassigned at Order level and below (we filtered out samples unassigned at Phylum level & above previously))
+
+--> we'll work on cleaning this up a bit
+
+```{r check tax}
+# Taxonomy table
+tax_tab <- phyloseq::tax_table(ROHR_merged_filt)
+# check 
+tax_tab[1:5,1:6] # for my table show me [1 to 5 otu ids, 1 to 6 first six ranks]
+```
+
+Again, as we noticed before, the OTU IDs are currently the sequences, not names of taxa --> this is left over from the phylogenetic tree addition step, where we propagated sequences to tree tips, but did not switch the names back to assigned taxonomy --> will need to find a workaround to fix this 
+
+```{r attempt to change OTU IDs}
+# Extract the tax_table
+tax_table_data <- tax_table(ROHR_merged_filt)
+
+# Create a vector of new taxa names
+new_taxa_names <- apply(tax_table_data, 1, function(row) {
+  # Extract the phylum
+  phylum <- row["Phylum"]
+  
+  # Find the highest taxonomic rank that is not NA
+  highest_resolved <- tail(row[!is.na(row)], 1)
+  
+  # If all ranks are NA, default to the original taxa_name (OTU sequence)
+  if (length(highest_resolved) == 0) {
+    return(rownames(row)) # Use OTU sequence (original rowname)
+  } else {
+    # Combine phylum with the highest resolved rank
+    return(paste(phylum, highest_resolved, sep = "; "))
+  }
+})
+
+# Make taxa names unique
+new_taxa_names <- make.unique(new_taxa_names)
+
+# Assign the new taxa names to the taxa_names
+taxa_names(ROHR_merged_filt) <- new_taxa_names
+
+# Verify the updated taxa_names
+head(taxa_names(ROHR_merged_filt))
+
+```
+Beautiful, this worked! We now have the phylum followed by the highest taxonomic resolution assigned to a given taxa, and, if multiple versions of this occur (since we're not going to species level right now), a sequential number (.1, .2, .3 etc) that indicates that two taxa are different members of the same genus.
+
+```{r save modified dataset with new taxa names}
+#Save phyloseq object with filtered taxa
+saveRDS(ROHR_merged_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_10percent_newTaxanames.rds")
+
+#read if not starting from top
+ROHR_merged_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_10percent_newTaxanames.rds")
+```
+
+# DESeq2 with apeglm - fish & water
+
+```{r DESeq2}
+dds2 <- phyloseq_to_deseq2(ROHR_merged_filt, ~ region + season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds2 <- DESeq(dds2, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+```{r results of DESeq2}
+resDeSeq2 <- results(dds2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq2
+```
+
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered2 <- resDeSeq2[order(resDeSeq2$pvalue),]
+resOrdered2
+```
+
+```{r summarize results DESeq}
+summary(resOrdered2)
+
+#we can see that there were 66 (13%) taxa (?) with an LFC > 0 (went up)
+# and 49 (9.3%) with an LFC <0 (went down) when comparing upwelling to non-upwelling
+
+#it finds 0 outliers (0%) --> how is this calculated?
+# and 0 (0%) taxa with low counts --> there were more when we ran at 5% so we filtered out more in the first step
+```
+```{r checking padj <0.1 and <0.05}
+sum(resOrdered2$padj < 0.1, na.rm=TRUE) #149
+
+sum(resOrdered2$padj < 0.05, na.rm=TRUE) #115
+```
+
+Here, we see that with a p-adj. val of 0.05 (5%), and a filtering step where taxa found in <5% of samples are removed, there are 117 differentially abundant microbial taxa during upwelling/non-upwelling across both our fish and water samples (we'll later want to test for differential abundance between sample types (fish vs skin) when seasons shift)
+
+```{r plot dds}
+plotDispEsts(dds2)
+```
+We can shrink the effect size (LFC estimates, using apeglm method) to visualize & rank taxa
+```{r residuals apeglm}
+res2 <- lfcShrink(dds2, coef=2, type="apeglm") 
+res2
+```
+
+MA-plot: shows the log2 fold chenges linked to a given variable over the mean of normalized counts for all samples in the dataset
+--> points RED if p adj <0.1 (default), points outside of window show as triangles
+```{r MA-plot from base means and log fold changes}
+plotMA(dds2) #"shows the mean of the normalized counts versus the log2 foldchanges"
+```
+Can make a cleaner, more informative plot with the "shrunken log2 fold changes, which remove the noise associated with log2 fold changes from low count genes without requiring arbitrary filtering thresholds"
+```{r shrunken log2 fold change plot}
+plotMA(res2, ylim=c(-2,2))
+
+```
+
+```{r Deseq residuals}
+deseq_res_df2 <- data.frame(res2) %>%
+  rownames_to_column(var = "Species") %>%
+  dplyr::arrange(padj)                                 
+
+fdr_deseq2 <- deseq_res_df2 %>%
+    dplyr::filter(padj < 0.05)
+
+dim(fdr_deseq2) #109, 6 season (controlling for region)
+
+head(fdr_deseq2)
+```
+```{r visualize DA w DESeq2}
+ggplot(fdr_deseq2, aes(x = Species, y = log2FoldChange, color = Species)) +
+    geom_point(size = 4) +
+    labs(y = "\nLog2 Fold-Change for Dry vs. Wet Seasons", x = "") +
+    theme(axis.text.x = element_text(color = "black", size = 12),
+          axis.text.y = element_text(color = "black", size = 12),
+          axis.title.y = element_text(size = 14),
+          axis.title.x = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.position = "none") +
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype="dotted")
+
+```
+#MaAsLin2 - fish & water
+
+```{r MaAsLin water}
+mas_2 <- Maaslin2(
+  input_data = data.frame(otu_table(ROHR_merged_filt)),
+  input_metadata = data.frame(sample_data(ROHR_merged_filt)),
+  output = "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output2",
+  min_abundance = 0.0,
+  min_prevalence = 0.0,
+  normalization = "TSS",
+  transform = "LOG",
+  analysis_method = "LM",
+  max_significance = 0.05,
+  fixed_effects = c("season", "region", "sample", "species"),
+  reference = "species,Water",
+  correction = "BH",
+  standardize = FALSE,
+  cores = 1)
+```
+From the heatmap, we can see that there are many strong, significant differences in abundance of certain microbial taxa between sample type (water as reference VS. fish (all species merged))
+
+```{r Maaaslin DA results}
+mas_res_df2 <- mas_2$results
+
+fdr_mas2 <- mas_res_df2 %>%
+    dplyr::filter(qval < 0.05)
+
+dim(fdr_mas2)
+
+head(fdr_mas2)
+```
+With the same 10% cutoff as DESeq2, MaAsLin2 finds 197 differentially abundant microbes between seasons across the full dataset ("season" put as a fixed effect), whereas DESeq2 finds 109
+
+```{r visualize DA w Maaslin2}
+ggplot(fdr_mas2, aes(x = feature, y = coef, color = feature)) +
+    geom_point(size = 4) +
+    labs(y = "\nLog2 Fold-Change for Dry vs. Wet Seasons", x = "") +
+    theme(axis.text.x = element_text(color = "black", size = 12),
+          axis.text.y = element_text(color = "black", size = 12),
+          axis.title.y = element_text(size = 14),
+          axis.title.x = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.position = "none") +
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype="dotted")
+
+```

@@ -1,0 +1,1131 @@
+---
+title: "ROHR_08_Water_stats_Alpha_div"
+author: "LLL"
+date: "2023-1-19"
+output: html_document
+---
+
+make sure to start w/ working directory set to correct filepath - in this case:
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed")
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+Project summary
+
+- Fish were collected from 2 sites in the Tropical Eastern Pacific: Las Perlas & Coiba. 
+- Sampling during both upwelling & non-upwelling seasons (collections done 2021-22). 
+- 12 target species, 10 of which are represented in this dataset. 
+- Gut = 8 per species.
+- Control swabs (swabs exposed to air in field) collected at each site and season
+- 2L water samples (~4-5) were collected from each sampling site and season to serve as a baseline for microbes present in the fishes environment
+- These water samples were vacuum-filtered and the filters stored at -80ºC until DNA extraction
+- DNA was extracted using a modified Qiagen Powersoil protocol (DNeasy PowerSoil Kit (100))
+- (all protocols in shared Fish Team lab drive)
+- Swabs were stored in liquid nitrogen for transport from field to lab, then at -80ºC
+- DNA was extracted using ZymoBIOMICS 96 well DNA kit - 4 plates total (per sample type = skin & gut)
+- DNA was amplified following a modified version of the Earth Microbiome Project 16S protocol using phased primers (1 set per plate)
+- Negative PCR controls and extraction controls included in each plate
+- Index PCR performed to attach unique barcodes, then all four plates (384 samples) pooled for sequencing on the Illumina MiSeq sequencing platform of the Smithsonian Tropical Research Institute's (STRI) Naos facilities in Panama (courtesy of Marta Vargas)
+- Sequenced libraries were demultiplexed at STRI by Marta Vargas using the MiSeq Reporter Software
+- These libraries were sent to me (Laura Lardinois) and trimmed with Cutadapt to remove primers before being read into R to start the DADA2 pipeline (following tutorial v 1.16) 
+- Silva version 138.1 (mar 10, 2021 update) used for taxonomic assignments
+- See "Water Pre Processing RRR Fish 16S Sequences Summer 2022" document for pipeline and processing up to the creation of the initial phyloseq object
+
+- This document follows the steps outlined in "OPEN & REPRODUCIBLE MICROBIOME DATA ANALYSIS SPRING SCHOOL 2018 v3.0 (Updated 11-Apr-2020)", created by Sudarshan A. Shetty, Leo Lahti, and Gerben DA. Hermes, as well as other sources (linked below)
+
+Shetty Sudarshan A, Lahti Leo, Hermes Gerben DA, & Hauke Smidt. (2020, April 11). Microbial bioinformatics introductory course material 2018 (Version v3.0). Zenodo. http://doi.org/10.5281/zenodo.1436630
+
+```{r load required packages, echo=FALSE}
+library(microbiome) # data analysis and visualisation
+library(phyloseq) # also the basis of data object. Data analysis and visualisation
+library(microbiomeutilities) # some utility tools 
+library(RColorBrewer) # nice color options
+library(ggpubr) # publication quality figures, based on ggplot2
+library(DT) # interactive tables in html and markdown
+library(data.table) # alternative to data.frame
+library(dplyr) # data handling 
+
+library(phylosmith) # package to create merged meta-data column
+
+library(DECIPHER) # multiple-alignment of ASVs to construct phylogenetic tree
+library(phangorn) # used to construct phylogenetic tree
+
+library(picante) # calculating phylogenetic (alpha) diversity
+
+library(microViz) # analysis and visualization of microbiome data (used to add sample_data column about tropic group)
+library(forcats) #part of the tidyverse, the forcats library allows reordering and modifying factors in R (needed to cluster fish by trophic group)
+
+library(vegan) # community ecology package: tools for diversity analysis, ordination methods, analysis of dissimilarities
+library(hilldiv) # Hill numbers package
+```
+
+Loading our phyloseq object = cleaned water microbiome ASVs from the TEP, with metadata, tax table, and otu table (no tree yet)
+```{r read phyloseq object, echo=FALSE}
+ROHR_08_obj_clean = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_clean.rds")
+```
+
+Before working with the full dataset, given that there are both distinct sampling regions (Coiba & Las Perlas) and sampling seasons (upwelling and non-upwelling), we want to be able to split the dataset into these four groups as needed. To do this, we need a single column that specifies both season and region, rather than 2 columns.
+```{r add column to phyloseq metadata file that includes both region and season}
+
+ROHR_08_obj_clean <- merge_treatments(ROHR_08_obj_clean, c("region", "season"))
+
+# Save new metadata
+saveRDS(ROHR_08_obj_clean, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_clean.rds")
+
+#read new metadata
+ROHR_08_obj_clean <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_clean.rds")
+
+```
+
+Quick look at cleaned dataset before removing rare ASVs
+```{r examining phyloseq object - #reads, variables...}
+
+#look at phyloseq object features (using microbiome package)
+summarize_phyloseq(ROHR_08_obj_clean)
+
+#min reads = 42156, max reads = 99992, total reads = 1507994, average reads = 79368, median reads = 78562
+##note that sparsity is high (0.6875) --> indicates data has many 0s --> common in microbiome data from sequencing-based techniques (will remove these in later steps)
+
+#number of singletons = 3, % OTUs that are singletons = 0.1106
+
+#this is quite different from the gut samples, where there were generally fewer reads, samples with as few as 7 reads, and higher sparsity than the water samples we have here. Additionally, there are proportionally fewer singletons.
+```
+
+We can use the coefficient of variation (C.V. = sd(x)/mean(x)) to measure the variability in our ASV abundance across samples (shows the amount of variability in relation to the population mean). The plot below shows CV (calculated for each ASV across samples) versus mean relative abundance. See that there are many ASVs with high CV, low mean; high heterogeneity/variance in ASV abundance - makes sense considering that we are pooling reads from different species, regions, and season together here. Note that there are many reads still unassigned at the Phylum level (Phylum = NA).
+```{r looking at heterogeneity (variability) in ASV abundance across our dataset}
+
+# the plot_taxa_cv will first convert the counts to relative abundances and then calculate the C.V.
+
+CV.ROHR_08 <- plot_taxa_cv(ROHR_08_obj_clean, plot.type = "scatter")
+CV.ROHR_08 + scale_x_log10()
+
+```
+
+Look at distribution of number of sequences kept after ASV picking using DADA2
+```{r sequence distribution}
+p_seqdepth.ROHR_08 <- plot_read_distribution(ROHR_08_obj_clean, "species", "density")
+print(p_seqdepth.ROHR_08)
+```
+```{r Distribution of ASV counts}
+# Make a data table with information on the ASVs
+ROHR_08_df_taxa <- data.table(tax_table(ROHR_08_obj_clean),
+                          ASVabundance = taxa_sums(ROHR_08_obj_clean),
+                          ASV = taxa_names(ROHR_08_obj_clean))
+
+ROHR_08_tax_plot <- ggplot(ROHR_08_df_taxa, aes(ASVabundance)) +
+  geom_histogram() + ggtitle("Histogram of ASVs (unique sequence) counts (DADA2)") +
+  theme_bw() + scale_x_log10() + ylab("Frequency of ASVs") + xlab("Abundance (raw counts)")
+
+print(ROHR_08_tax_plot)
+
+```
+
+Can also look at the distribution of different microbial taxa among the ASVs, plotting average count abundance against taxa prevalence. Taxa that are low prevalence (i.e., rare) but represented by a high abundance of reads are likely to be real observations
+
+```{r distribution of microbial taxa - abundance vs. prevalence}
+
+######currently get error from this code
+#taxa_prevalence_ROHR_08 <- plot_taxa_prevalence(ROHR_08_obj_clean, "Phylum")
+#taxa_prevalence_ROHR_08
+```
+
+```{r examining number of reads, reads/ASV, singletons, doubletons }
+
+#total number of reads in the dataset
+reads_per_asv <- taxa_sums(ROHR_08_obj_clean)
+print(sum(reads_per_asv)) #1507994
+
+#total number of reads across all samples 
+reads_per_sample <- sample_sums(ROHR_08_obj_clean)
+print(sum(reads_per_sample)) #1507994 (sum should be same as above = total number of reads)
+
+#how many ASVs with fewer than 10 reads?
+print(length(reads_per_asv[reads_per_asv < 10])) #911 
+
+#how many reads do these ASVs contain?
+print(sum(reads_per_asv[reads_per_asv < 10])) #4403
+
+#how many samples with fewer than 10 reads?
+print(length(reads_per_sample[reads_per_sample < 10])) #0
+
+#how many reads do these samples contain?
+print(sum(reads_per_sample[reads_per_sample < 10])) #0
+
+#how many singletons?
+length(which(taxa_sums(ROHR_08_obj_clean) <= 1)) #3
+
+#how many doubletons?
+length(which(taxa_sums(ROHR_08_obj_clean) == 2)) #174 doubletons
+
+```
+From the code above, we can see that our full swab dataset contains quite a few rare ASVs but none of our samples have fewer than 1,000 reads. We can further visualize this by plotting out the distribution of read counts in our samples.
+
+```{r visualize number of reads per sample}
+#calculate total number of reads per sample and sort from smallest # to largest #
+sort(sample_sums(ROHR_08_obj_clean))
+
+#visualize distribution of read counts
+hist(sample_sums(ROHR_08_obj_clean), main="Histogram: Read Counts", xlab="Total Reads", 
+     border="blue", col="green", las=1, breaks=50)
+```
+Looking at the histogram above, we can see that the majority of our samples have between 70,000 and ~100,000 reads, with 1 sample having fewer reads (~40,000). Given that there are only a few water samples and thus many taxa found only in 1 sample, we will not remove taxa found in only one sample, as this reduces the total number of taxa by more than half (1328 out of 2712)
+
+```{r filter ASVs unassigned at phylum level}
+
+##Removing ASVs unassigned (NA) at the phylum level
+ROHR_08_obj_clean_updated_P <- subset_taxa(ROHR_08_obj_clean, Phylum != "NA")
+ROHR_08_obj_clean_updated_P #down to 2624 taxa in 19 samples  --> potentially add these back in as needed, depending on analyses to be run
+
+#Save phyloseq object with filtered taxa
+saveRDS(ROHR_08_obj_clean_updated_P, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_clean_updated_phyla.rds")
+
+#read in if not starting from top
+ROHR_08_obj_clean_updated_P <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_clean_updated_phyla.rds")
+
+```
+######################################################
+ALPHA DIVERSITY
+- Measures within individual taxa richness & evenness
+- common metrics/indices = Shannon, Inverse Simpson, Simpson, Gini, Observed and Chao1 (do not take into account phylogeny of taxa)
+- Faith's PD (phylogenetic diversity) --> uses phylogenetic distance
+
+****"It is important to note that, alpha diversity indices are sensitive to noise that is inherent to application of polymerase chain reaction and the sequencing errors"
+
+*** Need to consider sequencing depth - that is, how many taxa did we actually capture - for each sample, and, as needed, normalize samples to equal depth before running alpha diversity indices
+
+Alpha diversity lecture: https://evolution.unibas.ch/walser/bacteria_community_analysis/2015-02-10_MBM_tutorial_combined.pdf
+
+```{r look at number of reads}
+summary(sample_sums(ROHR_08_obj_clean_updated_P)) #see that there is a large difference in number of reads (42100 to 99870)
+```
+
+Plot rarefaction curve for the ASV data for the full dataset. This allows us to see if/how microbial richness has been captured by the sequencing effort. All samples appear to reach a plateau, indicating sufficient sampling depth to capture most diversity. 
+
+```{r rarefaction curves for full (trimmed) dataset, echo=FALSE}
+otu_tab_ROHR08 <- t(abundances(ROHR_08_obj_clean_updated_P))
+rarcurve_ROHR08 <- vegan::rarecurve(otu_tab_ROHR08, 
+                      step = 50, label = FALSE, 
+                      sample = min(rowSums(otu_tab_ROHR08), 
+                                   col = "blue", cex = 0.6))
+```
+
+For the a-diversity analyses, we will begin by rarefying (normalizing) our data to at least 40,000 reads. This cutoff, given the high number of reads in this dataset, should not exclude any samples
+
+```{r normalizing data}
+#check current reads/sample
+reads_per_sample <- sample_sums(ROHR_08_obj_clean_updated_P)
+
+#how many samples with fewer than 1000 reads?
+print(length(reads_per_sample[reads_per_sample < 40000])) #0 samples will be excluded under this criterion
+
+set.seed(9242)  # This will help in reproducing the filtering and normalisation. 
+
+ROHR08.rar <- rarefy_even_depth(ROHR_08_obj_clean_updated_P, sample.size = 40000) 
+#129 OTUs were removed because they are no longer present in any sample after random subsampling
+
+```
+
+```{r save rarefied data as new phyloseq object}
+
+# Save rarefied data
+saveRDS(ROHR08.rar, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_40000.rds")
+
+#read rarefied data
+ROHR08.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_40000.rds")
+
+#check how much data post-rarefaction
+print(ROHR08.rar) # 2495 taxa, 19 samples
+
+```
+
+```{r check data post-rarefaction}
+ # quick check for sampling depth
+
+barplot(sample_sums(ROHR08.rar), las =2) #all samples rarefied to 40,000 reads
+```
+
+We'll also do a second rarefaction down to 2500 reads, to match the fish skin dataset, so that when displaying the data simultaneously, we have the same rarefaction criteria
+
+```{r normalizing data}
+#check current reads/sample
+reads_per_sample <- sample_sums(ROHR_08_obj_clean_updated_P)
+
+#how many samples with fewer than 2500 reads?
+print(length(reads_per_sample[reads_per_sample < 2500])) #0 samples will be excluded under this criterion
+
+set.seed(9242)  # This will help in reproducing the filtering and normalisation. 
+
+ROHR08.2500.rar <- rarefy_even_depth(ROHR_08_obj_clean_updated_P, sample.size = 2500) 
+#1177 OTUs were removed because they are no longer present in any sample after random subsampling
+#much higher number of OTUs excluded
+
+```
+
+```{r save rarefied data as new phyloseq object}
+
+# Save rarefied data
+saveRDS(ROHR08.2500.rar, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_2500.rds")
+
+#read rarefied data
+ROHR08.2500.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_2500.rds")
+
+#check how much data post-rarefaction
+print(ROHR08.2500.rar) # 1447 taxa, 19 samples
+#lost 58% of taxa compared to rarefaction to 40,000
+```
+
+```{r check data post-rarefaction}
+ # quick check for sampling depth
+
+barplot(sample_sums(ROHR08.2500.rar), las =2) #all samples rarefied to 2500 reads
+```
+
+
+Alpha diversity - non-phylogenetic diversities
+
+- Alpha diversity metrics/indices give us information about the variation of microbes within a single sample
+
+The "alpha" function within the microbiome package gives "global ecosystem state variables", including richness, evenness, and diversity. 
+```{r Calculate a-div - observed richness, other forms of richness, diversity, evenness, dominance, rarity...}
+ROHR08.div <- alpha(ROHR08.rar, index = "all")
+
+datatable(ROHR08.div)
+```
+```{r plot a-div data (one option) - shannon diversity}
+# get the metadata out as separate object
+ROHR08.meta <- meta(ROHR08.rar)
+
+# Add the rownames as a new column for easy integration later.
+ROHR08.meta$sam_name <- rownames(ROHR08.meta)
+
+# Add the rownames to diversity table
+ROHR08.div$sam_name <- rownames(ROHR08.div)
+
+# merge these two data frames into one
+div.df <- merge(ROHR08.div,ROHR08.meta, by = "sam_name")
+
+# check the tables
+colnames(div.df)
+
+#reorder samples so that samples are grouped by gulf
+div.df <- div.df %>%
+  mutate(region_season = fct_relevel(region_season, 
+           "Coiba non-upwelling", "Coiba upwelling", "Las Perlas non-upwelling", "Las Perlas upwelling"))
+
+# Now use this data frame to plot by region (Coiba & Las Perlas)
+ROHR08.shannon <- ggboxplot(div.df, 
+               x = "region", 
+               y = "diversity_shannon",
+              title = "Shannon Diversity of TEP Water Microbiome",
+              xlab = "Sampling Gulfs",
+              ylab = "Diversity (Shannon)")
+
+print(ROHR08.shannon)
+
+# facet by season
+ROHR08.shannon.RS <- ggboxplot(div.df, 
+               x = "region", 
+               y = "diversity_shannon",
+              fill = "season", 
+              palette = "rickandmorty",
+              title = "Shannon Diversity of TEP Water Microbiome",
+              xlab = "Sampling Gulfs",
+              ylab = "Diversity (Shannon)",
+              facet.by = "season")
+
+print(ROHR08.shannon.RS)
+
+
+```
+Plotting a-diversity (in this case using Shannon Diversity) by site, shows that diversity is high across all sites (close to upper range, as Shannon Index generally goes from 0-5, with higher values corresponding to higher diversity), with slightly higher alpha diversity in Las Perlas compared to Coiba and a greater range of diversity values in Coiba. 
+
+
+--> explanation + formulas & calculations of Shannon-Wiener & Simpson's Indices: https://www.webpages.uidaho.edu/veg_measure/Modules/Lessons/Module%209(Composition&Diversity)/Detailed_Calculations.htm
+
+We can gain a bit more insight on the distribution of the alpha diversity metrics by using violin plots, instead of simple box plots, following code outlined in: https://rpubs.com/lgschaerer/515637
+
+***note that in the "plot_richness" documentation, they specifically advise against working with trimmed, normalized count data to obtain meaningful results, but the data I'm currently working with HAS been trimmed and normalized --> "You must use untrimmed, non-normalized count data for meaningful results, as many of these estimates are highly dependent on the number of singletons. You can always trim the data later on if needed, just not before using this function." 
+
+```{r plotting alpha diversity (another option using observed + shannon & violin plots)}
+
+ROHR08.rar %>%                                                              #phyloseq object (rarefied)
+  plot_richness(
+    x = "region_season",                                                #compare diversity of datatype
+    measures = c("Observed", "Shannon")) +                           #choose diversity measures
+  geom_violin(aes(fill = region), show.legend = FALSE)+          #make violin plot, set fill aes to region
+  geom_boxplot(width=0.1) +                                          #add boxplot, set width
+  theme_classic()+                                                   #change theme to classic
+  xlab(NULL)+                                                        #no label on x-axis
+  theme(axis.text.y.left = element_text(size = 20),                  #adjust y-axis text
+        axis.text.x = element_text(size = 20, hjust = 0.5, vjust = 1, angle = 0),           #adjust x-axis label position
+        axis.title.y = element_text(size = 20))+                     #adjust y-axis title
+  theme(strip.text = element_text(face = "bold", size = 25))+        #adjust headings
+  scale_fill_brewer(palette = "Paired")+                        #set fill colors
+  ggtitle("Alpha Diversity of TEP Water Microbiome (rarefied to 40,000 reads)") +                  #add title
+  rotate_x_text()+
+  theme(plot.title=element_text(size = 25, face = "bold", hjust = 0.5)) #change title size, face and position
+
+```
+
+https://mibwurrepo.github.io/Microbial-bioinformatics-introductory-course-Material-2018/alpha-diversities.html#equal-sample-sums
+
+Composite plot with multiple alpha diversity indices, including Inverse Simpson, Gini-Simpson, Shannon, Fisher, and Coverage (although these can be modified to select from the full list contained in the div.df data frame)
+
+- Inverse Simpson Index:
+"the effective number of types that is obtained when the weighted arithmetic mean is used to quantify average proportional abundance of types in the dataset of interest" (rdocumentation.org)
+In other words, the Inverse Simpson Index is the reciprocal of Simpson's Index (see below), where 1 = low diversity, and highest diversity would be equal to the maximum number of species in the sample
+        --> Simpson's Index (D) = quantifies probability that two individuals randomly selected from a sample will belong                to the same species. 0 represents infinite diversity, 1 represents no diversity --> makes little intuitive                 sense, so we often use the Diversity Index (see below) instead...
+        --> Simpson's Diversity Index (1 - D) = takes D, subtracts from 1 so that highest diversity = 1 --> at high values               (nearing 1 or 100%), probability that two individuals selected at random will belong to different species is
+              high. 
+http://www.countrysideinfo.co.uk/simpsons.htm
+
+- Gini-Simpson Index - aka Gibbs-Martin or Blau index
+        --> 1 - sum of the (proportion of a given species within a community) squared
+
+- Shannon Diversity Index - aka Shannon-Wiener Index:
+        --> Measures diversity of species in a community by taking the (negative of the) sum of the proportion of a given species within a community times the natural log of that same proportion. Higher index = more species present (1 species = 0)
+
+- Fisher Diversity Index - aka Fisher's alpha:
+"a diversity index, defined implicitly by the formula S=a*ln(1+n/a) where S is number of taxa, n is number of individuals and a is the Fisher's alpha." https://www.nhm.uio.no/english/research/resources/past/help/diversity.html
+       --> parametric diversity index that assumes species abundance follows log distribution
+       
+- Diversity Coverage 
+"The coverage index gives the number of groups needed to have a given proportion of the ecosystem occupied (by default 0.5 ie 50%)." https://microbiome.github.io/tutorials/Alphadiversity.html
+
+```{r alpha diversity plots - multiple indices}
+# convert phyloseq object into a long data format.
+
+div.df.2 <- div.df[, c("region_season", "diversity_inverse_simpson", "diversity_gini_simpson", "diversity_shannon", "diversity_fisher", "diversity_coverage")]
+
+# Replace names of diversity metrics/indices
+
+colnames(div.df.2) <- c("Region Season", "Inverse Simpson", "Gini-Simpson", "Shannon", "Fisher", "Coverage")
+
+# check
+colnames(div.df.2)
+
+### Using Species as id variables
+div_df_melt <- reshape2::melt(div.df.2)
+
+head(div_df_melt)
+
+# Now use this data frame to plot 
+ROHR08_alpha_div <- ggboxplot(div_df_melt, x = "Region Season", y = "value",
+              fill = "Region Season", 
+              palette = "rickandmorty", 
+              legend= "right",
+              facet.by = "variable", 
+              scales = "free")
+
+ROHR08_alpha_div <- ROHR08_alpha_div + rotate_x_text() # we will remove the x axis labels
+
+ROHR08_alpha_div <- ROHR08_alpha_div + rremove("x.text")
+ROHR08_alpha_div
+```
+
+```{r significance of a-diversity comparisons, echo=FALSE}
+
+lev <- levels(as.factor(div_df_melt$`Region Season`)) # get the variables ###with source code, get error that n < m #tried to fix by making Species as factor rather than as character
+
+# make a pairwise list that we want to compare.
+L.pairs <- combn(seq_along(lev), 2, simplify = FALSE, FUN = function(i) lev[i])
+
+pval <- list(
+  cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 0.1, 1),
+  symbols = c("****", "***", "**", "*", "n.s")
+)
+
+ROHR08.alpha.comp <- ROHR08_alpha_div + stat_compare_means(
+  comparisons = L.pairs,
+  label = "p.signif",
+  symnum.args = list(
+    cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 0.1, 1),
+    symbols = c("****", "***", "**", "*", "n.s")
+  )
+)
+
+
+print(ROHR08.alpha.comp) ###get error message saying: "Warning: cannot compute exact p-value with ties" --> try to fix this (perhaps by reducing dataset and/or specifying a different method to compare the means? --> default is currently "wilcox.test") ###also not very informative given the visual clutter of plotting the significance of pairwise (uncorrected?) comparisons across 10 species --> better as a table and/or clustered into groups by region and/or season perhaps
+
+```
+Looking across several a-diversity indices, Inverse Simpson and Gini-Simpson indices detect significant differences between Coiba non-upwelling and both Las Perlas non-upwelling and upwelling water samples. Comparisons via other indices (Shannon, Fisher, Coverage) are not significant. 
+
+```{r alpha diversity plots - Shannon w/ significance bars attached}
+# convert phyloseq object into a long data format.
+
+div.df.shannon <- div.df[, c("region_season", "diversity_shannon")]
+
+# Replace names of diversity metrics/indices
+
+colnames(div.df.shannon) <- c("Region Season", "Shannon")
+
+# check
+colnames(div.df.shannon)
+
+### Using Species as id variables
+div_df_melt_shan <- reshape2::melt(div.df.shannon)
+
+head(div_df_melt_shan)
+
+# Now use this data frame to plot 
+ROHR08_alpha_div_shannon <- ggboxplot(div_df_melt_shan, x = "Region Season", y = "value",
+              fill = "Region Season", 
+              palette = "rickandmorty", 
+              legend= "right",
+              facet.by = "variable", 
+              scales = "free")
+
+ROHR08_alpha_div_shannon <- ROHR08_alpha_div_shannon + rotate_x_text() # we will remove the x axis labels
+
+ROHR08_alpha_div_shannon <- ROHR08_alpha_div_shannon + rremove("x.text")
+ROHR08_alpha_div_shannon
+
+###add significance levels
+lev_S <- levels(as.factor(div_df_melt_shan$`Region Season`)) # get the variables ###with source code, get error that n < m #tried to fix by making Species as factor rather than as character
+
+# make a pairwise list that we want to compare.
+L.pairs_S <- combn(seq_along(lev_S), 2, simplify = FALSE, FUN = function(i) lev_S[i])
+
+pval <- list(
+  cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 0.1, 1),
+  symbols = c("****", "***", "**", "*", "n.s")
+)
+
+ROHR08.alpha.comp.shan <- ROHR08_alpha_div_shannon + stat_compare_means(
+  comparisons = L.pairs_S,
+  label = "p.signif",
+  symnum.args = list(
+    cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 0.1, 1),
+    symbols = c("****", "***", "**", "*", "n.s")
+  )
+)
+
+
+print(ROHR08.alpha.comp.shan)
+
+```
+No significant difference in Shannon diversity between all 4 sampling regions and seasons. 
+
+Phylogenetic Tree
+
+To calculate phylogenetic diversity, we will need to create a phylogenetic tree with our microbiome data. We can use this site: Workflow for Microbiome Data Analysis: from raw reads to community analyses, by Benjamin J Callahan, Kris Sankaran, Julia A Fukuyama, Paul Joey McMurdie and Susan P Holmes to help with tree creation. (It also includes information on many other steps in the microbiome processing and data visualization pipeline) https://bioconductor.org/help/course-materials/2017/BioC2017/Day1/Workshops/Microbiome/MicrobiomeWorkflowII.html#construct_phylogenetic_tree
+
+Since the DADA2 method used to assign taxonomy (ASVs) to our 16S reads is reference free, we need to connect the ASVs to their phylogenies de novo. The multiple-alignment step will be done using the DECIPHER R package (3.16); Wright (2016): http://bioconductor.org/packages/release/bioc/html/DECIPHER.html
+
+
+```{r multiple alignment using DECIPHER package}
+tax_silva_tax  = tax_table(ROHR_08_obj_clean_updated_P)
+
+seqs <- getSequences(tax_silva_tax)
+names(seqs) <- seqs # This propagates to the tip labels of the tree
+alignment <- AlignSeqs(DNAStringSet(seqs), anchor=NA,verbose=FALSE)
+```
+
+Once multiple alignment has been done using DECIPHER, we can use the phangorn package to build a phylogenetic tree.
+The code below first builds a neighbor-joining tree, then fits a GTR+G+I maximum likelihood tree ( Generalized time-reversible with Gamma rate variation) using the neighbor-joining tree. Note that the maximum likelihood tree step requires considerable computational power - best to run on cluster (ran on laptop local hard drive for 27 hrs). 
+
+Helpful lecture on different tree types and how they're constructed: https://si.biostat.washington.edu/sites/default/files/modules/2018-SISMID-04.pdf
+
+CRAN documentation for phangorn: https://cran.r-project.org/web/packages/phangorn/vignettes/Trees.html
+***this is the most thorough documentation, with steps for distance based methods, parsimony, and maximum likelihood trees
+
+The Molecular Ecologist - "Quick and Dirty Tree Building in R": https://www.molecularecologist.com/2016/02/26/quick-and-dirty-tree-building-in-r/
+
+
+```{r build NJ tree, then GTR+G+I maximum likelihood tree}
+
+phangAlign <- phyDat(as(alignment, "matrix"), type="DNA")
+dm <- dist.ml(phangAlign)
+treeNJ <- NJ(dm) #Neighbor joining tree ### Note, tip order != sequence order
+#plot(treeNJ, "unrooted", main="NJ") #plot unrooted Neighbor Joining tree - given the number of tips and the fact that each   tip is currently labeled with a sequence, this just gives us a big, unreadable block of black ink 
+treeUPGMA  <- upgma(dm) #UPGMA (unweighted pair group method with arithmetic mean)
+
+#check parsimony score --> the min number of changes needed to describe data for the tree: best tree = lower score
+parsimony(treeUPGMA, phangAlign)
+#33394 for UPGMA tree
+
+parsimony(treeNJ, phangAlign)
+#32507 for NJ tree (better - improve upon this one with maximum likelihood (ML) method below)
+
+#prior to producing a distance matrix, best to test which model best fits data, using a likelihood ratio test
+mt <- modelTest(phangAlign, model = c("GTR", "JC", "F81", "K80", "HKY", "SYM")) #test a subset of models to limit run time, GTR + G(4) likely best based on best models from prior (TEP skin microbiome) full set
+print(mt)
+
+as.pml(mt, "BIC")
+
+#save model test results as plain text file (to avoid having to run again)
+write.table(mt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR08_distance_models.txt")
+
+fit = pml(treeNJ, data=phangAlign) #pml object contains the data + tree + many parameters of the model, inc. likelihood
+fit 
+fitGTR <- update(fit, k=4, inv=0.2)
+fitGTR <- optim.pml(fitGTR, model="GTR", optInv=TRUE, optGamma=TRUE,
+                    rearrangement = "stochastic", control = pml.control(trace = 0)) #rearrangement = "stochastic" helps escape local optima by performing stochastic rearrangements
+fitGTR
+
+#model: GTR+G(4)+I 
+#loglikelihood: -137109.3 
+#unconstrained loglikelihood: -2318.563 
+#Proportion of invariant sites: 0.1012362 
+#Discrete gamma model
+#Number of rate categories: 4 
+#Shape parameter: 0.5303384 
+
+#Rate matrix:
+#          a         c         g        t
+#a 0.0000000 0.8326139 3.5162097 1.318709
+#c 0.8326139 0.0000000 0.7725738 4.096584
+#g 3.5162097 0.7725738 0.0000000 1.000000
+#t 1.3187093 4.0965842 1.0000000 0.000000
+
+#Base frequencies:  
+ #       a         c         g         t 
+#0.2746296 0.1637652 0.2340625 0.3275426 
+
+AIC(fitGTR) #284728.5
+
+BIC(fitGTR) #306204.5
+
+
+#bootstrap to test how well edges of tree are supported
+bs <- bootstrap.pml(fitGTR, bs=100, optNni=TRUE,
+    control = pml.control(trace = 0)) #####have not run this yet - supposed to be computationally demanding - will wait until not running other analyses
+
+cnet <- consensusNet(bs, p=0.2) ######have not run this yet
+plot(cnet, show.edge.label=TRUE) ####have not run this yet
+
+#alternative function to do this which hides a few steps (starting from :
+fitGTR <- pml_bb(treeNJ, model="GTR+G(4)+I", control = pml.control(trace = 0))
+fitGTR
+
+```
+
+This phylogenetic tree will be added to a phyloseq object with (1) a sample-by-sequence table, (2) sample metadata, and (3) sequence taxonomies (see code below)
+
+```{r write & read phylogenetic tree (unrooted)}
+tree_NJ_tree = phy_tree(fitGTR$tree)
+
+#save tree (on its own) in Newick format
+ape::write.tree(tree_NJ_tree, file='/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR08_phylo_tree.tre')
+
+tree_NJ_tree <- read.tree('/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR08_phylo_tree.tre')
+
+#merge phylogenetic tree with phyloseq object
+
+ROHR_08_obj_phylo <- merge_phyloseq(ROHR_08_obj_clean_updated_P, tree_NJ_tree)
+ROHR_08_obj_phylo
+
+#otu_table()   OTU Table:         [ 2624 taxa and 19 samples ]
+#sample_data() Sample Data:       [ 19 samples by 42 sample variables ]
+#tax_table()   Taxonomy Table:    [ 2624 taxa by 6 taxonomic ranks ]
+#phy_tree()    Phylogenetic Tree: [ 2624 tips and 2622 internal nodes ]
+
+saveRDS(ROHR_08_obj_phylo, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree.rds")
+
+#read RDS file (if not re-running code from start)
+
+ROHR_08_obj_phylo <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree.rds")
+
+```
+
+```{r Root phylogenetic tree}
+
+tree.unrooted <- phy_tree(ROHR_08_obj_phylo)
+
+# Function to root the tree
+pick_new_outgroup <- function(tree.unrooted){
+  require("magrittr")
+  require("data.table")
+  require("ape") # ape::Ntip
+  # tablify parts of tree that we need.
+  treeDT <-
+    cbind(
+      data.table(tree.unrooted$edge),
+      data.table(length = tree.unrooted$edge.length)
+    )[1:Ntip(tree.unrooted)] %>%
+    cbind(data.table(id = tree.unrooted$tip.label))
+  # Take the longest terminal branch as outgroup
+  new.outgroup <- treeDT[which.max(length)]$id
+  return(new.outgroup)
+}
+
+new.outgroup = pick_new_outgroup(tree.unrooted)
+new.outgroup
+
+#new outgroup - that is the new root to be added to our tree = 
+#TACGTAGGGTGCAAGCGTTGTCCGGATTTATTGGGTTTAAAGGGTGCGCAGGCGGATTGTTAAGTTAGTGGTGAAATCGTCCCGCTCAACGGGATACCCGCCATTGATACTGGCAATCTTGAGTGTGTCTGAGGGAGTTAGAATGCGTGGTGTAGCGGTGAAATGCATAGATATCACGCAGAATACCGATTGCGAAGGCAGACTCCTAAGGCACAACTGACGCTGAGGCACGAAAGCGTGGGGAGCGAACAGG
+
+rootedTree = ape::root(tree.unrooted, outgroup=new.outgroup, resolve.root=TRUE)
+
+#plot(rootedTree) #don't plot rooted tree given the number of ASVs - at this stage plotting will not give informative results
+
+#check that tree is, indeed, rooted
+is.rooted(rootedTree) #TRUE! Yay, finally!
+
+#make new phyloseq object with ROOTED tree
+ROHR_08_obj_phylo_root <- merge_phyloseq(ROHR_08_obj_clean_updated_P, rootedTree)
+ROHR_08_obj_phylo_root
+
+#save rooted tree
+saveRDS(ROHR_08_obj_phylo_root, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree_rooted.rds")
+
+#read RDS file (if not re-running code from start)
+
+ROHR_08_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree_rooted.rds")
+```
+
+#Rarefy phyloseq with rooted tree (to 2500 for comparability with fish samples)
+```{r normalizing data w/ tree - single sampling w/o replacement}
+#check current reads/sample
+reads_per_sample <- sample_sums(ROHR_08_obj_phylo_root)
+
+#how many samples with fewer than 2500 reads?
+print(length(reads_per_sample[reads_per_sample < 2500]))
+
+set.seed(9242)  # This will help in reproducing the filtering and normalisation. 
+
+ROHR08.rar <- rarefy_even_depth(ROHR_08_obj_phylo_root, sample.size = 2500)  #1177 OTUs removed
+
+```
+```{r save updated rarefied data as new phyloseq object}
+# Save updated rarefied data
+saveRDS(ROHR08.rar, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_2500_tree.rds")
+
+#read rarefied data
+ROHR08.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_2500_tree.rds")
+
+#check how much data post-rarefaction
+print(ROHR08.rar) # 1447 taxa, 19 samples
+```
+
+#Hill Numbers
+
+#Hill numbers, unrarefied data
+```{r fix sample IDs to not start with an integer}
+#make sure to only run this once, otherwise you'll affix multiple names
+sample_names(ROHR_08_obj_phylo_root) <- paste("RRR", gsub("-", "_", sample_names(ROHR_08_obj_phylo_root)), sep = "_")
+
+```
+
+```{r transform ASV table and check tree tips}
+asv.whole <- t(otu_table(ROHR_08_obj_phylo_root))
+tree.whole <- phy_tree(ROHR_08_obj_phylo_root)
+identical(sort(rownames(asv.whole)), sort(tree.whole$tip.label))
+```
+
+```{r normalize reads to relative abundance}
+asv.whole.norm <- microbiome::transform(asv.whole, transform = "compositional")
+```
+
+Species Richness
+```{r species richness - Hill}
+hillq0 <- estimate_richness(ROHR_08_obj_phylo_root, measures = "Observed")
+```
+
+Hill-Shannon (Shannon Exponential)
+```{r Hill-Shannon}
+shannon.hill <- exp(vegan::diversity(t(asv.whole.norm), index = "shannon"))
+shannon.whole.df <- as.data.frame(shannon.hill)
+```
+
+Hill-Simpson (Simpson Index)
+```{r Hill-Simpson}
+1/(1-(vegan::diversity(t(asv.whole.norm), index = "simpson")))
+simpson.hill<-1/(1-(vegan::diversity(t(asv.whole.norm), index = "simpson")))
+simpson.whole.df <- as.data.frame(simpson.hill)
+```
+
+Combine all elements into a single data frame
+
+```{r merge data into phyloseq}
+newDF.whole <- data.frame(hillq0, shannon.hill, simpson.hill)
+
+newDF.whole <- data.frame(hillq0, shannon.hill, simpson.hill,
+                          sample_data(ROHR_08_obj_phylo_root))
+
+ROHR_08.phylo.hill <- merge_phyloseq(otu_table(ROHR_08_obj_phylo_root),
+                                sample_data(newDF.whole),
+                                tax_table(ROHR_08_obj_phylo_root),
+                                phy_tree(ROHR_08_obj_phylo_root))
+ROHR_08.phylo.hill
+sample_data(ROHR_08.phylo.hill)
+#save new phyloseq object with Hill numbers integrated
+saveRDS(ROHR_08.phylo.hill, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_phylo_tree_Hill.rds")
+```
+
+```{r read Hill number RDS}
+#read RDS, if not starting from scratch
+ROHR_08.phylo.hill <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_phylo_tree_Hill.rds")
+```
+
+```{r change species to "Water"}
+# Extract the sample_data as a data frame
+ROHR08_df <- as.data.frame(sample_data(ROHR_08.phylo.hill))
+
+# Replace NA values in the "species" column with "Water"
+ROHR08_df$species[is.na(ROHR08_df$species)] <- "Water"
+
+# Update the sample_data in the phyloseq object
+sample_data(ROHR_08.phylo.hill) <- sample_data(ROHR08_df)
+
+# Check if the replacement worked
+head(sample_data(ROHR_08.phylo.hill))
+
+# Extract the sample_data as a data frame
+ROHR08_df_rar <- as.data.frame(sample_data(ROHR08.rar))
+
+# Replace NA values in the "species" column with "Water"
+ROHR08_df_rar$species[is.na(ROHR08_df_rar$species)] <- "Water"
+
+# Update the sample_data in the phyloseq object
+sample_data(ROHR08.rar) <- sample_data(ROHR08_df_rar)
+
+# Check if the replacement worked
+head(sample_data(ROHR08.rar))
+```
+
+```{r break species data into season & region - new column}
+ROHR_08.phylo.hill <- merge_treatments(ROHR_08.phylo.hill, c("species", "region", "season"))
+
+# Save new metadata
+saveRDS(ROHR_08.phylo.hill, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_unrarefied_Hill_merged.rds")
+```
+
+```{r adjust sample data on hill phyloseq}
+
+data.hill.whole_n <- data.frame(sample_data(ROHR_08.phylo.hill)) %>%
+  pivot_longer(cols = 1:3, names_to = "Index",  values_to = "Diversity")
+data.hill.whole_n$Fraction_delailed <- NULL
+data.hill.whole_n <- data.hill.whole_n[, c(1, 3:5, 7, 11:12, 42:45)] ###Adjust #s to match metadata columns to keep
+data.hill.whole_n <- dplyr::mutate_if(data.hill.whole_n, is.factor, as.character)
+data.hill.whole_n$Index <- stringr::str_replace(
+  data.hill.whole_n$Index, "Observed", "Observed (q=0)")
+data.hill.whole_n$Index <- stringr::str_replace(
+  data.hill.whole_n$Index, "shannon.hill", "Shannon exponential (q=1)")
+data.hill.whole_n$Index <- stringr::str_replace(
+  data.hill.whole_n$Index, "simpson.hill", "Simpson multi. inverse (q=2)")
+data.hill.whole_n <- data.hill.whole_n[order(data.hill.whole_n$Index),]
+
+saveRDS(data.hill.whole_n, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_hill_datatable.rds")
+```
+
+```{r read data with hill num}
+data.hill.whole <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_hill_datatable.rds")
+```
+
+
+```{r subset pivot table to only q0 (Observed)}
+data.hill.observed <- data.hill.whole %>%
+  filter(Index == "Observed (q=0)")
+```
+
+```{r create season & species column}
+
+# Merge 'species' and 'season' into a new column
+data.hill.observed$species_season <- paste(data.hill.observed$species, data.hill.observed$season, sep = " ")
+
+# View the updated data frame
+print(data.hill.observed)
+```
+```{r subset pivot table to only Gulf of Chiriquí}
+data.hill.observed.chiriqui <- data.hill.observed %>%
+  filter(region == "Coiba")
+```
+
+```{r subset pivot table to only Gulf of Panama}
+data.hill.observed.perlas <- data.hill.observed %>%
+  filter(region == "Las Perlas")
+```
+
+```{r define levels - species_season - Coiba}
+data.hill.observed.chiriqui$species_season <- factor(data.hill.observed.chiriqui$species_season,
+                               levels = c('Water non-upwelling', 'Water upwelling'))
+data.hill.observed.perlas$species_season <- factor(data.hill.observed.perlas$species_season,
+                               levels = c('Water non-upwelling', 'Water upwelling')) 
+
+data.hill.observed.chiriqui$species <- factor(data.hill.observed.chiriqui$species,
+                               levels = c('Water'))
+data.hill.observed.perlas$species <- factor(data.hill.observed.perlas$species,
+                               levels = c('Water'))
+
+level_order10 <- c('Water non-upwelling', 'Water upwelling')
+
+disp.pal12 <- c("#BE93D4", "#E2B9EA")
+disp.pal13 <- c("#9C6FB1", "#BE93D4")
+
+``` 
+
+```{r basic a-div fig Coiba}
+fig03.1 <- ggplot(data = data.hill.observed.chiriqui, aes(x = factor(species, level = level_order10),
+                                           y=Diversity)) +
+        stat_boxplot(aes(colour=species_season), geom ='errorbar') + #alpha=0.3
+        geom_boxplot(aes(fill=species_season, colour=species_season), alpha=0.6,
+                     outlier.alpha = 0.7, outlier.shape = 16) +
+        scale_colour_manual(values=disp.pal13, name = "Species Season")+
+        scale_fill_manual(values=disp.pal12, name = "Species Season")+
+   theme(axis.text.x = element_text(angle = 0, hjust = 0.5, face = "italic")) +
+        font_theme+
+        stat_summary(aes(fill=species_season), fun="mean", geom="point", size=2.5, shape=18,
+                     position=position_dodge(width=0.75),
+                     color=c( "#9C6FB1","#BE93D4"
+                               ),
+                     show.legend = FALSE) +
+        scale_x_discrete(name=NULL,  labels = c()) + #'Water'
+                           scale_y_continuous(limits = c(0, 970), name="Hill diversity (Observed q0)") +
+        theme(strip.background = element_rect(color="black", fill="white",
+                                              size=1, linetype="blank"),
+              strip.text.x = element_text(size = 14),
+              panel.border = element_rect(fill = NA, color = "#CC5500", size = 1.5), # orange box
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_rect(fill = "white",colour = NA),
+              legend.key = element_rect(fill = "transparent", color = NA),
+              legend.text = element_text(size = 12, face = "italic"),
+              legend.title = element_text(size = 14),
+              legend.position = "none", #remove legend from plot
+              axis.title.y = element_blank(), 
+         axis.text.y = element_blank(),
+         axis.ticks.y = element_blank()
+        )
+fig03.1
+```
+```{r save plot as RDS}
+saveRDS(fig03.1, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft/water_barchart_coiba.rds")
+```
+
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Water Microbiome Hill q0 Species Season Perlas Unrarefied FOR COWPLOT.pdf", plot = fig03.1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Water Microbiome Hill q0 Species Season Perlas Unrarefied FOR COWPLOT.png", plot = fig03.1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+
+```{r basic a-div fig Las Perlas}
+fig03.2 <- ggplot(data = data.hill.observed.perlas, aes(x = factor(species, level = level_order10),
+                                           y=Diversity)) +
+        stat_boxplot(aes(colour=species_season), geom ='errorbar') + #alpha=0.3
+        geom_boxplot(aes(fill=species_season, colour=species_season), alpha=0.6,
+                     outlier.alpha = 0.7, outlier.shape = 16) +
+        scale_colour_manual(values=disp.pal13, name = "Species Season")+
+        scale_fill_manual(values=disp.pal12, name = "Species Season")+
+   theme(axis.text.x = element_text(angle = 0, hjust = 0.5, face = "italic")) +
+        font_theme+
+        stat_summary(aes(fill=species_season), fun="mean", geom="point", size=2.5, shape=18,
+                     position=position_dodge(width=0.75),
+                     color=c( "#9C6FB1","#BE93D4"
+                               ),
+                     show.legend = FALSE) +
+        scale_x_discrete(name=NULL,  labels = c('Water')) + 
+                           scale_y_continuous(limits = c(0, 970), name="Hill diversity (Observed q0)") +
+        theme(strip.background = element_rect(color="black", fill="white",
+                                              size=1, linetype="blank"),
+              strip.text.x = element_text(size = 14),
+              panel.border = element_rect(fill = NA, color = "#009999", size = 1.5), # orange box
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_rect(fill = "white",colour = NA),
+              legend.key = element_rect(fill = "transparent", color = NA),
+              legend.text = element_text(size = 12, face = "italic"),
+              legend.title = element_text(size = 14),
+              legend.position = "none", #remove legend from plot
+              axis.title.y = element_blank(), 
+         axis.text.y = element_blank(),
+         axis.ticks.y = element_blank()
+        )
+fig03.2
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Water Microbiome Hill q0 Species Season Perlas Unrarefied FOR COWPLOT.pdf", plot = fig03.2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Water Microbiome Hill q0 Species Season Perlas Unrarefied FOR COWPLOT.png", plot = fig03.2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+
+```{r save plot as RDS}
+saveRDS(fig03.2, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft/water_barchart_lasperlas.rds")
+```
+                                          
+#Hill numbers, reads rarefied to 2,500 sequences/sample
+```{r fix sample IDs to not start with an integer}
+#make sure to only run this once, otherwise you'll affix multiple names
+sample_names(ROHR08.rar) <- paste("RRR", gsub("-", "_", sample_names(ROHR08.rar)), sep = "_")
+
+sample_names(ROHR_08_obj_phylo_root) <- paste("RRR", gsub("-", "_", sample_names(ROHR_08_obj_phylo_root)), sep = "_")
+```
+
+```{r transform ASV table and check tree tips}
+asv.whole <- t(otu_table(ROHR08.rar))
+tree.whole <- phy_tree(ROHR08.rar)
+identical(sort(rownames(asv.whole)), sort(tree.whole$tip.label))
+```
+
+```{r normalize reads to relative abundance}
+asv.whole.norm <- microbiome::transform(asv.whole, transform = "compositional")
+```
+
+Species Richness
+```{r species richness - Hill}
+hillq0 <- estimate_richness(ROHR08.rar, measures = "Observed")
+```
+
+Hill-Shannon (Shannon Exponential)
+```{r Hill-Shannon}
+shannon.hill <- exp(vegan::diversity(t(asv.whole.norm), index = "shannon"))
+shannon.whole.df <- as.data.frame(shannon.hill)
+```
+
+Hill-Simpson (Simpson Index)
+```{r Hill-Simpson}
+1/(1-(vegan::diversity(t(asv.whole.norm), index = "simpson")))
+simpson.hill<-1/(1-(vegan::diversity(t(asv.whole.norm), index = "simpson")))
+simpson.whole.df <- as.data.frame(simpson.hill)
+```
+
+Combine all elements into a single data frame
+
+```{r merge data into phyloseq}
+newDF.whole.r <- data.frame(hillq0, shannon.hill, simpson.hill)
+
+newDF.whole.r <- data.frame(hillq0, shannon.hill, simpson.hill,
+                          sample_data(ROHR08.rar))
+
+ROHR_08.phylo.hill.r <- merge_phyloseq(otu_table(ROHR08.rar),
+                                sample_data(newDF.whole.r),
+                                tax_table(ROHR08.rar),
+                                phy_tree(ROHR08.rar))
+ROHR_08.phylo.hill.r
+sample_data(ROHR_08.phylo.hill.r)
+#save new phyloseq object with Hill numbers integrated
+saveRDS(ROHR_08.phylo.hill.r, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_phylo_tree_Hill_rar.rds")
+```
+
+## Rarefied Hill numbers - region & season
+```{r subset dataset into region and season}
+#Coiba
+Coiba_up <- subset_samples(ROHR_08.phylo.hill.r, region_season == "Coiba upwelling")
+Coiba_up <- prune_taxa(taxa_sums(Coiba_up) > 0, Coiba_up) #985 taxa and 5 samples
+Coiba_up
+Coiba_N <- subset_samples(ROHR_08.phylo.hill.r, region_season == "Coiba non-upwelling")
+Coiba_N <- prune_taxa(taxa_sums(Coiba_N) > 0, Coiba_N) #646 taxa and 4 samples
+Coiba_N
+#Las Perlas
+LP_up <- subset_samples(ROHR_08.phylo.hill.r, region_season == "Las Perlas upwelling")
+LP_up <- prune_taxa(taxa_sums(LP_up) > 0, LP_up) #593 taxa and 4 samples
+LP_up
+LP_N <- subset_samples(ROHR_08.phylo.hill.r, region_season == "Las Perlas non-upwelling")
+LP_N <- prune_taxa(taxa_sums(LP_N) > 0, LP_N) #705 taxa and 6 samples
+LP_N
+
+#From the summary of the phyloseq objects, we can see that the number of taxa across all samples within a given season & region is relatively consistent, although much lower than for fish (water 593-985 (in 4-6 samples); fish: from 4020 to 4095 taxa across 65 to 74 samples)
+```
+```{r transpose ASV tables to ASVs as rows}
+asv.Coiba_up <- t(otu_table(Coiba_up))
+asv.Coiba_N <- t(otu_table(Coiba_N))
+asv.LP_up <- t(otu_table(LP_up))
+asv.LP_N <- t(otu_table(LP_N))
+```
+
+```{r transform counts to relative abundance}
+asv.Coiba_up.norm <- microbiome::transform(asv.Coiba_up, transform = "compositional")
+asv.Coiba_N.norm <- microbiome::transform(asv.Coiba_N, transform = "compositional")
+asv.LP_up.norm <- microbiome::transform(asv.LP_up,
+                                             transform = "compositional")
+asv.LP_N.norm <- microbiome::transform(asv.LP_N,
+                                             transform = "compositional")
+```
+
+"Now we can test alpha diversity per zone based on Hill numbers at different diversity levels (q = 0 (observed), q = 1 (shannon exponential), q = 2 (multiplicative simpson)).
+
+Note: for Hill numbers, alpha diversity per zone cannot be obtained as a mean across samples. The calculation is different as performed by function alpha_div()." - Clever et al. (2022)
+
+What do these "different diversity levels" do for us?
+- since no single metric fully captures diversity, using a trio of metrics that complement each other can help us best understand the complex microbial diversity in our samples. Observed: species richness - "Species richness emphasizes (provides higher leverage to) rare species" (Roswell, 2022), Shannon exponential: "Hill–Shannon diversity emphasizes neither rare nor common species.", multiplicative simpson: "Hill–Simpson diversity emphasizes (provides higher leverage to) the common species."
+
+```{r test a-div per season & region}
+#Coiba upwelling
+alpha_div(countable = asv.Coiba_up.norm, qvalue = 0)
+alpha_div(countable = asv.Coiba_up.norm, qvalue = 1)
+alpha_div(countable = asv.Coiba_up.norm, qvalue = 2)
+
+#Coiba non-upwelling
+alpha_div(countable = asv.Coiba_N.norm, qvalue = 0)
+alpha_div(countable = asv.Coiba_N.norm, qvalue = 1)
+alpha_div(countable = asv.Coiba_N.norm, qvalue = 2)
+
+#Las Perlas upwelling
+alpha_div(countable = asv.LP_up.norm, qvalue = 0)
+alpha_div(countable = asv.LP_up.norm, qvalue = 1)
+alpha_div(countable = asv.LP_up.norm, qvalue = 2)
+
+#Las Perlas non-upwelling
+alpha_div(countable = asv.LP_N.norm, qvalue = 0)
+alpha_div(countable = asv.LP_N.norm, qvalue = 1)
+alpha_div(countable = asv.LP_N.norm, qvalue = 2)
+```
+
+Test significance of differences between a-div
+
+###paused here 8/16 - 14:00 - need to change numbers for metadata columns to call correct ones
+
+```{r run Kruskal-Wallis test and post-hoc Dunn}
+
+#full dataset
+temp_table <- data.frame(sample_data(ROHR_08_obj_phylo_root))
+temp_table[, c(5, 8:41)] <- list(NULL) #adjust these numbers to define which metadata columns to EXCLUDE
+temp_table <- temp_table %>% tibble::rownames_to_column("Sample")
+temp_table <- temp_table %>% dplyr::rename(Group = region_season)
+temp_table$Group <- as.character(temp_table$Group)
+
+#comparisons between seasons & regions
+hill_hierarchy <- temp_table[, c(1, 8)] #adjust these numbers for the comparisons between groups you want to make - in this case RRR number (renamed to "Sample") & Group (region_season)
+
+```
+
+```{r significance test season region}
+#If get error when trying to run div_test that sample sizes are outside the bounds of a shapiro test, make sure that names of "hill_hierarchy" and "asv.whole.norm" match (since we added RRR_ at the beginning)
+
+divtestresult.q0 <- div_test(asv.whole.norm, qvalue = 0,
+                             hierarchy = hill_hierarchy, posthoc = TRUE)
+divtestresult.q1 <- div_test(asv.whole.norm, qvalue = 1,
+                             hierarchy = hill_hierarchy, posthoc = TRUE)
+divtestresult.q2 <- div_test(asv.whole.norm, qvalue = 2,
+                             hierarchy = hill_hierarchy, posthoc = TRUE)
+
+divtestresult.q0 #There are not significant differences between seasons and regions in observed a-div --> p.adj values of between-season comparisons very high (p = 0.87 to 1.0)
+
+#normality.pvalue = 1.462341e-07 #data are not normal
+#homogeneity.pvalue = 6.969352e-06 #data are non homogeneous (even post-rarefaction)
+#groups = 4
+#"Kruskal-Wallis Test"
+# chi.squared          df     p.value 
+#  1.2447623   3.0000000   0.7422897   # not significant
+
+divtestresult.q1 #NSD in shannon exponential across all regions & seasons (pairwise comparisons closest to significant p = ~0.17 for upwelling-upwelling Coiba-LP & non-upwelling Coiba VS upwelling LP, which makes sense given the assumption that differences would be most pronounced across the different seasons, but mostly in the site that experiences upwelling (LP))
+
+#normality.pvalue = 0.0001228739
+#homogeneity.pvalue = 0.0003040027
+#groups = 4
+#"Kruskal-Wallis Test"
+# chi.squared          df     p.value 
+#  6.2068421   3.0000000   0.1019693   #close, but not significant
+ 
+divtestresult.q2 #Significant in multiplicative simpson! --> driven by differences between LP up VS Coiba NUp (p = 0.0242); and LP up - Coiba up ( p = 0.0368)
+
+#normality.pvalue = 0.09285231 #closer to normal and homogeneous
+#homogeneity.pvalue = 0.543964
+#groups = 4
+#"ANOVA"
+#             Df Sum Sq Mean Sq F value Pr(>F)  
+# Group        3   2165   721.7   4.539 0.0187 * #significant difference
+# Residuals   15   2385   159.0   
+
+```
+
+
+
+
+

@@ -1,0 +1,2228 @@
+---
+title: "ROHR_06_Environmental_Data"
+author: "LLL"
+date: "2023-03-16"
+output: html_document
+root.dir: /Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data")
+
+Markdown document to read, clean, and plot environmental data (water temperature, for now) collected in 2021-22 in Las Perlas and Coiba using HOBO data loggers. Water temperature measurements were taken continuously during deployment at 15 (Las Perlas) to 30 minute (Coiba) intervals. Metadata file for these data = "RRR_watertemp_metadata". Separate files in "RRR_HOBO_Environmental_data" folder for each site (n = 3 per gulf). Water temperature records were retrieved for ~August/September 2021 through March/April 2022. Sensors were deployed at 15-25 ft (4.5 to 7.6 m) depth. Limited DO data also available and manipulated at bottom of script. Data courtesy of Anabell Cornejo. 
+
+Coiba (Gulf of Chiriqui) sites:
+    Bahia Damas ("Damas_RRR1"), lat: 7.402953962, long: -81.665283, date range: 2021-08-20 to	2022-04-19
+    Canal de Afuera ("Afuera_RRR1"), lat: 7.695941962, long:	-81.63292903, date range: 2021-08-19 to	2022-04-19
+    Uva ("Uvas_RRR1"), lat: 7.815128015, long:	-81.75892202, date range: 2021-08-22 to	2022-04-21
+    
+Las Perlas (Gulf of Panama) sites: 
+    Contadora ("Contadora_RRR1"), lat: 8.63245, long:	-79.02834, date range: 2021-08-30	to 2022-03-22
+    Saboga (Saboga_RRR1"), lat: 8.62807, long:	-79.05462, date range: 2021-08-30	to 2022-04-05
+    Mogo Mogo ("MogoM_RRR1"), lat: 8.57442, long:	-79.01646 2021-09-01 to	2022-03-25
+    
+Headers to files: Gulf (Chiriqui or Panama),	Site (Damas, Afuera, Uvas, Contadora, Saboga, MogoMogo)	Num (measurement #),	Date (YYYY-MM-DD),	Time (GMT-5; 24h time),	Temp (ºC)
+
+```{r load required packages, echo = FALSE}
+library(tidyverse) #data manipulation
+library(lubridate) #for date-time column
+library(colorBlindness) #check color choices for color blind accessibility
+library(tidyquant) #smoothing temp data
+library(naniar) #dealing with missing data
+```
+
+###April 2024 updates = adding in missing 2022 April/May data###
+
+###October 2024 updates = adding DO data from the RRR project and Steve Paton's data
+
+Pre-processing of raw data files included merging the datasets from 2021 & early 2022 with the next 2022 datasets (raw data files denoted by a "_NEW" ending, to distinguish from earlier data files) to fully cover our study period (temp monitoring is still ongoing as of Oct. 2024), manually splitting the date:time column into date and time for ease of reading (but this is a useless step given that we're going to merge them again in R...), making the date format match what R likes (Y%-m%-d%), and adjusting the "Num" column of the new dataset to be consecutive, as it appears that this column is reset for each logger data download (i.e., same number appears multiple times in the two different datasets), thus if the original reference number is needed, we have to go back to the unmodified source file (e.g., "Afuera_RRR1_NEW"). 
+
+```{r read in water temp data, echo = FALSE}
+#first check WD set to correct location
+print(getwd())
+#in this case WD should be:
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data")
+
+#Coiba water data - measurements taken in 30 min intervals
+Afuera <- read.csv("Afuera_RRR1.csv", colClasses = c("character", "character", "character", "Date", "character", "numeric")) # covers 8/19/21 to 11/16/22
+Damas <- read.csv("Damas_RRR1.csv", colClasses = c("character", "character", "character", "Date", "character", "numeric")) # covers 8/20/21 to 11/16/22 : small data gap between 4-19-22 9 AM and 4-20-22 8:30 AM)
+Uvas <- read.csv("Uvas_RRR1.csv", colClasses = c("character", "character", "character", "Date", "character", "numeric")) # covers 8/22/21 to 4/21/22 (have data for Nov 2022 onwards, missing Apr - Nov 2022)
+
+#Las Perlas water data - measurements taken in 15 min intervals
+Contadora <- read.csv("Contadora_RRR1.csv", colClasses = c("character", "character", "character", "Date", "character", "numeric")) # covers 8/30/21 to 8/2/22
+Saboga <- read.csv("Saboga_RRR1.csv", colClasses = c("character", "character", "character", "Date", "character", "numeric")) # covers 09/01/2021 to 08-05-2022
+MogoMogo <- read.csv("MogoM_RRR1.csv", colClasses = c("character", "character", "character", "Date", "character", "numeric")) # covers 9/1/21 to 8/5/22
+```
+
+```{r summary of read data}
+summary(Afuera)
+```
+
+```{r remove NA rows, echo = FALSE}
+#remove extra rows from Contadora dataset
+Contadora <- na.omit(Contadora)
+```
+
+
+```{r create basic water temp plot, echo = FALSE}
+
+#test plot with Afuera --> Chiriqui (Coiba)
+ggplot(Afuera, aes(Date, Temp)) +
+           geom_point(na.rm=TRUE)
+
+#test plot with Contadora --> Panama (Las Perlas)
+ggplot(Contadora, aes(Date, Temp)) +
+           geom_point(na.rm=TRUE)
+
+#test plot with Damas --> Chiriqui (Coiba)
+ggplot(Damas, aes(Date, Temp)) +
+           geom_point(na.rm=TRUE)
+
+#test plot with Mogo Mogo --> Panama (Las Perlas)
+ggplot(MogoMogo, aes(Date, Temp)) +
+           geom_point(na.rm=TRUE)
+
+#test plot with Saboga --> Panama (Las Perlas)
+ggplot(Saboga, aes(Date, Temp)) +
+           geom_point(na.rm=TRUE)
+
+#test plot with Uvas --> Chiriqui (Coiba)
+ggplot(Uvas, aes(Date, Temp)) +
+           geom_point(na.rm=TRUE)
+```
+From these basic plots, we can see that we'll need to simplify the data quite a bit to help with visualization and reduce overplotting. 
+
+We want to create a single data frame with the temperature data for all 6 sites. However, each site has a different start/end date (thus different numbers of data points) and the Las Perlas sites are at 15 min intervals while the Coiba ones are at 30 min intervals. Thus, we'll need to find a way to standardize across these datasets so we can plot all of them. 
+
+``` {r create a date:time category for Afuera, echo = FALSE}
+#merge date & time into a single, new column
+Afuera <- Afuera %>%
+  unite("Date_Time", Date:Time, sep = " ", remove = FALSE)
+
+Afuera #check this worked - yes! now have a "Date_Time" column (class = character)
+
+# check data types (and contents) of data frame
+# date & time read in as characters, temp as numeric --> need to change these
+
+Afuera$Date_Time <- as.POSIXct(Afuera$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+Afuera$Date <- as.Date(Afuera$Date) #this worked!!
+
+Afuera
+
+```
+``` {r create a date:time category for Contadora, echo = FALSE}
+#merge date & time into a single, new column
+Contadora <- Contadora %>%
+  unite("Date_Time", Date:Time, sep = " ", remove = FALSE)
+
+Contadora #check this worked - yes! now have a "Date_Time" column (class = character)
+
+# check data types (and contents) of data frame
+# date & time read in as characters, temp as numeric --> need to change these
+
+Contadora$Date_Time <- as.POSIXct(Contadora$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+Contadora$Date <- as.Date(Contadora$Date) #this worked!!
+
+Contadora
+
+```
+
+``` {r create a date:time category for Damas, echo = FALSE}
+#merge date & time into a single, new column
+Damas <- Damas %>%
+  unite("Date_Time", Date:Time, sep = " ", remove = FALSE)
+
+Damas #check this worked - yes! now have a "Date_Time" column (class = character)
+
+# check data types (and contents) of data frame
+# date & time read in as characters, temp as numeric --> need to change these
+
+Damas$Date_Time <- as.POSIXct(Damas$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+Damas$Date <- as.Date(Damas$Date) #this worked!!
+
+Damas
+
+```
+
+``` {r create a date:time category for MogoMogo, echo = FALSE}
+#merge date & time into a single, new column
+MogoMogo <- MogoMogo %>%
+  unite("Date_Time", Date:Time, sep = " ", remove = FALSE)
+
+MogoMogo #check this worked - yes! now have a "Date_Time" column (class = character)
+
+# check data types (and contents) of data frame
+# date & time read in as characters, temp as numeric --> need to change these
+
+MogoMogo$Date_Time <- as.POSIXct(MogoMogo$Date_Time, tz = "America/Panama", format = "%m/%d/%Y %H:%M") #note that specified format for date/time is different in the MogoMogo source file, but can be standardized by specifying initial format 
+
+MogoMogo$Date <- as.Date(MogoMogo$Date, format = "%m/%d/%Y") #this worked!!
+
+MogoMogo
+
+```
+
+``` {r create a date:time category for Saboga, echo = FALSE}
+#merge date & time into a single, new column
+Saboga <- Saboga %>%
+  unite("Date_Time", Date:Time, sep = " ", remove = FALSE)
+
+Saboga #check this worked - yes! now have a "Date_Time" column (class = character)
+
+# check data types (and contents) of data frame
+# date & time read in as characters, temp as numeric --> need to change these
+
+Saboga$Date_Time <- as.POSIXct(Saboga$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+Saboga$Date <- as.Date(Saboga$Date) #this worked!!
+
+Saboga
+
+```
+
+``` {r create a date:time category for Uvas, echo = FALSE}
+#merge date & time into a single, new column
+Uvas <- Uvas %>%
+  unite("Date_Time", Date:Time, sep = " ", remove = FALSE)
+
+Uvas #check this worked - yes! now have a "Date_Time" column (class = character)
+
+# check data types (and contents) of data frame
+# date & time read in as characters, temp as numeric --> need to change these
+
+Uvas$Date_Time <- as.POSIXct(Uvas$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+Uvas$Date <- as.Date(Uvas$Date) #this worked!!
+
+Uvas
+
+```
+```{r merge all 6 sites temp data, echo = FALSE}
+temp <- bind_rows(Afuera, Damas, Uvas, Contadora, Saboga, MogoMogo, .id = NULL)
+temp
+```
+
+```{r save merged temperature dataset, echo = FALSE}
+saveRDS(temp, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/water_temp_data_coiba_lasperlas_21_22.rds")
+
+#read in merged data, if not running code from start
+temp <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/water_temp_data_coiba_lasperlas_21_22.rds")
+```
+
+From this massive merged dataset (152451 observations) with Gulf, Site, Num, Date_Time, Date, Time, and Temp, we need to clean the raw data to make easy to understand temperature graphs - that is, make sure that we can see general trends in temperature across each site across seasons and gulfs. This will require first making the time intervals for temperature equal across gulfs (15 min in LP and 30 min in LP, right now) as well as potentially trimming start/end dates so all measurements line up
+
+```{r visualized the merged temperature dataset (raw), echo = FALSE}
+#line graph
+ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+           geom_line(na.rm=TRUE)
+```
+Even with this overplotted plot, we can observe the daily variation in water temperature as well as the seasonal variation only present in the Las Perlas (Gulf of Chiriquí) sites. We can also see that the temperature is generally consistent across our sampling sites on any given day/time. 
+
+```{r plot temperature with better graphics, echo = FALSE}
+#assign colors to sites
+Blue2DarkOrange18Steps #color blind friendly palette
+
+site_cols <- c( "#FFAD65", "#FF6E00", "#662700", "#99FFFF", "#009999", "#006666")
+
+names(site_cols) = unique(temp$Site)
+
+site_cols
+
+#set theme
+theme_set(theme_bw())
+
+#reorder sites to group by gulf
+temp$Site <- factor(temp$Site, levels = c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo'))
+
+ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+           geom_line(na.rm=TRUE) +
+          scale_color_manual(values = site_cols) +
+  ylab("Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+
+cvdPlot() #check plots for colorblind & B&W friendliness
+```
+```{r add vertical lines to indicate sampling, echo = FALSE}
+
+##need to extend data to cover upwelling sampling (currently only have temp data up to mid April)
+
+
+ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+           geom_line(na.rm=TRUE) +
+          scale_color_manual(values = site_cols) +
+  ylab("Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#787276", linewidth = 2) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#787276", linewidth = 2) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#373737", linewidth = 2) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#373737", linewidth = 2) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+
+```
+
+```{r add vertical shaded bars to indicate sampling, echo = FALSE}
+
+##need to extend data to cover upwelling sampling (currently only have temp data up to mid April)
+
+# Shade from Oct to Dec 2021 (non-upwelling sampling) and from March through April 2022 (upwelling sampling)
+
+ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#FFE5CB", alpha = 0.3, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#7F7D9C", alpha = 0.3, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+           geom_line(na.rm=TRUE) +
+          scale_color_manual(values = site_cols) +
+  ylab("Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+
+cvdPlot() #check plots for colorblind & B&W friendliness
+ 
+```
+```{r shaded bars + dashed lines along edges, echo = FALSE}
+  
+# Shade from Oct to Dec 2021 (non-upwelling sampling) and from March through April 2022 (upwelling sampling)
+
+ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#FFE5CB", alpha = 0.3, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#7F7D9C", alpha = 0.3, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#787276", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#787276", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#373737", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#373737", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+           geom_line(na.rm=TRUE) +
+          scale_color_manual(values = site_cols) +
+  ylab("Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+cvdPlot() #check plots for colorblind & B&W friendliness
+```
+Tidyquant package - to calculate simple moving averages:
+https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ04-charting-with-tidyquant.html
+
+Helpful page for working with timeseries data (including table with codes for meanings of common symbols for dates/times) - https://r-charts.com/evolution/time-series-ggplot2/
+
+```{r smooth temp plot attempts, echo = FALSE}
+#using geom_ma (tidyquant package) to calculate simple moving average
+smooth_temp <- temp %>%
+  ggplot(aes(x = Date, y = Temp, color = Site)) +
+  scale_color_manual(values = site_cols) +
+  geom_line(linewidth = 1, alpha = 0.2) + # define line width and transparency of raw temp data
+  geom_ma(ma_fun = SMA, n = 100, linetype = 1, size = 2) +  # Plot SMA (standard moving average) across 100 timepoints
+  coord_x_date(xlim = c("2021-10-01", "2022-04-30")) + # Zoom in
+ ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+smooth_temp
+
+#using geom_ma (tidyquant package) to calculate simple moving average (Afuera only)
+ggplot(Afuera, aes(Date_Time, Temp)) +
+           geom_line(na.rm=TRUE) +
+  ylab("Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  geom_ma(ma_fun = SMA, n = 40, color = "red4", linetype = 1) + #add simple moving average (averages points by factor of n)
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+
+#using geom_smooth to add smoothed conditional mean
+ggplot(temp, aes(Date, Temp, color = Site)) +
+           geom_line(na.rm=TRUE, alpha = 0.2) +
+  scale_color_manual(values = site_cols) +
+  ylab("Temperature (ºC)") +
+  xlab("Date (months)") +
+  coord_x_date(xlim = c("2021-10-01", "2022-04-30")) + # Zoom in
+  geom_smooth(se = FALSE) + #remove confidence interval around smooth
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+```
+```{r put best graph elements so far together, echo = FALSE}
+#temperature graph with bars for sampling season (salmon (#FFE5CB) = non-upwelling, flint #7F7D9C = upwelling)
+#vertical dashed lines mark start & end dates of sampling (slightly darker for upwelling)
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+water_temp_final <- ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#FFE5CB", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#7F7D9C", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#787276", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#787276", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#373737", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#373737", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_ma(ma_fun = SMA, n = 96, linetype = 1, size = 2) +  # Plot SMA (standard moving average) across 96 timepoints (given 15 to 30 min intervals, this means calculating the average over 24 to 48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 14), #change size of months (x-axis)
+        axis.title.x = element_text(size = 16), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 14), #change size of y-axis #s
+        axis.title.y = element_text(size = 16), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 14) #change size of legend text
+        )
+
+water_temp_final
+
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Water Temperature Data 21-22", plot = water_temp_final, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 14, height = 10, device='pdf', dpi=700)
+```
+
+```{r put best graph elements so far together with improvements for poster, echo = FALSE}
+#temperature graph with bars for sampling season 
+#vertical dashed lines mark start & end dates of sampling (slightly darker for upwelling)
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+water_temp_final2 <- ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_ma(ma_fun = SMA, n = 96, linetype = 1) +  # Plot SMA (standard moving average) across 96 timepoints (given 15 to 30 min intervals, this means calculating the average over 24 to 48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.85, 0.15), #make legend inside plot
+        legend.title.align = 0.25)  #adjust legend title position
+
+water_temp_final2
+
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Water Temperature Data 21-22 V3.pdf", plot = water_temp_final2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a jpg}
+ggsave(filename = "Water Temperature Data 21-22 V3.png", plot = water_temp_final2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r put best graph elements so far together without sampling bars, echo = FALSE}
+#temperature graph with bars for sampling season 
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+water_temp_final3 <- ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-01-01 06:00:00"), xmax = as.POSIXct("2022-04-01 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+          scale_color_manual(values = site_cols) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_ma(ma_fun = SMA, n = 96, linetype = 1, linewidth = 2) +  # Plot SMA (standard moving average) across 96 timepoints (given 15 to 30 min intervals, this means calculating the average over 24 to 48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change size of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.85, 0.15), #make legend inside plot
+        legend.title.align = 0.25) #adjust legend title position
+
+water_temp_final3
+
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Water Temperature Data 21-22 General", plot = water_temp_final3, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 14, height = 10, device='pdf', dpi=700)
+```
+
+###Making a modified version of these temperature graphs showing the Pacific - Caribbean temp comparison
+
+Steve Paton (STRI Staff Scientist) and his team have been monitoring SST, along with other characteristics depending on the site (e.g., chlorophyll, DO, air temp, salinity, wind speed & direction, secchi depth, etc.), as part of the Smithsonian Physical Monitoring Program. All of the data used below are publicly available on STRI's webpage: current link (4/12/24) https://biogeodb.stri.si.edu/physical_monitoring/research/sst
+
+Data are retrieved every 4-6 mo by Steve's team and uploaded to the respective pages. Data collection varies slightly between the Pacific and the Caribbean (weekly manual measurements - Pacific; daily measurements: Bocas dock, in-situ data loggers: select Bocas and Colón/Galeta sites in Caribbean). 
+
+"Water temperature is measured using Hobo U22 Water Temperature Pro v2 probes (WaterTemp_Hobo_U22_001.pdf) and Campbell Sci. CS 107 temperature probes (Temperature_Probe_Model_107.pdf)." (from STRI website)
+
+In selecting temperature measurement sites from the Caribbean, we tried - to the greatest extent possible - to match both sampling location (same area as where fish were collected), depth in water column (i.e., shallow reef but fully submerged), and frequency of measurements (ideally 15-20 min intervals) to match the data collected by the RRR team in the Pacific (which explicitly matched our collections since most fish collections were done in tandem with the deployment of HOBO data loggers). Listed below are the coordinates of our main sampling locations in the Caribbean, followed by the coordinates of the available STRI SST data.
+
+```{r read metadata from fish collections}
+Fish_metadata <- read.csv("RRRfishDissectionData_RAW_M2_D19_Y24.csv")
+summary(Fish_metadata)
+
+
+
+#need to fix categories for certain columns, given that unexpected characters (e.g., <0.01) are changing numeric columns to character, but this doesn't matter for our purposes right now
+
+# Column Headers: 
+#RRR	ocean	region	site	date	time	collection_yr	season	sample	preservative	family	species	sister_pair	individual	wholefish_ID	totalWT	guttedWT	totalLength	standardLength	gutLength	gonadWT	liverWT	head_width	epaxialis_width	regurgitated_food	DietStrategy	sex	eggs	head_shot	gut_shot	notes
+```
+```{r streamlining fish metadata}
+#remove non-useful columns
+Fish_metadata <- Fish_metadata %>% select(RRR, ocean, region, site, date, season, sample, family, species, sister_pair)
+
+#subset to just have 1 entry per fish (instead of replicate whole fish, stomach, etc.)
+Fish_metadata <- subset(Fish_metadata, sample == "Whole fish")
+
+```
+
+```{r unique sampling sites for fish}
+#for ease of interpretation, first subset datasets by region
+
+#will need to clean up the region identifiers, as we have "Bocas" and "Bocas del Toro", "Portobelo", "East Caribbean", and "Panama"
+
+unique(Fish_metadata$site)
+
+unique(Fish_metadata$region)
+
+#for now, we'll consider all Bocas data as one, and likewise merge all Eastern Atlantic (Portobelo, East Caribbean) samples under the region identifier of "Portobelo"
+Fish_metadata$region <- replace(Fish_metadata$region, Fish_metadata$region == "Bocas del Toro", "Bocas")
+
+Fish_metadata$region <- replace(Fish_metadata$region, Fish_metadata$region == "East Caribbean", "Portobelo")
+
+#check this worked
+unique(Fish_metadata$region) #yes!
+
+#since focusing on new Caribbean data, will keep TEP as one lump (call ocean rather than region)
+TEP <- subset(Fish_metadata, ocean == "Pacific")
+
+#Caribbean
+
+Bocas_fish <- subset(Fish_metadata, region == c("Bocas")) # n = 107
+
+Portobelo_fish <- subset(Fish_metadata, region == c("Portobelo")) # n = 179
+
+unique(Bocas_fish$site)
+#"Bocas del Toro" "Muelle STRI"    "Abuela"         "Hospital"       "Isla Coral"     "Eric"          "Donato"
+
+#note that "Bocas del Toro" is not a specific site - this is one fish from May 2022 (C. cruentata)
+#we're most interested in samples from May 2023, which were collected from: "Muelle STRI"    "Abuela"         "Hospital"       "Isla Coral"     "Eric"          "Donato"
+
+unique(Portobelo_fish$site)
+#"Isla Grande"    "Punta Galeta"   "San Lorenzo"    "Octopus Garden" "Cacique"        "Portobelo"     "Huerta"         "3 Hermanas"     "Medina"         "Puerto Frances" "Faro" 
+
+#note that "Portobelo" is not a specific site - these are a few December and March, 2023 samples (Natasha's collections)
+#we're most interested in samples from May 2023, which were collected from: "Huerta"         "3 Hermanas"     "Medina"         "Puerto Frances" "Faro" 
+```
+
+```{r coordinates of sampling sites & water measurements Caribbean}
+
+#Bocas --> fish collections May 2 to 11, 2023
+
+#Portobelo --> main fish collections May 22 to 26, 2023 (preliminary sampling Portobelo, Isla Grande, San Lorenzo: July 7, 2022 - July 27, 2022)
+
+#fish sampling sites - Caribbean ###need to add these data in!
+Caribbean_sampling_sites <- tibble::tribble( 
+  ~sampling_site,   ~latitude,     ~longitude,
+
+)
+
+#water SST measurement locations - most complete electronic HOBO data logs available currently
+Water_sampling_sites_CAR <- tibble::tribble( 
+  ~sampling_site,   ~latitude,     ~longitude,
+  "Bocas Dock", 9.351553, -82.256565, # Bocas STRI dock tower, measurements every 15 min
+  "Isla Cayo Agua", 9.133500, -82.037450, # Bocas - every 30 min
+  "Galeta", 9.402742, -79.860837 #Galeta tower - every 15 min
+)
+```
+
+```{r coordinates of sampling sites & water measurements Pacific}
+#these coordinates are used in "Skin Figures Version 1.Rmd" document to create inset maps of our TEP sampling sites
+
+###GPS coordinates
+TEP_sampling_sites <- tibble::tribble( 
+  ~sampling_site,   ~latitude,     ~longitude,
+  "Pacheca", 8.662814, -79.055719, #Las Perlas
+  "Chapera", 8.592016, -79.019052, #Las Perlas
+  "Saboga",  8.6284317, -79.055171, #Las Perlas
+  "Machete", 7.6381651, -81.737106, #Coiba
+  "Cocos", 7.6158149, -81.714212, #Coiba
+  "Frijol", 7.6546197,  -81.727973, #Coiba
+  "Afuera", 7.695941962,   -81.63292903, #Coiba
+  "Granito", 7.5939362,   -81.712836, #Coiba
+)
+
+###GPS coordinates
+Water_sampling_sites_TEP <- tibble::tribble( 
+  ~sampling_site,   ~latitude,     ~longitude,
+  "Afuera", 7.695941962, -81.63292903, #Coiba
+  "Damas", 7.402953962, -81.665283, #Coiba
+  "Uvas", 7.815128015, -81.75892202, #Coiba
+  "Contadora", 8.63245, -79.02834, #Las Perlas
+  "Saboga", 8.62807, -79.05462, #Las Perlas
+  "MogoMogo", 8.57442, -79.01646, #Las Perlas
+)
+
+```
+
+####START HERE to read & graph temperature data
+
+```{r read in Steve Paton's Caribbean Data - Bocas & Galeta (near Portobelo)}
+#Galeta water data - measurements taken in 30 min intervals for recent measurements
+Galeta_channel <- read.csv("Galeta_Channel_03m_wt.csv", colClasses = c("character", "character", "numeric", "numeric", "character", "character", "integer"))  
+
+#Galeta tower water data - measurements taken in 15 min intervals for most recent measurements
+Galeta_tower <- read.csv("galeta_tower_wt_elect.csv", colClasses = c("character", "character", "numeric", "numeric", "character", "character")) #starts 2002 - through jan 2, 2024
+
+# Bocas <- read.csv("bocas_dock_wt_man.csv", colClasses = c("character", "character", "numeric", "numeric", "character", "character")) #omit this dataset if possible, as it only has daily manual readings, as opposed to being a fixed data logger with 15 to 60 min intervals, as for the other logger - will replace with other sources
+
+Bocas_tower <- read.csv("bocas_tower_wt_elect.csv", colClasses = c("character", "character", "numeric", "numeric", "character", "character")) #starts 2002 - through jan 2, 2024
+
+BocasCayoAgua <- read.csv("Isla_Cayo_Agua_03m_wt.csv", colClasses = c("character", "character", "numeric", "numeric", "character", "character", "integer")) 
+```
+
+```{r fixing date format for R to recognize}
+Galeta_channel <- Galeta_channel %>% 
+  mutate(date = as.Date(as.character(date), format = "%d/%m/%Y")) #note that the date formats for the datasets may be different!!!
+
+Galeta_tower <- Galeta_tower %>% 
+  mutate(date = as.Date(as.character(date), format = "%d/%m/%Y")) 
+
+Bocas_tower <- Bocas_tower %>% 
+  mutate(date = as.Date(as.character(date), format = "%d/%m/%Y"))
+
+BocasCayoAgua <- BocasCayoAgua %>% 
+  mutate(date = as.Date(as.character(date), format = "%d/%m/%Y")) 
+```
+
+```{r fixing date time column - Galeta}
+#need to change from d%/m%/Y% to Y%/m%/d%
+
+#not necessarily the cleanest way to do this, but here I first split the datetime column to be able to fix the date
+df <- Galeta_channel %>% separate(datetime, into = c('date2', 'time'), sep = " ")
+
+#change date format, as done above
+df <- df %>% 
+  mutate(date2 = as.Date(as.character(date2), format = "%d/%m/%Y")) #note that the date formats for the two datasets are different!!!
+
+#merge date & time into a single, new column
+Galeta_channel <- df %>%
+  unite("Date_Time", date2:time, sep = " ", remove = FALSE) #here could use "remove = TRUE" so we don't get stuck with duplicate columns for date, but we'll fix this later on
+
+#not necessarily the cleanest way to do this, but here I first split the datetime column to be able to fix the date
+df <- Galeta_tower %>% separate(datetime, into = c('date2', 'time'), sep = " ")
+
+#change date format, as done above
+df <- df %>% 
+  mutate(date2 = as.Date(as.character(date2), format = "%d/%m/%Y")) #note that the date formats for the two datasets are different!!!
+
+#merge date & time into a single, new column
+Galeta_tower <- df %>%
+  unite("Date_Time", date2:time, sep = " ", remove = FALSE) #here could use "remove = TRUE" so we don't get stuck with duplicate columns for date, but we'll fix this later on
+
+```
+
+```{r fixing date time column - Bocas}
+#need to change from "%m/%d/%Y" to Y%/m%/d%
+
+#not necessarily the cleanest way to do this, but here I first split the datetime column to be able to fix the date
+df <- Bocas_tower %>% separate(datetime, into = c('date2', 'time'), sep = " ")
+
+#change date format, as done above
+df <- df %>% 
+  mutate(date2 = as.Date(as.character(date2), format = "%m/%d/%Y")) #note that the date formats for the two datasets are different!!!
+
+#merge date & time into a single, new column
+Bocas_tower <- df %>%
+  unite("Date_Time", date2:time, sep = " ", remove = FALSE) #here could use "remove = TRUE" so we don't get stuck with duplicate columns for date, but we'll fix this later on
+
+
+df <- BocasCayoAgua %>% separate(datetime, into = c('date2', 'time'), sep = " ")
+
+#change date format, as done above
+df <- df %>% 
+  mutate(date2 = as.Date(as.character(date2), format = "%d/%m/%Y")) #note that the date formats for the two datasets are different!!!
+
+#merge date & time into a single, new column
+BocasCayoAgua <- df %>%
+  unite("Date_Time", date2:time, sep = " ", remove = FALSE) #here could use "remove = TRUE" so we don't get stuck with duplicate columns for date, but we'll fix this later on
+
+```
+
+```{r read in TEP data, if not running code from start}
+#read in merged data, if not running code from start
+temp <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/water_temp_data_coiba_lasperlas_21_22.rds")
+```
+
+```{r make columns match RRR data}
+#remove non-useful columns
+Galeta_channel <- Galeta_channel %>% select(Date_Time, date, time, wt)
+
+#rename columns to match
+Galeta_channel <- rename(Galeta_channel, c(Date = date, Temp = wt, Time = time))
+
+#remove non-useful columns
+Galeta_tower <- Galeta_tower %>% select(Date_Time, date, time, wt)
+
+#rename columns to match
+Galeta_tower <- rename(Galeta_tower, c(Date = date, Temp = wt, Time = time))
+
+
+#remove non-useful columns
+Bocas_tower <- Bocas_tower %>% select(Date_Time, date, time, wt)
+
+#rename columns to match
+Bocas_tower <- rename(Bocas_tower, c(Date = date, Temp = wt, Time = time))
+
+#reduce columns in Pacific dataset as well
+temp <- temp %>% select(Gulf, Site, Date_Time, Date, Time, Temp)
+
+#remove non-useful columns
+BocasCayoAgua <- BocasCayoAgua %>% select(Date_Time, date, time, wt)
+
+#rename columns to match
+BocasCayoAgua <- rename(BocasCayoAgua, c(Date = date, Temp = wt, Time = time))
+
+#add columns for gulf and site to Caribbean data
+
+Galeta_tower['Gulf']='Portobelo' #not really true, but works for our purposes
+
+Galeta_tower['Site']='Galeta tower' 
+
+Galeta_channel['Gulf']='Portobelo' #not really true, but works for our purposes
+
+Galeta_channel['Site']='Galeta channel' 
+
+Bocas_tower['Gulf']='Almirante' 
+
+Bocas_tower['Site']='Bocas tower'
+
+BocasCayoAgua['Gulf']='Almirante' 
+
+BocasCayoAgua['Site']='Bocas Cayo Agua'
+
+#reorder columns in Caribbean data to match Pacific
+Galeta_channel <- Galeta_channel %>% relocate(c("Gulf", "Site"), .before = Date_Time)
+
+Galeta_tower <- Galeta_tower %>% relocate(c("Gulf", "Site"), .before = Date_Time)
+
+Bocas_tower <- Bocas_tower %>% relocate(c("Gulf", "Site"), .before = Date_Time)
+
+BocasCayoAgua <- BocasCayoAgua %>% relocate(c("Gulf", "Site"), .before = Date_Time)
+```
+
+
+```{r summary of datasets to check classes}
+summary(Galeta_tower)  #will need to fix Date_Time column class & exclude outlier from Temp (0.00)
+
+summary(Galeta_channel) 
+
+summary(Bocas_tower) #will need to fix Date_Time column class & exclude outlier from Temp (0.00)
+
+summary(BocasCayoAgua)
+
+summary(temp)
+```
+```{r convert date time column to official POSIXct}
+Galeta_tower$Date_Time <- as.POSIXct(Galeta_tower$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+Galeta_channel$Date_Time <- as.POSIXct(Galeta_channel$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+
+Bocas_tower$Date_Time <- as.POSIXct(Bocas_tower$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+BocasCayoAgua$Date_Time <- as.POSIXct(BocasCayoAgua$Date_Time, tz = "America/Panama", format = "%Y-%m-%d %H:%M")
+
+```
+
+
+```{r remove 0.00 temp (missing data) from dataset}
+#using naniar, a tidy package for dealing with missing data, we can fix some of the missing data issues in the temp column
+
+GaletaNA <- Galeta_tower %>% replace_with_na(Galeta_tower, replace = list(Temp = 0.00))
+
+#check that this worked
+summary(GaletaNA)  
+
+
+BocasNA <- Bocas_tower %>% replace_with_na(Bocas_tower, replace = list(Temp = 0.00))
+
+#check that this worked
+summary(BocasNA)  
+
+
+```
+
+
+```{r merge all temperature data for Pacific and Caribbean}
+Panama_temp <- bind_rows(temp, Galeta_channel, BocasCayoAgua, .id = NULL) #excluding Bocas tower which has issues & Galeta tower, for comparability
+
+summary(Panama_temp)
+
+unique(Panama_temp$Site)
+```
+
+```{r save new merged temp dataset!!!}
+saveRDS(Panama_temp, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/water_temp_data_Pacific_and_Caribbean.rds")
+
+```
+
+###Start here if Transisthmian temp code already run
+
+```{r read merged temp dataset}
+#read in merged data, if not running code from start
+Panama_temp <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/water_temp_data_Pacific_and_Caribbean.rds")
+```
+
+```{r graphing all temp data using Pacific template, echo = FALSE}
+#assign new colors to sites
+#Blue2DarkOrange18Steps #color blind friendly palette
+
+#color options:
+#"#990F0F", "#B22C2C", "#CC5151", "#E57E7E", "#FFB2B2", "#99540F", "#B26F2C", "#CC8E51", "#E5B17E", "#FFD8B2", "#6B990F", "#85B22C","#A3CC51", "#C3E57E", "#E5FFB2", "#0F6B99", "#2C85B2", "#51A3CC", "#7EC3E5", "#B2E5FF","#260F99", "#422CB2", "#6551CC", "#8F7EE5","#BFB2FF"
+
+site_cols2 <- c( "#FFAD65", "#FF6E00", "#662700", "#99FFFF", "#009999", "#006666", "#FF99BF",  "#260F99")
+
+#reorder sites to group by gulf
+Panama_temp$Site <- factor(Panama_temp$Site, levels = c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo', 'Bocas Cayo Agua', 'Galeta channel'))
+
+names(site_cols2) = unique(Panama_temp$Site)
+
+site_cols2
+
+#set theme
+theme_set(theme_bw())
+
+
+#temperature graph with bars for sampling season 
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+#this will need to be modified for Bocas, since the measurements are once per day (max)
+
+water_temp_all <- ggplot(Panama_temp, aes(Date_Time, Temp, colour = Site)) +
+          scale_color_manual(values = site_cols2) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_ma(ma_fun = SMA, n = 96, linetype = 1, linewidth = 2) +  # Plot SMA (standard moving average) across 96 timepoints (given 15 to 30 min intervals, this means calculating the average over 24 to 48 hours) - need to change this for Bocas since the measurements are taken daily, not by 30 min
+  coord_x_datetime(xlim = c("2021-09-05 00:00:00", "2022-07-20 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo', 'Bocas Cayo Agua', 'Galeta channel')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change size of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.85, 0.18), #make legend inside plot
+        legend.title.align = 0.25) #adjust legend title position
+
+water_temp_all
+
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Water Temperature Across the Isthmus 21-22.pdf", plot = water_temp_all, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Water Temperature Across the Isthmus 21-22.png", plot = water_temp_all, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+4/10/24  - We'll eventually want to average across all sites in a given bay (e.g., Afuera, Damas, Uvas) for this overview figure, and increase the number of sampling sites from the Caribbean to give a representative average of our sampling sites' temperatures. Additional data was requested from Steve Paton on 4/10/24 - some data from 2023-24 are missing, as loggers disappeared from Galeta Channel, Downstream reef (also Galeta), and Bocas Isla Colon (3 m depth) during Nov 2023 sensor retrievals and have not yet been replaced (as of 4/12/24).
+
+4/12/24 - looking at current graph which has 2 sites for each Caribbean sampling area, we'll want to exclude the Bocas Tower data which has weird stuff going on, and most likely just display data from one site (or an average across sites) per gulf (4 total overlapping lines, to avoid overplotting)
+
+#### Dissolved Oxygen Data
+
+
+
+Most recent edits: 
+10/28/24 - LLL - further cleaning & adding in Steve Paton's data for Las Perlas
+10/25/24 - LLL- clean dataset
+10/24/24 - LLL - write base code
+
+Summary of DO data:
+
+DO data was collected by the RRR team (Anabell Cornejo) at two sites: Bahía Damas in Coiba (starting Dec 3, 2020 - present (2024)) and Saboga in Las Perlas (starting Dec 9, 2021 - present (2024)). Data is available on lab drive as .TXT file - will need to read files and merge the relevant datasets. 
+
+**There is also environmental data available for the Gulf of Panama from STRI's Physical Monitoring Program led by Steve Paton. We'll try to use these data to fill in the gaps for Las Perlas, which only began to be logged by the RRR team in Dec 2021. Measurements taken: SST, Chlorophyll, DOC, DO, pH, salinity, temperature, turbidity
+Program page: https://striresearch.si.edu/physical-monitoring/water-quality-monitoring/
+
+***Note that measurement intervals differ between both RRR datasets: in Saboga the measurements were taken in 30-min intervals while in Damas they were taken every 15 minutes --> this means we have both a greater volume of data for Damas (Gulf of Chiriquí) & higher resolution data
+
+For our study period (temp graph covers ~Aug 2021 - May 2022), we'll need 3 source files:
+- "Cat_DO_Saboga_Dec2021May2022.TXT" (missing Aug-Dec 2021 data)
+- "Cat_Damas_Aug2021Apr2022.TXT"
+- "Cat_Damas_Apr2022Sept2022.TXT"
+
+--> Files stored in RRR_HOBO_Environmental_data > Dissolved_Oxygen21_22
+
+- file format = 8 columns with commas as delimitors (possible that headings have 2 rows, one with column name and the second with the unit - e.g. (Second))
+- columns: Unix Timestamp,               UTC_Date_&_Time,         Central Standard Time,       Battery,   Temperature,  Dissolved Oxygen,  Dissolved Oxygen Saturation,             Q
+                  (Second),                        (none),                        (none),        (Volt),       (deg C),            (mg/l),                          (%),        (none)
+
+this is gonna be a fun one to read in correctly...
+
+Units: 
+Unix Timestamp = seconds
+Date & Time = "%Y-%m-%d %H:%M"
+Battery = Volts
+Temperature = ºC
+Dissolved oxygen = mg/l
+Dissolved oxygen saturation = %
+Q = no unit
+
+```{r read in source files}
+#temporarily set WD to source file directory
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22")
+
+#check file is there & in correct directory
+file.exists("Cat_DO_Saboga_Dec2021May2022.TXT") #check that source files are where they should be
+
+#workaround to skip lines 1-3 (after header)
+# Read lines
+lines <- readLines("Cat_DO_Saboga_Dec2021May2022.TXT")
+
+# Remove the 2nd and 3rd rows manually
+lines <- lines[-c(2, 3, 4, 5)]
+
+# Read the cleaned lines as a CSV
+Sab_DO <- read.csv(text = paste(lines, collapse = "\n"), 
+                   header = TRUE, 
+                   sep = ",", 
+                   blank.lines.skip = TRUE, 
+                   fill = TRUE)
+
+file.exists("Cat_Damas_Aug2021Apr2022.TXT")
+
+# Read lines
+lines <- readLines("Cat_Damas_Aug2021Apr2022.TXT")
+
+# Remove the 2nd and 3rd rows manually
+lines <- lines[-c(2, 3, 4)]
+
+# Read the cleaned lines as a CSV
+Dam_DO1 <- read.csv(text = paste(lines, collapse = "\n"), 
+                   header = TRUE, 
+                   sep = ",", 
+                   blank.lines.skip = TRUE, 
+                   fill = TRUE)
+
+# Read lines
+lines <- readLines("Cat_Damas_Apr2022Sept2022.TXT")
+
+# Remove the 2nd and 3rd rows manually
+lines <- lines[-c(2, 3)]
+
+# Read the cleaned lines as a CSV
+Dam_DO2 <- read.csv(text = paste(lines, collapse = "\n"), 
+                   header = TRUE, 
+                   sep = ",", 
+                   blank.lines.skip = TRUE, 
+                   fill = TRUE)
+```
+Data cleaning needed:
+- We'll want to change the headers so that they no longer have odd characters due to spaces
+- Will 2nd row w/ units pose problem? May want to merge units w/ first row to clean this up before running into issues --> removed these manually when re-reading in filed
+- Oxygen saturation goes above 100% - is this a calculation or measurement error? Checked logger manual and for this calculation it needs to be calculated with two solutions, which may not have been done
+
+```{r basic data cleaning}
+#removing blank rows
+Sab_DO_clean <- na.omit(Sab_DO)
+Dam_DO1_clean <- na.omit(Dam_DO1)
+Dam_DO2_clean <- na.omit(Dam_DO2)
+
+#renaming headers
+colnames(Sab_DO_clean) <- c("Timestamp", "Time_UTC", "Time_CST", "Battery", 
+                            "Temperature", "DO", "DO_Sat", "Q")
+colnames(Dam_DO1_clean) <- c("Timestamp", "Time_UTC", "Time_CST", "Battery", 
+                            "Temperature", "DO", "DO_Sat", "Q")
+colnames(Dam_DO2_clean) <- c("Timestamp", "Time_UTC", "Time_CST", "Battery", 
+                            "Temperature", "DO", "DO_Sat", "Q")
+
+#redefining column classes to correct class
+  #"character", "POSIXct", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric"
+
+# Redefine column classes Saboga
+Sab_DO_clean <- Sab_DO_clean %>%
+  mutate(
+    Timestamp = as.character(Timestamp),
+    Time_UTC = as.POSIXct(Time_UTC, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+    Time_CST = as.POSIXct(Time_CST, format="%Y-%m-%d %H:%M:%S", tz="CST6CDT"),
+    Battery = as.numeric(Battery),
+    Temperature = as.numeric(Temperature),
+    DO = as.numeric(DO),
+    DO_Sat = as.numeric(DO_Sat),
+    Q = as.numeric(Q)
+  )
+
+# Check the updated classes
+str(Sab_DO_clean)
+
+# Redefine column classes Damas
+Dam_DO1_clean <- Dam_DO1_clean %>%
+  mutate(
+    Timestamp = as.character(Timestamp),
+    Time_UTC = as.POSIXct(Time_UTC, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+    Time_CST = as.POSIXct(Time_CST, format="%Y-%m-%d %H:%M:%S", tz="CST6CDT"),
+    Battery = as.numeric(Battery),
+    Temperature = as.numeric(Temperature),
+    DO = as.numeric(DO),
+    DO_Sat = as.numeric(DO_Sat),
+    Q = as.numeric(Q)
+  )
+
+# Check the updated classes
+str(Dam_DO1_clean)
+
+# Redefine column classes
+Dam_DO2_clean <- Dam_DO2_clean %>%
+  mutate(
+    Timestamp = as.character(Timestamp),
+    Time_UTC = as.POSIXct(Time_UTC, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+    Time_CST = as.POSIXct(Time_CST, format="%Y-%m-%d %H:%M:%S", tz="CST6CDT"),
+    Battery = as.numeric(Battery),
+    Temperature = as.numeric(Temperature),
+    DO = as.numeric(DO),
+    DO_Sat = as.numeric(DO_Sat),
+    Q = as.numeric(Q)
+  )
+
+# Check the updated classes
+str(Dam_DO2_clean)
+```
+```{r merge both Damas datasets}
+# Stack rows from both datasets
+Dam_DO_merged <- bind_rows(Dam_DO1_clean, Dam_DO2_clean)
+
+# Check merged data
+head(Dam_DO_merged)
+```
+
+```{r checking DO value ranges & datasets}
+summary(Sab_DO_clean)
+summary(Dam_DO_merged) 
+```
+
+Saboga DO Summary:
+
+- Temp (ºC) range = 16.38 - 29.64, mean = 26.23
+- DO (mg/l) range = 0.8602 - 15.2758, mean = 6.55
+- DO saturation (%) range = 10.97 - 218.4, mean = 96.3
+
+Damas DO Summary:
+
+- Temp (ºC) range = 22.55 - 33.48, mean = 28.68
+- DO (mg/l) range = 0.822 - 16.822, mean = 6.45
+- DO saturation (%) range = 12.61 - 262.65, mean = 98.72
+
+Before merging the two sites, we need to add a column that identifies data as belonging to each site
+
+```{r add site & region columns}
+#Saboga
+Sab_DO_clean$Site <- rep("Saboga", nrow(Sab_DO_clean))
+Sab_DO_clean$Region <- rep("Las Perlas", nrow(Sab_DO_clean))
+
+Sab_DO_clean
+
+#Bahía Damas
+Dam_DO_merged$Site <- rep("Damas", nrow(Dam_DO_merged))
+Dam_DO_merged$Region <- rep("Coiba", nrow(Dam_DO_merged))
+
+Dam_DO_merged
+```
+Prior to merging the Saboga and Damas datasets, we want to standardize the measurements to the same time intervals. This will require subsampling the Damas merged dataset to only take measurements every 30 minutes (that is, every other measurement)
+
+```{r subsample Damas dataset to 30 min intervals}
+# Subset using dplyr to select every 30 minutes
+Dam_DO_30 <- Dam_DO_merged %>%
+  filter(row_number() %% 2 == 1)
+
+# View the result
+print(Dam_DO_30) #it worked! and the intervals line up: measurements taken at HH:07:00 & HH:37:00
+```
+
+```{r merge Saboga & Damas datasets}
+# Stack rows from both datasets
+ALL_DO <- bind_rows(Dam_DO_30, Sab_DO_clean)
+
+ALL_DO
+```
+```{r remove unnecessary rows}
+# Select specific columns
+ALL_DO <- ALL_DO %>%
+  select(Region, Site, Time_CST, Temperature, DO, DO_Sat)  #select relevant columns & reorder
+
+# View the result
+print(ALL_DO)
+```
+
+```{r save cleaned datasets}
+#temporarily set WD to source file directory
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22")
+
+# Save Sab_DO_clean as CSV
+write.csv(Sab_DO_clean, "Saboga_DO_clean_Dec21Apr22.csv", row.names = FALSE)
+
+# Save Dam_DO1_clean as CSV
+write.csv(Dam_DO1_clean, "Damas_DO1_clean_Aug21Apr22.csv", row.names = FALSE)
+
+# Save Dam_DO2_clean as CSV
+write.csv(Dam_DO2_clean, "Damas_DO2_clean_Apr22Sept22.csv", row.names = FALSE)
+
+# Save merged damas dataset as CSV
+write.csv(Dam_DO_merged, "Damas_DO_merged_Aug21Sept22.csv", row.names = FALSE)
+
+# Save 30-min subset damas dataset as CSV
+write.csv(Dam_DO_30, "Damas_DO_30min_Aug21Sept22.csv", row.names = FALSE)
+
+# Save merged whole dataset as CSV
+write.csv(ALL_DO, "ALL_DO_merged_Aug21Sept22.csv", row.names = FALSE)
+```
+#START HERE for DO if already cleaned data
+```{r read in DO datasets}
+#temporarily set WD to source file directory
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22")
+
+Sab_DO_clean <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22/Saboga_DO_clean_Dec21Apr22.csv", colClasses = c("character", "POSIXct", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric", "character", "character"))
+
+Dam_DO1_clean <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22/Damas_DO1_clean_Aug21Apr22.csv", colClasses = c("character", "POSIXct", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+Dam_DO2_clean <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22/Damas_DO2_clean_Apr22Sept22.csv", colClasses = c("character", "POSIXct", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+Dam_DO_merged <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22/Damas_DO_merged_Aug21Sept22.csv", colClasses = c("character", "POSIXct", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric", "character", "character"))
+
+Dam_DO_30 <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22/Damas_DO_30min_Aug21Sept22.csv", colClasses = c("character", "POSIXct", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric", "character", "character"))
+
+ALL_DO <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/Dissolved_Oxygen21_22/ALL_DO_merged_Aug21Sept22.csv", colClasses = c("character", "character", "POSIXct", "numeric", "numeric", "numeric"))
+```
+
+```{r plot basic DO graph}
+#site colors, NOT matching temp graph since the two are too similar
+site_cols3 <- c("#7A94C0", "#D35FB7")
+
+names(site_cols3) = unique(ALL_DO$Site)
+
+site_cols3
+
+#set theme
+theme_set(theme_bw())
+
+#DO graph with bars for sampling season 
+#vertical dashed lines mark start & end dates of sampling (slightly darker for upwelling)
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+DO_all_1 <- ggplot(ALL_DO, aes(Time_CST, DO, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols3) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_ma(ma_fun = SMA, n = 96, linetype = 1) +  # Plot SMA (standard moving average) across 96 timepoints (given 15 to 30 min intervals, this means calculating the average over 24 to 48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.85, 0.15), #make legend inside plot
+        legend.title.align = 0.25) #adjust legend title position
+
+DO_all_1
+
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "DO draft plot V1 21_22.pdf", plot = DO_all_1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "DO draft plot V1 21_22.png", plot = DO_all_1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+#Read in and clean Steve's DO data
+
+GPS coords of Open Water Site #1 (in between Saboga, Contadora, and Pacheca):
+8° 38.743'N 79° 2.887'W
+
+Full data collected at this site: 
+"Weekly depth profile (approximately 5m intervals) using YSI EXO 2 sonde.
+Parameters measured temperature, salinity, conductivity, pH, turbidity, chlorophyll, Dissolved Oxygen"
+
+Two separate files for DO & DO saturation:
+Odo = dissolved oxygen (mg/l)
+Odopsat = dissolved oxygen saturation (%)
+
+--> Monitoring done since 2017
+
+Data available at: https://striresearch.si.edu/physical-monitoring/water-quality-monitoring/
+
+Data updated every 1-3 months: most recent update 09/09/24 --> issues with this file, so loaded previous version (06-13-24) since we are only interested in the period from 2021 to 2022
+
+```{r read in DO data}
+#temporarily set WD to enviro data source files location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
+
+DO_raw_1 <-read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP/exo_bp_s01_odo.csv")
+
+DOsat_raw_1 <-read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP/exo_bp_s01_odopsat.csv")
+
+```
+
+Headers: datetime, date, depth, odo, raw, chk_note, chk_fail
+
+Data format = multiple measurements taken over a span of a few minutes at a given depth (at approx 5 m, 10 m, 15 m, 20 m), taken ~weekly starting on July 25, 2017, usually in the morning (~8:45 - 10:30 am)
+
+datetime = dd/mm/YYYY HH:mm:ss
+date = dd/mm/YYYY
+
+we'll need to change some of this to match the rest of our data:
+- change datetime format
+- change headers
+- merge DO & DOsat data
+- add site & region columns
+- cut raw & chk_note/chk_fail columns after verifying content during target timeperiod
+- select only target depth (~5 m depth --> need to define size bin for this, since the exact depth for this measurement varies)
+- add temp data?
+
+```{r remove and rename columns}
+#rename columns
+DO_raw_1 <- rename(DO_raw_1, c(Time_CST = datetime, Date = date, Depth = depth, DO = odo, Raw_DO = raw))
+DOsat_raw_1 <- rename(DOsat_raw_1, c(Time_CST = datetime, Date = date, Depth = depth, DO_Sat = odopsat, Raw_DOSat = raw))
+
+# Select specific columns
+DO1_subset <- DO_raw_1 %>%
+  select(Time_CST, Depth, DO)  #select relevant columns & reorder
+DO2_subset <- DOsat_raw_1 %>%
+  select(Time_CST, Depth, DO_Sat)
+
+# Convert the datetime column to POSIXct
+DO1_subset$Time_CST <- as.POSIXct(DO1_subset$Time_CST, format = "%d/%m/%Y %H:%M:%S", tz = "UTC")
+DO2_subset$Time_CST <- as.POSIXct(DO2_subset$Time_CST, format = "%d/%m/%Y %H:%M:%S", tz = "UTC")
+
+# View the result
+print(DO1_subset)
+print(DO2_subset)
+```
+We'll want to select for only the shallowest measurements, taken ~5m depth, to match the depths of the RRR HOBO loggers. Since the exact depths are reported, we'll place the cutoff at +/- 2 of 5 m depth.
+```{r filter out only shallow depth measurements (~5m)}
+# Filter for depth values between 3 and 7
+DO1_filtered <- DO1_subset %>%
+  filter(Depth >= 3 & Depth <= 7)
+
+DO2_filtered <- DO2_subset %>%
+  filter(Depth >= 3 & Depth <= 7)
+
+# View the result
+print(DO1_filtered)
+print(DO2_filtered)
+```
+```{r filter for only dates of interest}
+# Define the datetime range
+start_datetime <- as.POSIXct("2021-09-15 12:00:00")
+end_datetime <- as.POSIXct("2022-05-20 12:00:00")
+
+# Filter data frame for rows within the datetime range
+DO1_filtered <- DO1_filtered %>%
+  filter(Time_CST >= start_datetime & Time_CST <= end_datetime)
+DO2_filtered <- DO2_filtered %>%
+  filter(Time_CST >= start_datetime & Time_CST <= end_datetime)
+
+# View the result
+print(DO1_filtered)
+print(DO2_filtered)
+```
+
+```{r take the average DO and DO_Sat measurement for each day}
+# Calculate daily average and standard deviation for depth and DO_Sat
+DO_daily <- DO1_filtered %>%
+  mutate(Date = as.Date(Time_CST)) %>%  # Extract date from datetime
+  group_by(Date) %>%
+  summarize(
+    avg_depth = mean(Depth, na.rm = TRUE),
+    sd_depth = sd(Depth, na.rm = TRUE),
+    avg_DO = mean(DO, na.rm = TRUE),
+    sd_DO = sd(DO, na.rm = TRUE)
+  )
+
+DO_Sat_daily <- DO2_filtered %>%
+  mutate(Date = as.Date(Time_CST)) %>%  # Extract date from datetime
+  group_by(Date) %>%
+  summarize(
+    avg_depth = mean(Depth, na.rm = TRUE),
+    sd_depth = sd(Depth, na.rm = TRUE),
+    avg_DO_Sat = mean(DO_Sat, na.rm = TRUE),
+    sd_DO_Sat = sd(DO_Sat, na.rm = TRUE)
+  )
+
+# View the result
+print(DO_Sat_daily)
+print(DO_daily)
+```
+
+```{r merge dataframes}
+
+DO_merged <- left_join(DO_Sat_daily, DO_daily)
+
+# View the result
+print(DO_merged)
+```
+```{r add a placeholder time to restore "datetime" column}
+# Convert Date column to POSIXct and add placeholder time
+DO_merged <- DO_merged %>%
+  mutate(Time_CST = as.POSIXct(paste(Date, "09:07:00"), format = "%Y-%m-%d %H:%M:%S", tz = "CST6CDT"))
+```
+
+```{r add region and site}
+#in Las Perlas, near Sabga
+DO_merged$Site <- rep("Saboga Avg", nrow(DO_merged))
+DO_merged$Region <- rep("Las Perlas", nrow(DO_merged))
+
+DO_merged <- DO_merged %>%
+  select(Region, Site, Time_CST, everything()) 
+
+DO_merged
+```
+
+```{r save subsetted df}
+#temporarily set WD to enviro data source files location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
+write_csv(DO_merged, "DO_StevePaton_Oct21_May22.csv")
+```
+```{r read in subsetted df}
+#temporarily set WD to enviro data source files location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
+
+DO_merged <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP/DO_StevePaton_Oct21_May22.csv", colClasses = c("character", "character", "POSIXct", "Date", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+```
+
+Now that we have a cleaned dataset for DO and DO saturation, we can plot it over the existing RRR DO plot
+
+Run only if plot not run before, otherwise skip to next code chunk
+```{r plot basic graph from above}
+
+#site colors, NOT matching temp graph since the two are too similar
+site_cols3 <- c("#7A94C0", "#D35FB7", "orange")
+
+names(site_cols3) = c("Damas", "Saboga", "Saboga Avg")
+
+site_cols3
+
+#set theme
+theme_set(theme_bw())
+
+#DO graph with bars for sampling season 
+#vertical dashed lines mark start & end dates of sampling (slightly darker for upwelling)
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+# Calculate the Simple Moving Average (SMA) and add it as a new column in ALL_DO
+ALL_DO$DO_SMA <- SMA(ALL_DO$DO, n = 48)
+
+DO_all_1 <- ggplot(ALL_DO, aes(Time_CST, DO, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols3) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_SMA), linewidth = 1, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.85, 0.15), #make legend inside plot
+        legend.title.align = 0.25) #adjust legend title position
+
+DO_all_1
+
+```
+```{r test renaming sd_DO due to read issues}
+DO_merged <- DO_merged %>%
+  rename(
+    StdDevDO = sd_DO,
+    StdDevDOsat = sd_DO_Sat,
+    StdDevDepth = sd_depth,
+    AvgDO = avg_DO,
+    AvgDOSat = avg_DO_Sat,
+    AvgDepth = avg_depth
+  )
+
+# Verify the renaming
+head(DO_merged)
+```
+
+```{r add DO data to graph}
+# Add points and shaded area for the second dataset
+DO_all_2 <- DO_all_1 +
+  geom_point(data = DO_merged, aes(x = Time_CST, y = AvgDO, color = "Saboga Avg"), size = 3) + # Add points and include in legend
+  scale_color_manual(values = site_cols3)
+
+# Display the plot
+DO_all_2
+
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "DO draft plot V2 21_22.pdf", plot = DO_all_2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "DO draft plot V2 21_22.png", plot = DO_all_2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r add SD to DO points - NEEDS FIXING}
+#Add standard deviation around each of these values - get error with this code - seems like it tries to use the first dataset (ALL_DO) or something else that is odd 
+DO_all_3 <- DO_all_2 +
+geom_errorbar(data = DO_merged, aes(x = Time_CST, ymin = AvgDO - StdDevDO, ymax = AvgDO + StdDevDO),
+                color = "orange", width = 0.1, alpha = 0.3)
+DO_all_3
+```
+
+# Zoom in on shorter time period to see daily variation in DO
+```{r DO over 10 days}
+
+# Calculate the Simple Moving Average (SMA) and add it as a new column in ALL_DO
+ALL_DO$DO_Sat_SMA <- SMA(ALL_DO$DO_Sat, n = 48)
+
+DO_week <- ggplot(ALL_DO, aes(Date_Time, DO, colour = Site)) +
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Date_Time, y = AvgDO), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2022-03-01 00:00:00", "2022-03-10 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("March 2022") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = '6 hours', date_labels = "%d %H:%M") +
+  theme(axis.text.x = element_text(size = 16, angle = 45, hjust = 1), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18)) #change size of y-axis title
+
+DO_week
+
+#during upwelling
+DO_week_up1 <- ggplot(ALL_DO, aes(Date_Time, DO, colour = Site)) +
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Date_Time, y = AvgDO), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2022-02-25 00:00:00", "2022-03-10 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Feb - March 2022") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = '6 hours', date_labels = "%d %H:%M") +
+  theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18)) #change size of y-axis title
+
+DO_week_up1
+
+DO_week1 <- ggplot(ALL_DO, aes(Date_Time, DO_Sat, colour = Site)) +
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_Sat_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Date_Time, y = AvgDOSat), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2022-03-15 00:00:00", "2022-04-15 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen Sat (%)") +
+  xlab("May - April 2022") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = '12 hours', date_labels = "%d %H") +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18)) #change size of y-axis title
+
+DO_week1
+
+#DO saturation over same timeperiod
+DO_week2 <- ggplot(ALL_DO, aes(Date_Time, DO_Sat, colour = Site)) +
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_Sat_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Date_Time, y = AvgDOSat), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2022-03-01 00:00:00", "2022-03-10 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen Saturation (%)") +
+  xlab("March 2022") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = '6 hours', date_labels = "%d %H:%M") +
+  theme(axis.text.x = element_text(size = 16, angle = 45, hjust = 1), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18)) #change size of y-axis title
+
+DO_week2
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "March 10-day Daily DO 21_22.pdf", plot = DO_week, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "March 10-day Daily DO 21_22.png", plot = DO_week, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Feb-March Upwelling 10-day Daily DO 21_22.pdf", plot = DO_week_up1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Feb-March Upwelling 10-day Daily DO 21_22.png", plot = DO_week_up1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "May-Apr 30-day Daily DO SAT 21_22.pdf", plot = DO_week1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "May-Apr 30-day 10-day Daily DO SAT 21_22.png", plot = DO_week1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "March 10-day Daily DO SAT 21_22.pdf", plot = DO_week2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "March 10-day Daily DO SAT 21_22.png", plot = DO_week2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+# Boxplots of DO to visualize range of values by gulf
+```{r DO fill colors}
+site_fill <- c( "#FFAD65", "#FF6E00", "#662700", "#99FFFF", "#009999", "#006666", "#D35FB7")
+
+names(site_fill) = c("Afuera", "Damas", "Uvas", "Contadora", "Saboga", "MogoMogo", "Saboga Avg")
+
+site_fill
+```
+
+```{r DO violin plot}
+# Base violin plot with y-axis label, mean, and median points
+DO_violin <- ggplot(ALL_DO, aes(x = Site, y = DO, fill = Site)) + 
+  geom_violin() +  # Create the violin plot
+  scale_fill_manual(values = site_fill) +  # Set fill colors for each site
+  ylab("Dissolved Oxygen (mg/l)") +  # Add y-axis label
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = "black", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  # Add mean points
+  stat_summary(fun = median, geom = "point", shape = 17, size = 3, color = "red", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) + # Add median points
+stat_summary(fun = mean, geom = "text", aes(label = ..y..), color = "black", 
+               vjust = -0.5, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9)) + #add mean value to plot
+   # Max value as point and label
+  stat_summary(fun = max, geom = "point", shape = 18, size = 3, color = "blue", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  
+  stat_summary(fun = max, geom = "text", aes(label = round(..y.., 2)), color = "blue", 
+               vjust = -1, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9)) +  
+
+  # Min value as point and label
+  stat_summary(fun = min, geom = "point", shape = 18, size = 3, color = "green", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  
+  stat_summary(fun = min, geom = "text", aes(label = round(..y.., 2)), color = "green", 
+               vjust = 1.5, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9))
+
+DO_violin
+
+# Base violin plot with y-axis label, mean, and median points - DO saturation
+DO_violin2 <- ggplot(ALL_DO, aes(x = Site, y = DO_Sat, fill = Site)) + 
+  geom_violin() +  # Create the violin plot
+  scale_fill_manual(values = site_fill) +  # Set fill colors for each site
+  ylab("Dissolved Oxygen (mg/l)") +  # Add y-axis label
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = "black", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  # Add mean points
+  stat_summary(fun = median, geom = "point", shape = 17, size = 3, color = "red", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) + # Add median points
+stat_summary(fun = mean, geom = "text", aes(label = ..y..), color = "black", 
+               vjust = -0.5, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9)) + #add mean value to plot
+   # Max value as point and label
+  stat_summary(fun = max, geom = "point", shape = 18, size = 3, color = "blue", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  
+  stat_summary(fun = max, geom = "text", aes(label = round(..y.., 2)), color = "blue", 
+               vjust = -1, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9)) +  
+
+  # Min value as point and label
+  stat_summary(fun = min, geom = "point", shape = 18, size = 3, color = "green", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  
+  stat_summary(fun = min, geom = "text", aes(label = round(..y.., 2)), color = "green", 
+               vjust = 1.5, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9))
+
+DO_violin2
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Violin DO V1 21_22.pdf", plot = DO_violin, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Violin DO V1 21_22.png", plot = DO_violin, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Violin DO SAT V1 21_22.pdf", plot = DO_violin2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Violin DO SAT V1 21_22.png", plot = DO_violin2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r DO basic boxplot}
+DO_box <- ggplot(ALL_DO, aes(x = Site, y = DO, fill = Site)) +
+  geom_boxplot() +
+  scale_fill_manual(values = site_fill) +  # Set fill colors for each site
+  ylab("Dissolved Oxygen (mg/l)") +  # Add y-axis label
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = "black", 
+               position = position_dodge(width = 0.9), show.legend = FALSE) +  # Add mean points
+  stat_summary(fun = mean, geom = "text", aes(label = ..y..), color = "black", 
+               vjust = -0.5, size = 3, show.legend = FALSE, 
+               position = position_dodge(width = 0.9)) #add mean value to plot
+
+DO_box
+
+```
+
+# Merged Temperature and DO graphs
+
+Now that we have a decent DO graph with data for our whole study period, it would be nice to overlay the DO data with the temperature data, to then be able to see how DO tracks with temp through upwelling.
+
+(scroll up to code chunks 16-26 to see the step-by-step construction of the initial temperature graph)
+
+```{r read in temp data}
+#read in merged data, if not running code from start
+temp <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/water_temp_data_coiba_lasperlas_21_22.rds")
+```
+
+To make things easier, we'll round the datetime values from the DO data, which are currently at XX:07:00 and XX:37:00, to the nearest hour or half hour (so 12:07:00 becomes 12:00:00), so that we have the ability to merge both DO and temp datasets, if needed.
+
+Note that we'll have duplicate temperature columns, as the ALL_DO dataset also has temperature calculated for the relevant timeperiod, but does not have the same resolution across multiple sites as the "temp" dataset.
+
+```{r round datetime column DO}
+# Round down the Time_CST column to the nearest hour or half-hour
+ALL_DO$Time_CST <- floor_date(ALL_DO$Time_CST, unit = "30 minutes")
+DO_merged$Time_CST <- floor_date(DO_merged$Time_CST, unit = "30 minutes")
+
+# Rename the column
+ALL_DO <- ALL_DO %>%
+  rename(Date_Time = Time_CST)
+
+DO_merged <- DO_merged %>%
+  rename(Date_Time = Time_CST)
+
+ALL_DO
+DO_merged
+```
+
+```{r save subsetted df}
+#temporarily set WD to enviro data source files location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
+write_csv(DO_merged, "DO_StevePaton_Oct21_May22_version2.csv")
+
+write_csv(ALL_DO, "ALL_DO_merged_Aug21Sept22_version2.csv")
+```
+
+```{r merge temp and DO data}
+#add region column to temp data (redundant w/ gulf)
+temp <- temp %>%
+  mutate(Region = case_when(
+    Gulf == "Chiriqui" ~ "Coiba",
+    Gulf == "Panama" ~ "Las Perlas",
+    TRUE ~ NA_character_  # Assign NA for any other values or omit this line if you want to keep other values unchanged
+  ))
+
+# Filter out measurements taken at the XX:15:00 and XX:45:00 timepoints (as this was only done for Las Perlas)
+temp <- temp %>%
+  filter(!minute(Date_Time) %in% c(15, 45))
+
+# Calculate the Simple Moving Average (SMA) and add it as a new column in temp
+temp$temp_SMA <- SMA(temp$Temp, n = 96)
+
+# Merge temp & ALL_DO by Date_Time & Site & Region
+combined_df <- full_join(temp, ALL_DO, by = c("Date_Time", "Site", "Region"))
+
+# Remove some columns from DO_merged before merging
+DO_merged <- DO_merged %>%
+  select(Region, Site, Date_Time, Date, AvgDOSat, AvgDO)
+
+# Append rows from DO_merged to combined_df
+combined_df <- bind_rows(combined_df, DO_merged)
+
+# Clean up merged dataset columns
+combined_df <- combined_df %>%
+  select(Gulf, Region, Site, Date_Time, Temp, temp_SMA, DO, DO_SMA, AvgDO, DO_Sat, AvgDOSat)
+
+
+combined_df
+```
+```{r save merged temp and DO df}
+#temporarily set WD to enviro data source files location
+setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
+write_csv(combined_df, "Temp_and_DO_merged_21_22.csv")
+```
+```{r read merged temp & DO df}
+combined_df <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP/Temp_and_DO_merged_21_22.csv", colClasses = c("character", "character","character", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+```
+
+##START HERE if already merged temp & DO
+```{r load site colors for temp & DO graphs}
+site_cols4 <- c( "#FFAD65", "#FF6E00", "#662700", "#99FFFF", "#009999", "#006666", "#D35FB7")
+
+names(site_cols4) = c("Afuera", "Damas", "Uvas", "Contadora", "Saboga", "MogoMogo", "Saboga Avg")
+
+site_cols4
+```
+
+```{r merge temp and DO plots - pt 1 plot water temp}
+# starting with water_temp_final2 graph from chunk #23 above:
+#temperature graph with bars for sampling season 
+#vertical dashed lines mark start & end dates of sampling (slightly darker for upwelling)
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+#reorder sites
+combined_df <- combined_df %>%
+  mutate(Site = factor(Site, levels = c("Afuera", "Damas", "Uvas", "Contadora", "Saboga", "MogoMogo", "Saboga Avg")))
+
+water_temp_test <- ggplot(combined_df, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = temp_SMA), linewidth = 0.5, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 96 timepoints (given 15-30 min intervals, this means calculating the average over 24-48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.215, 0.57), #make legend inside plot #0.93, 0.57 works for right side of graph
+        legend.title.align = 0.25) #adjust legend title position
+
+water_temp_test
+
+```
+
+```{r merge temp and DO graphs}
+
+temp_DO_combined <- water_temp_test +
+  geom_line(aes(y = DO_SMA*2, color = Site), linewidth = 0.75, na.rm = TRUE)+  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+geom_point(aes(x = Date_Time, y = AvgDO*2, color = "Saboga Avg"), size = 3, na.rm = TRUE) + # Add points and include in legend
+  scale_color_manual(values = site_cols4)
+
+temp_DO_combined
+
+```
+```{r fix merged graph axes}
+temp_DO_combined <- temp_DO_combined +
+  scale_y_continuous(labels = seq(4, 32, 4),
+                     breaks = seq(4, 32, 4),
+                     limits = c(5, 32),
+                     sec.axis = sec_axis(trans = ~.,
+                                         labels = seq(0, 16, 2),
+                                         breaks = seq(0, 16, 2)*2,
+                                         name = "Dissolved Oxygen (mg/l)")
+                     )
+temp_DO_combined
+```
+```{r add text box labels for temp and DO lines}
+temp_DO_combined2 <- temp_DO_combined +
+  annotate("text", x = as.POSIXct("2021-10-05 00:00:00"), y = max(combined_df$Temp, na.rm = TRUE) + 0.5, label = "Temp", hjust = 1, vjust = 1.1, size = 6, color = "black") +  # Top left
+  annotate("text", x = as.POSIXct("2021-10-05 00:00:00"), y = (0.5 * max(combined_df$Temp, na.rm = TRUE)) - 0.5, label = "DO", hjust = 1, vjust = 0.5, size = 6, color = "black")  # Middle left
+
+temp_DO_combined2
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Temp and DO draft plot V2 21_22.pdf", plot = temp_DO_combined2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Temp and DO draft plot V2 21_22.png", plot = temp_DO_combined2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r merged figure with only average values (no raw data)}
+merged_avg <- ggplot(combined_df, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols4) +
+  geom_line(aes(y = temp_SMA), linewidth = 0.75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 96 timepoints (given 15-30 min intervals, this means calculating the average over 24-48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.215, 0.57), #make legend inside plot #0.93, 0.57 works for right side of graph
+        legend.title.align = 0.25) + #adjust legend title position
+  geom_line(aes(y = DO_SMA*2, color = Site), linewidth = 0.75, na.rm = TRUE)+  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+geom_point(aes(x = Date_Time, y = AvgDO*2, color = "Saboga Avg"), size = 3, na.rm = TRUE) + # Add points and include in legend
+  scale_y_continuous(labels = seq(4, 32, 4),
+                     breaks = seq(4, 32, 4),
+                     limits = c(5, 32),
+                     sec.axis = sec_axis(trans = ~.,
+                                         labels = seq(0, 16, 2),
+                                         breaks = seq(0, 16, 2)*2,
+                                         name = "Dissolved Oxygen (mg/l)")) +
+  annotate("text", x = as.POSIXct("2021-10-05 00:00:00"), y = max(combined_df$Temp, na.rm = TRUE) + 0.5, label = "Temp", hjust = 1, vjust = 1.1, size = 6, color = "black") +  # Top left
+  annotate("text", x = as.POSIXct("2021-10-05 00:00:00"), y = (0.5 * max(combined_df$Temp, na.rm = TRUE)) - 0.5, label = "DO", hjust = 1, vjust = 0.5, size = 6, color = "black")
+  
+merged_avg
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "AVG Temp and DO draft plot 21_22.pdf", plot = merged_avg, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "AVG Temp and DO draft plot 21_22.png", plot = merged_avg, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+This is all well and good, but having a bunch of stacked graphs with multiple lines can get quite overwhelming. Instead, let's make two wide and short plots to stack one above the other. We can use the cowplot package to do this.
+
+```{r load cowplot if not starting from top}
+library(cowplot)
+```
+
+```{r stack temps & DO graphs together}
+# we'll use the two best versions of the independent temp and DO plots made above
+# best water plot = water_temp_final2 --> saved as "Water Temperature Data V3" (png or pdf)
+# best DO plot = DO_all_2 --> saved as "DO draft plot V2 21_22" (png or pdf)
+
+# Create the combined plot using cowplot
+combined_plot <- plot_grid(water_temp_test, DO_all_2, ncol = 1, align = "v")
+
+# Display the combined plot
+print(combined_plot)
+
+```
+While this gives a technically usable plot, the plot colors don't match (although this could help distinguish between DO and temp data), the legends are wonky, the average lines differ in thickness, and the x-axis is unnecessarily duplicated. We'll want to mess with these aspects to have a more homogeneous composite figure. 
+
+```{r improving DO plot for merged figure matching colors}
+#Make sure to check datetime column - either "Date_Time" or "Time_CST"
+
+DO_all_4 <- ggplot(ALL_DO, aes(Time_CST, DO, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Time_CST, y = AvgDO), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.position = "none") #remove legend
+
+DO_all_4
+```
+```{r same plot with legend for printing alone}
+#DO graph with bars for sampling season 
+#vertical dashed lines mark start & end dates of sampling (slightly darker for upwelling)
+#scales set to months
+#simple moving average plotted overtop of raw temperature data from all 6 sites in both gulfs
+
+# Calculate the Simple Moving Average (SMA) and add it as a new column in ALL_DO
+ALL_DO$DO_SMA <- SMA(ALL_DO$DO, n = 48)
+
+DO_4.2 <- ggplot(ALL_DO, aes(Time_CST, DO, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_SMA), linewidth = 1, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+   geom_point(data = DO_merged, aes(x = Time_CST, y = AvgDO), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.position = c(0.85, 0.15), #make legend inside plot
+        legend.title.align = 0.25) #adjust legend title position
+
+DO_4.2
+
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "DO draft plot V 3 21_22.pdf", plot = DO_4.2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "DO draft plot V 3 21_22.png", plot = DO_4.2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+The colors from the temp graph look kind of awful on the DO graph (why I changed them in the first place...). We'll make 2 versions, 1 where the colors match across sampling locations, and the other where they are different depending on the measurement type (and for my own sanity)
+
+```{r improving DO plot for merged figure different colors}
+#Make sure to check datetime column - either "Date_Time" or "Time_CST"
+
+DO_all_5 <- ggplot(ALL_DO, aes(Date_Time, DO, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols3) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = DO_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Date_Time, y = AvgDO), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.position = "none") #remove legend
+
+DO_all_5
+```
+```{r improving DO plot for merged figure averages only}
+#Make sure to check datetime column - either "Date_Time" or "Time_CST"
+
+DO_all_6 <- ggplot(ALL_DO, aes(Date_Time, DO, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols4) +
+  geom_line(aes(y = DO_SMA), linewidth = .75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 48 timepoints (given 30 min intervals, this means calculating the average over 24 hours)
+  geom_point(data = DO_merged, aes(x = Date_Time, y = AvgDO), size = 3) +# Add points and include in legend
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Dissolved Oxygen (mg/l)") +
+  xlab("Date (months)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.text.x = element_text(size = 16), #change linewidth of months (x-axis)
+        axis.title.x = element_text(size = 18), #change size of x-axis label (sampling gulfs & seasons)
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18), #change size of y-axis title
+        legend.position = "none") #remove legend
+
+DO_all_6
+```
+```{r optimize temp graph for stacked figure}
+temp_all_1 <- ggplot(combined_df, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling - actual end date is 2021-04-29, but current data only runs through 4-21-22
+          scale_color_manual(values = site_cols4) +
+  geom_line(na.rm = TRUE, linewidth = 1, alpha = 0.3) + # define line width and transparency of raw temp data
+  geom_line(aes(y = temp_SMA), linewidth = 0.75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 96 timepoints (given 15-30 min intervals, this means calculating the average over 24-48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18),
+        legend.position = c(0.215, 0.35),
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.title.align = 0.25) #adjust legend title position
+
+temp_all_1
+```
+```{r optimize temp avg data only}
+temp_all_2 <- ggplot(temp, aes(Date_Time, Temp, colour = Site)) +
+  annotate("rect", fill = "#660066", alpha = 0.2, 
+        xmin = as.POSIXct("2021-10-15 06:00:00"), xmax = as.POSIXct("2021-12-03 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  annotate("rect", fill = "#336633", alpha = 0.2, 
+        xmin = as.POSIXct("2022-03-11 06:00:00"), xmax = as.POSIXct("2022-04-29 00:00:00"),
+        ymin = -Inf, ymax = Inf) +
+  geom_vline(xintercept = as.POSIXct("2021-10-15 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling start: non-upwelling
+   geom_vline(xintercept = as.POSIXct("2021-12-03 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#601A35", linewidth = 1) + #add sampling end: non-upwelling
+    geom_vline(xintercept = as.POSIXct("2022-03-11 06:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling start: upwelling
+    geom_vline(xintercept = as.POSIXct("2022-04-29 00:00:00", tz = "America/Panama"),
+             linetype = 6, color = "#333300", linewidth = 1) + #add sampling end: upwelling
+          scale_color_manual(values = site_cols4) +
+  geom_line(aes(y = temp_SMA), linewidth = 0.75, na.rm = TRUE) +  # Plot SMA with specified line width +  # Plot SMA (standard moving average) across 96 timepoints (given 15-30 min intervals, this means calculating the average over 24-48 hours)
+  coord_x_datetime(xlim = c("2021-10-01 00:00:00", "2022-04-30 00:00:00")) + # Zoom in
+  ylab("Water Temperature (ºC)") +
+  scale_fill_discrete(breaks=c('Afuera', 'Damas', 'Uvas', 'Contadora', 'Saboga', 'MogoMogo')) +
+  scale_x_datetime(date_breaks = 'month', date_labels = "%b") +
+  theme(axis.title.x = element_blank(),
+         axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(size = 16), #change size of y-axis #s
+        axis.title.y = element_text(size = 18),
+        legend.position = c(0.215, 0.35),
+        legend.title = element_text(size = 18), #change size of legend title
+        legend.text = element_text(size = 16), #change size of legend text
+        legend.title.align = 0.25) #adjust legend title position
+
+
+temp_all_2
+```
+
+```{r stacked barchart temp & DO V1}
+# Create the combined plot using cowplot
+combined_plot2 <- plot_grid(temp_all_1, DO_all_4, ncol = 1, align = "v")
+
+# Display the combined plot
+print(combined_plot2)
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Stacked Temp and DO draft plot V1 21_22.pdf", plot = combined_plot2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Stacked Temp and DO draft plot 21_22.png", plot = combined_plot2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r stacked barchart temp & DO V2}
+# Create the combined plot using cowplot
+combined_plot3 <- plot_grid(temp_all_1, DO_all_5, ncol = 1, align = "v")
+
+# Display the combined plot
+print(combined_plot3)
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Stacked Temp and DO draft plot V2 diff color DO 21_22.pdf", plot = combined_plot3, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Stacked Temp and DO draft plot V2 diff color DO 21_22.png", plot = combined_plot3, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r stacked barchart temp & DO averages only}
+# Create the combined plot using cowplot
+combined_plot4 <- plot_grid(temp_all_2, DO_all_6, ncol = 1, align = "v")
+
+# Display the combined plot
+print(combined_plot4)
+```
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "AVG Stacked Temp and DO draft plot 21_22.pdf", plot = combined_plot4, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "AVG Stacked Temp and DO draft plot 21_22.png", plot = combined_plot4, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='png', dpi=700)
+```

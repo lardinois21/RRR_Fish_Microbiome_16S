@@ -1,0 +1,2113 @@
+---
+title: "Species by Species Differential Abundance Version 1"
+author: "LLL"
+date: "2024-12-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Script N. 4.2 - Differential abundance analyses - fish skin, species-by-species
+
+Most recent updates: 
+
+Dec 13, 2024 --> comparing significant (padj <0.05) DA taxa between water and fish skin
+Dec 12, 2024 --> species by species draft code (adjusted from Script N. 4.1; water microbiome)
+
+
+Following alpha and beta diversity estimates (see scripts # 2 & 3: "Skin Alpha Diversity..." and "Skin Beta Diversity..."), we are interested in identifying the differentially abundant ASVs/groups of ASVs between seasons & gulfs in cases where PERMANOVA results were significant. 
+
+We are looking for differentially abundant (DA) microbes - that is, microbes that significantly change in abundance between our target groups. Specifically, we want to know:
+
+(1) Are the changes we're seeing in fish microbial communities [between seasons] driven by changes in the water microbiome (i.e., the surrounding environment)?
+    --> we'll thus need to look at the merged fish skin & water dataset and look at differentially abundant microbes
+    --> from the PERMANOVAs we ran in the beta diversity analyses, we know that there were only significant differences between seasons for certain groups of fish, notably the herbivores, carnivores, and planktivore
+    --> we also know that the Las Perlas (upwelling site) water samples differed significantly during upwelling in both alpha and beta diversity from the Coiba samples as well as from the non-upwelling Las Perlas samples
+    --> given this, it may make sense to first look at DA microbes in the water, to see what is changing in the environment between upwelling and non-upwelling (while we can look at all sites and seasons, comparing Las Perlas upwelling & non-upwelling may be the most informative when asking how microbial communities are responding to environmental change)
+
+(2) Given the influence of the host on microbial community composition, what are the differentially abundant microbes between fish species? 
+
+```{r load required packages}
+#make sure to load DESeq2 FIRST (& start new R session, as it bugs otherwise)
+library(DESeq2) #DA analyses - differential gene expression analysis based on negative binomial distribution
+library(Maaslin2) #DA analyses - microbiome multivariable association with linear models
+library(phyloseq) #working with phyloseq objects
+library(apeglm) #DESeq used with this: "apeglm provides Bayesian shrinkage estimators for effect sizes for a variety of GLM models, using approximation of the posterior for individual coefficients"
+library(tidyverse)
+library(pheatmap) #make heatmaps of count data
+```
+
+We're starting with the "ROHR06_new" dataset, which was previously cleaned a bit in script 4.1 to remove extra metadata columns and change characters that R doesn't like (e.g., spaces between Las & Perlas). 
+
+```{r read in cleaned fish skin dataset from Script 4.1}
+#from script 4.1
+ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+```
+
+Based on the species-by-species PERMANOVAs done in script 3.2: "Skin Species by Species" beta diversity analyses, we know that only a subset of the fish species showed significant season and region differences in their microbiomes. We'll thus restrict the DA analyses to those that were significant: n= 7 species; all 4 herbivores, the 2 carnivores, and the planktivore.
+
+To do this, we'll first need to subset the dataset, then run our DA tests (we'll be doing both DESeq2 & MaAsLin2, as was done for the water samples) and create some sort of visualization of the most differentially abundant taxa present.
+
+We'll also implement some of the changes we did to make the dataset neater (e.g., cleaning up some taxa names, adjusting the tip labels for the taxa, etc.) prior to subsetting the dataset into species, that way these changes are applied once, rather than 7 times before each subset.
+
+Right now the "Species" names are the sequence letter codes rather than a genus or species name(note that we have only assigned to genus level, and there may be unassigned at Order level and below (we filtered out samples unassigned at Phylum level & above previously))
+
+--> we'll work on cleaning this up a bit
+
+```{r check tax}
+# Taxonomy table
+tax_tab <- phyloseq::tax_table(ROHR06_new)
+# check 
+tax_tab[1:5,1:6] # for my table show me [1 to 5 otu ids, 1 to 6 first six ranks]
+```
+
+```{r change OTU IDs}
+# Extract the tax_table
+tax_table_data <- tax_table(ROHR06_new)
+
+# Create a vector of new taxa names
+new_taxa_names <- apply(tax_table_data, 1, function(row) {
+  # Extract the phylum
+  phylum <- row["Phylum"]
+  
+  # Find the highest taxonomic rank that is not NA
+  highest_resolved <- tail(row[!is.na(row)], 1)
+  
+  # If all ranks are NA, default to the original taxa_name (OTU sequence)
+  if (length(highest_resolved) == 0) {
+    return(rownames(row)) # Use OTU sequence (original rowname)
+  } else {
+    # Combine phylum with the highest resolved rank
+    return(paste(phylum, highest_resolved, sep = "; "))
+  }
+})
+
+# Make taxa names unique
+new_taxa_names <- make.unique(new_taxa_names)
+
+# Assign the new taxa names to the taxa_names
+taxa_names(ROHR06_new) <- new_taxa_names
+
+# Verify the updated taxa_names
+head(taxa_names(ROHR06_new))
+
+```
+
+```{r save this new dataset with modified taxa names}
+#Save phyloseq object with filtered taxa
+saveRDS(ROHR06_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newTaxanames.rds")
+```
+
+```{r read new names if not starting from top}
+#read if not starting from top
+ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newTaxanames.rds")
+```
+
+#Subset by species
+```{r subset by host species}
+####Abudefduf concolor
+
+ROHR_06_Aconcolor <- subset_samples(ROHR06_new, species == "Abudefduf_concolor")
+ROHR_06_Aconcolor # 38 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Aconcolor <- prune_taxa(taxa_sums(ROHR_06_Aconcolor) > 0, ROHR_06_Aconcolor)
+ROHR_06_Aconcolor # 38 samples, 3055 taxa (full dataset = 6551 taxa, 341 samples)
+
+####Microspathodon dorsalis
+
+ROHR_06_Mdorsalis <- subset_samples(ROHR06_new, species == "Microspathodon_dorsalis")
+ROHR_06_Mdorsalis # 36 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Mdorsalis <- prune_taxa(taxa_sums(ROHR_06_Mdorsalis) > 0, ROHR_06_Mdorsalis)
+ROHR_06_Mdorsalis # 36 samples, 3558 taxa (full dataset = 6551 taxa, 341 samples)
+
+####Acanthurus xanthopterus
+
+ROHR_06_Axanthopterus <- subset_samples(ROHR06_new, species == "Acanthurus_xanthopterus")
+ROHR_06_Axanthopterus # 35 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Axanthopterus <- prune_taxa(taxa_sums(ROHR_06_Axanthopterus) > 0, ROHR_06_Axanthopterus)
+ROHR_06_Axanthopterus # 35 samples, 2846 taxa (full dataset = 6551 taxa, 341 samples)
+
+####Prionurus laticlavius
+
+ROHR_06_Platiclavius <- subset_samples(ROHR06_new, species == "Prionurus_laticlavius")
+ROHR_06_Platiclavius # 33 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Platiclavius <- prune_taxa(taxa_sums(ROHR_06_Platiclavius) > 0, ROHR_06_Platiclavius)
+ROHR_06_Platiclavius # 33 samples, 2930 taxa (full dataset = 6551 taxa, 341 samples)
+
+####Cephalopholis panamensis
+
+ROHR_06_Cpanamensis <- subset_samples(ROHR06_new, species == "Cephalopholis_panamensis")
+ROHR_06_Cpanamensis # 33 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Cpanamensis <- prune_taxa(taxa_sums(ROHR_06_Cpanamensis) > 0, ROHR_06_Cpanamensis)
+ROHR_06_Cpanamensis # 33 samples, 3537 taxa (full dataset = 6551 taxa, 341 samples)
+
+####Epinephelus labriformis
+
+ROHR_06_Elabriformis <- subset_samples(ROHR06_new, species == "Epinephelus_labriformis")
+ROHR_06_Elabriformis # 33 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Elabriformis <- prune_taxa(taxa_sums(ROHR_06_Elabriformis) > 0, ROHR_06_Elabriformis)
+ROHR_06_Elabriformis # 33 samples, 4121 taxa (full dataset = 6551 taxa, 341 samples)
+
+####Cephalopholis colonus
+
+ROHR_06_Ccolonus <- subset_samples(ROHR06_new, species == "Cephalopholis_colonus")
+ROHR_06_Ccolonus # 30 samples
+
+#removings ASVs that are not present in any sample (if any)
+ROHR_06_Ccolonus <- prune_taxa(taxa_sums(ROHR_06_Ccolonus) > 0, ROHR_06_Ccolonus)
+ROHR_06_Ccolonus # 30 samples, 2876 taxa (full dataset = 6551 taxa, 341 samples)
+```
+#Save subsets
+```{r save subsetted datasets}
+# Save Phyloseq objects
+
+#A. concolor
+saveRDS(ROHR_06_Aconcolor, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_concolor.rds")
+
+#M. dorsalis
+saveRDS(ROHR_06_Mdorsalis, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newM_dorsalis.rds")
+
+#A. xanthopterus
+saveRDS(ROHR_06_Axanthopterus, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_xanthopterus.rds")
+
+#P. laticlavius
+saveRDS(ROHR_06_Platiclavius, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_laticlavius.rds")
+
+#C. colonus
+saveRDS(ROHR_06_Ccolonus, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_colonus.rds")
+
+#C. panamensis
+saveRDS(ROHR_06_Cpanamensis, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newC_panamensis.rds")
+
+#E. labriformis
+saveRDS(ROHR_06_Elabriformis, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newE_labriformis.rds")
+
+```
+#Read subsets
+```{r read subsets}
+ROHR_06_Aconcolor = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_concolor.rds")
+
+ROHR_06_Mdorsalis = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newM_dorsalis.rds")
+
+ROHR_06_Axanthopterus = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_xanthopterus.rds")
+
+ROHR_06_Platiclavius = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_laticlavius.rds")
+
+ROHR_06_Ccolonus = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_colonus.rds")
+
+ROHR_06_Cpanamensis = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newC_panamensis.rds")
+
+ROHR_06_Elabriformis = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newE_labriformis.rds")
+```
+
+### Pre-filter = taxa need to be present in at least 10% of samples (approx 3 samples)
+We want to filter out some of the rarer taxa, as these can impact model assumptions and FDR penalty applied due to the lower powered taxa seen across few samples (Ollberding recommends filtering for taxa present in 10-50% of samples; given the high diversity & variability of our microbiomes, we'll use the 10%). Interestingly, when comparing the number of DA microbes found, at 10% cutoff, there are fewer DA microbes than when we filter out more rare taxa (e.g., setting this first step to 50%)
+
+We're doing this with the individual species, rather than across the whole dataset, given that applying this filter to the whole dataset wouldn't eliminate taxa that are rare in a given species
+
+```{r filter species found in <10% of samples}
+(ROHR_06_Aconcolor_filt <- filter_taxa(ROHR_06_Aconcolor, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 586 taxa
+(ROHR_06_Mdorsalis_filt <- filter_taxa(ROHR_06_Mdorsalis, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 744 taxa
+(ROHR_06_Axanthopterus_filt <- filter_taxa(ROHR_06_Axanthopterus, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 529 taxa
+(ROHR_06_Platiclavius_filt <- filter_taxa(ROHR_06_Platiclavius, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 627 taxa
+(ROHR_06_Cpanamensis_filt <- filter_taxa(ROHR_06_Cpanamensis, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 649 taxa
+(ROHR_06_Elabriformis_filt <- filter_taxa(ROHR_06_Elabriformis, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 1005 taxa
+(ROHR_06_Ccolonus_filt <- filter_taxa(ROHR_06_Ccolonus, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 468 taxa
+```
+```{r save filtered 10% taxa}
+#Save phyloseq object with filtered taxa
+saveRDS(ROHR_06_Aconcolor_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Aconcolor_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Mdorsalis_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Mdorsalis_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Axanthopterus_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Axanthopterus_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Platiclavius_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Platiclavius_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Cpanamensis_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Cpanamensis_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Elabriformis_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Elabriformis_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Ccolonus_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Ccolonus_filt_10percent_newTaxanames.rds")
+```
+
+```{r read filtered 10% taxa}
+#read if not starting from top
+ROHR_06_Aconcolor_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Aconcolor_filt_10percent_newTaxanames.rds")
+ROHR_06_Mdorsalis_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Mdorsalis_filt_10percent_newTaxanames.rds")
+ROHR_06_Axanthopterus_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Axanthopterus_filt_10percent_newTaxanames.rds")
+ROHR_06_Platiclavius_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Platiclavius_filt_10percent_newTaxanames.rds")
+ROHR_06_Cpanamensis_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Cpanamensis_filt_10percent_newTaxanames.rds")
+ROHR_06_Elabriformis_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Elabriformis_filt_10percent_newTaxanames.rds")
+ROHR_06_Ccolonus_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Ccolonus_filt_10percent_newTaxanames.rds")
+```
+###### Differential Abundance Analyses
+
+###Contrasts
+```{r DESeq2 specify contrasts}
+	contrast1 <- c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling")
+	contrast2 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling")
+	contrast3 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_upwelling")
+	contrast4 <- c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling")
+	contrast5 <- c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
+	contrast6 <- c("region_season", "Las_Perlas_upwelling", "Coiba_non_upwelling")
+```
+
+```{r create single list of contrasts for figures}
+# List of contrasts
+contrasts <- list(
+  c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_non_upwelling")
+)
+
+contrasts2 <- list(
+  c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
+)
+```
+#### Herbivores
+
+## DESeq2 - A. concolor
+
+```{r DESeq2 - A. concolor}
+dds_Acon <- phyloseq_to_deseq2(ROHR_06_Aconcolor_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Acon <- DESeq(dds_Acon, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Acon, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Acon, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Acon, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Acon, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Acon, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Acon, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #7
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #13
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #2
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #5
+```
+A. con DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+LFC > 0 (up)       : 0, 0%
+LFC < 0 (down)     : 4, 0.68%
+outliers [1]       : 0, 0%
+low counts [2]     : 1, 0.17%
+
+--> total significant p-adj values (Wald test results)
+4
+
+A. con DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+LFC > 0 (up)       : 4, 0.68%
+LFC < 0 (down)     : 3, 0.51%
+outliers [1]       : 0, 0%
+low counts [2]     : 1, 0.17%
+
+--> total significant p-adj values (Wald test results)
+7
+
+A. con DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+LFC > 0 (up)       : 5, 0.85%
+LFC < 0 (down)     : 8, 1.4%
+outliers [1]       : 0, 0%
+low counts [2]     : 296, 51%
+
+--> total significant p-adj values (Wald test results)
+13
+
+A. con DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+LFC > 0 (up)       : 3, 0.51%
+LFC < 0 (down)     : 1, 0.17%
+outliers [1]       : 0, 0%
+low counts [2]     : 1, 0.17%
+
+--> total significant p-adj values (Wald test results)
+4
+
+A. con DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+LFC > 0 (up)       : 0, 0%
+LFC < 0 (down)     : 2, 0.34%
+outliers [1]       : 0, 0%
+low counts [2]     : 1, 0.17%
+
+--> total significant p-adj values (Wald test results)
+2
+A. con DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+LFC > 0 (up)       : 5, 0.85%
+LFC < 0 (down)     : 0, 0%
+outliers [1]       : 0, 0%
+low counts [2]     : 1, 0.17%
+
+--> total significant p-adj values (Wald test results)
+5
+
+#### Plotting DESeq2 - A. con
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listAcon <- lapply(contrasts2, function(contrast) {
+  resAcon <- results(dds_Acon, contrast = contrast, alpha = 0.05)
+  resAcon <- as.data.frame(resAcon)
+  resAcon$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resAcon$Species <- rownames(resAcon)  # Add species names
+  resAcon
+})
+
+# Combine all results into one data frame
+all_resultsAcon <- do.call(rbind, results_listAcon)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsAcon$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsAcon$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsAcon$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsAcon$Species
+)
+
+# Verify the replacement
+unique(all_resultsAcon$Species)
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsAcon <- all_resultsAcon %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsAcon <- top_resultsAcon %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsAcon <- top_resultsAcon %>%
+  left_join(species_countsAcon[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsAcon <- top_resultsAcon %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsAcon$contrast <- factor(top_resultsAcon$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Acon <- ggplot(top_resultsAcon, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Acon
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 A concolor.pdf", plot = Deseq2_Acon, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 A concolor.png", plot = Deseq2_Acon, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+## MaAsLin2 - A. concolor
+
+
+## DESeq2 - M. dorsalis
+```{r DESeq2 -  M. dorsalis}
+dds_Mdor <- phyloseq_to_deseq2(ROHR_06_Mdorsalis_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Mdor <- DESeq(dds_Mdor, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Mdor, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Mdor, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Mdor, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Mdor, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Mdor, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Mdor, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #20
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #15
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #3
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #24
+```
+Mdor DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+LFC > 0 (up)       : 9, 1.2%
+LFC < 0 (down)     : 11, 1.5%
+outliers [1]       : 0, 0%
+low counts [2]     : 548, 74%
+
+--> total significant p-adj values (Wald test results)
+20
+
+Mdor DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+LFC > 0 (up)       : 2, 0.27%
+LFC < 0 (down)     : 2, 0.27%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+
+--> total significant p-adj values (Wald test results)
+4
+
+Mdor DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+LFC > 0 (up)       : 1, 0.13%
+LFC < 0 (down)     : 3, 0.4%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+
+--> total significant p-adj values (Wald test results)
+4
+
+Mdor DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+LFC > 0 (up)       : 5, 0.67%
+LFC < 0 (down)     : 10, 1.3%
+outliers [1]       : 0, 0%
+low counts [2]     : 476, 64%
+
+--> total significant p-adj values (Wald test results)
+15
+
+Mdor DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+LFC > 0 (up)       : 1, 0.13%
+LFC < 0 (down)     : 2, 0.27%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+
+--> total significant p-adj values (Wald test results)
+3
+
+Mdor DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+LFC > 0 (up)       : 11, 1.5%
+LFC < 0 (down)     : 13, 1.7%
+outliers [1]       : 0, 0%
+low counts [2]     : 548, 74%
+--> total significant p-adj values (Wald test results)
+24
+# Plotting DESeq2 - M.dor
+
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listMdor <- lapply(contrasts2, function(contrast) {
+  resMdor <- results(dds_Mdor, contrast = contrast, alpha = 0.05)
+  resMdor <- as.data.frame(resMdor)
+  resMdor$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resMdor$Species <- rownames(resMdor)  # Add species names
+  resMdor
+})
+
+# Combine all results into one data frame
+all_resultsMdor <- do.call(rbind, results_listMdor)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsMdor$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsMdor$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsMdor$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsMdor$Species
+)
+
+# Verify the replacement
+unique(all_resultsMdor$Species)
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsMdor <- all_resultsMdor %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsMdor <- top_resultsMdor %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsMdor <- top_resultsMdor %>%
+  left_join(species_countsMdor[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsMdor <- top_resultsMdor %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsMdor$contrast <- factor(top_resultsMdor$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Mdor <- ggplot(top_resultsMdor, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip(ylim = c(-40, 40)) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Mdor
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 M dorsalis.pdf", plot = Deseq2_Mdor, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 M dorsalis.png", plot = Deseq2_Mdor, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+## MaAsLin2 - M. dorsalis
+
+
+## DESeq2 - A. xanthopterus
+```{r DESeq2 - A. xanth}
+dds_Axan <- phyloseq_to_deseq2(ROHR_06_Axanthopterus_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Axan <- DESeq(dds_Axan, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Axan, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Axan, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Axan, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Axan, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Axan, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Axan, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #0
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #14
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #8
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #22
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #22
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #26
+```
+Axan DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+
+
+--> total significant p-adj values (Wald test results)
+0 HOW???
+
+Axan DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+
+
+--> total significant p-adj values (Wald test results)
+14
+
+Axan DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+8
+
+Axan DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+
+
+--> total significant p-adj values (Wald test results)
+22
+
+Axan DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+22
+
+Axan DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+
+--> total significant p-adj values (Wald test results)
+26
+
+***Need to check back in on this, how is it that the greatest differences here are in Coiba, not Las Perlas
+
+# Plotting DESeq2 - A. xanth
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listAxan <- lapply(contrasts2, function(contrast) {
+  resAxan <- results(dds_Axan, contrast = contrast, alpha = 0.05)
+  resAxan <- as.data.frame(resAxan)
+  resAxan$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resAxan$Species <- rownames(resAxan)  # Add species names
+  resAxan
+})
+
+# Combine all results into one data frame
+all_resultsAxan <- do.call(rbind, results_listAxan)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsAxan$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsAxan$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsAxan$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsAxan$Species
+)
+
+# Verify the replacement
+unique(all_resultsAxan$Species)
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsAxan <- all_resultsAxan %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsAxan <- top_resultsAxan %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsAxan <- top_resultsAxan %>%
+  left_join(species_countsAxan[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsAxan <- top_resultsAxan %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsAxan$contrast <- factor(top_resultsAxan$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Axan <- ggplot(top_resultsAxan, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Axan
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 A xanthopterus.pdf", plot = Deseq2_Axan, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 A xanthopterus.png", plot = Deseq2_Axan, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+## MaAsLin2 - A. xanthopterus
+
+
+## DESeq2 - P. laticlavius
+```{r DESeq2 - P. lat}
+dds_Plat <- phyloseq_to_deseq2(ROHR_06_Platiclavius_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Plat <- DESeq(dds_Plat, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Plat, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Plat, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Plat, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Plat, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Plat, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Plat, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #7
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #13
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #2
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #5
+```
+#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+LFC > 0 (up)       : 11, 1.8%
+LFC < 0 (down)     : 16, 2.6%
+outliers [1]       : 0, 0%
+low counts [2]     : 365, 58%
+
+--> total significant p-adj values (Wald test results)
+27
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+LFC > 0 (up)       : 9, 1.4%
+LFC < 0 (down)     : 3, 0.48%
+outliers [1]       : 0, 0%
+low counts [2]     : 195, 31%
+
+--> total significant p-adj values (Wald test results)
+12
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+LFC > 0 (up)       : 4, 0.64%
+LFC < 0 (down)     : 4, 0.64%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+
+--> total significant p-adj values (Wald test results)
+8
+
+#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+LFC > 0 (up)       : 14, 2.2%
+LFC < 0 (down)     : 6, 0.96%
+outliers [1]       : 0, 0%
+low counts [2]     : 377, 60%
+
+--> total significant p-adj values (Wald test results)
+20
+
+#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+LFC > 0 (up)       : 8, 1.3%
+LFC < 0 (down)     : 6, 0.96%
+outliers [1]       : 0, 0%
+low counts [2]     : 498, 79%
+
+--> total significant p-adj values (Wald test results)
+14
+
+#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+LFC > 0 (up)       : 15, 2.4%
+LFC < 0 (down)     : 7, 1.1%
+outliers [1]       : 0, 0%
+low counts [2]     : 474, 76%
+
+--> total significant p-adj values (Wald test results)
+22
+
+# Plotting DESeq2 - P. lat
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listPlat <- lapply(contrasts2, function(contrast) {
+  resPlat <- results(dds_Plat, contrast = contrast, alpha = 0.05)
+  resPlat <- as.data.frame(resPlat)
+  resPlat$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resPlat$Species <- rownames(resPlat)  # Add species names
+  resPlat
+})
+
+# Combine all results into one data frame
+all_resultsPlat <- do.call(rbind, results_listPlat)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsPlat$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsPlat$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsPlat$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsPlat$Species
+)
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsPlat <- all_resultsPlat %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsPlat <- top_resultsPlat %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsPlat <- top_resultsPlat %>%
+  left_join(species_countsPlat[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsPlat <- top_resultsPlat %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsPlat$contrast <- factor(top_resultsPlat$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Plat <- ggplot(top_resultsPlat, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Plat
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 P laticlavius.pdf", plot = Deseq2_Plat, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 P laticlavius.png", plot = Deseq2_Plat, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+## MaAsLin2 - P. laticlavius
+
+#### Carnivores
+## DESeq2 - C. panamensis
+```{r DESeq2 - C. panamensis}
+dds_Cpan <- phyloseq_to_deseq2(ROHR_06_Cpanamensis_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Cpan <- DESeq(dds_Cpan, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Cpan, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Cpan, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Cpan, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Cpan, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Cpan, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Cpan, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #7
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #5
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #1
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #6
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #13
+```
+#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+
+#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+
+--> total significant p-adj values (Wald test results)
+
+
+# Plotting DESeq2 - C. pan
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listCpan <- lapply(contrasts2, function(contrast) {
+  resCpan <- results(dds_Cpan, contrast = contrast, alpha = 0.05)
+  resCpan <- as.data.frame(resCpan)
+  resCpan$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resCpan$Species <- rownames(resCpan)  # Add species names
+  resCpan
+})
+
+# Combine all results into one data frame
+all_resultsCpan <- do.call(rbind, results_listCpan)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsCpan$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsCpan$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsCpan$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsCpan$Species
+)
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsCpan <- all_resultsCpan %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsCpan <- top_resultsCpan %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsCpan <- top_resultsCpan %>%
+  left_join(species_countsCpan[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsCpan <- top_resultsCpan %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsCpan$contrast <- factor(top_resultsCpan$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Cpan <- ggplot(top_resultsCpan, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Cpan
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 C panamensis.pdf", plot = Deseq2_Cpan, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 C panamensis.png", plot = Deseq2_Cpan, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+## MaAsLin2 - C. panamensis
+
+## DESeq2 - E. labriformis
+```{r DESeq2 - E. lab}
+dds_Elab <- phyloseq_to_deseq2(ROHR_06_Elabriformis_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Elab <- DESeq(dds_Elab, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Elab, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Elab, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Elab, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Elab, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Elab, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Elab, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #10
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #11
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #7
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #12
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #13
+```
+#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+
+#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+
+--> total significant p-adj values (Wald test results)
+
+
+# Plotting DESeq2 - E. lab
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listElab <- lapply(contrasts2, function(contrast) {
+  resElab <- results(dds_Elab, contrast = contrast, alpha = 0.05)
+  resElab <- as.data.frame(resElab)
+  resElab$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resElab$Species <- rownames(resElab)  # Add species names
+  resElab
+})
+
+# Combine all results into one data frame
+all_resultsElab <- do.call(rbind, results_listElab)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsElab$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsElab$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsElab$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsElab$Species
+)
+
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsElab <- all_resultsElab %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsElab <- top_resultsElab %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsElab <- top_resultsElab %>%
+  left_join(species_countsElab[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsElab <- top_resultsElab %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsElab$contrast <- factor(top_resultsElab$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Elab <- ggplot(top_resultsElab, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Elab
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 E lab.pdf", plot = Deseq2_Elab, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 E lab.png", plot = Deseq2_Elab, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+## MaAsLin2 - E. labriformis
+
+#### Planktivore
+## DESeq2 - C. colonus
+```{r DESeq2 - C. col}
+dds_Ccol <- phyloseq_to_deseq2(ROHR_06_Ccolonus_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_Ccol <- DESeq(dds_Ccol, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+Visualizing results of the DESEq2 differential abundance analysis: basic call "results(dds)" gives log2 fold change , p-vals, and adj. p-vals using the LAST variable in the design formula specified above --> upwelling vs. non-upwelling
+
+When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
+
+```{r results of DESeq2}
+resDeSeq <- results(dds_Ccol, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_n <- results(dds_Ccol, contrast = contrast2, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_nU <- results(dds_Ccol, contrast = contrast3, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_up <- results(dds_Ccol, contrast = contrast4, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_CC <- results(dds_Ccol, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+resDeSeq_LC_Un <- results(dds_Ccol, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
+```
+We can order our results by smallest p value:
+```{r reorder by p-val}
+resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
+resOrderedLC_n <- resDeSeq_LC_n[order(resDeSeq_LC_n$pvalue),]
+resOrderedLC_nU <- resDeSeq_LC_nU[order(resDeSeq_LC_nU$pvalue),]
+resOrderedLC_up <- resDeSeq_LC_up[order(resDeSeq_LC_up$pvalue),]
+resOrderedCC <- resDeSeq_CC[order(resDeSeq_CC$pvalue),]
+resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
+```
+
+```{r summarize results DESeq}
+summary(resOrdered)
+summary(resOrderedLC_n)
+summary(resOrderedLC_nU)
+summary(resOrderedLC_up)
+summary(resOrderedCC)
+summary(resOrderedLC_Un)
+
+#Note --> LFC = log fold change
+# outliers calculated with Cook's distance: fromDESeq2 documentation:
+#"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
+```
+
+```{r checking padj <0.05 in our comparisons}
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #7
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #13
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #2
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #5
+```
+#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+--> testing for seasonal upwelling driven differences
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+--> testing for regional differences (same season; similar enviro conditions)
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+--> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+--> testing for regional differences (same season; DIFFERENT enviro conditions)
+--> would expect to have MOST differences here
+
+
+--> total significant p-adj values (Wald test results)
+
+
+#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+--> testing for seasonal differences in Coiba
+
+
+--> total significant p-adj values (Wald test results)
+
+#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+
+--> total significant p-adj values (Wald test results)
+
+
+# Plotting DESeq2 - C. col
+```{r extract contrasts}
+# Extract DESeq2 results for each contrast
+results_listCcol <- lapply(contrasts2, function(contrast) {
+  resCcol <- results(dds_Ccol, contrast = contrast, alpha = 0.05)
+  resCcol <- as.data.frame(resCcol)
+  resCcol$contrast <- paste(contrast[2], "vs", contrast[3])  # Add contrast label
+  resCcol$Species <- rownames(resCcol)  # Add species names
+  resCcol
+})
+
+# Combine all results into one data frame
+all_resultsCcol <- do.call(rbind, results_listCcol)
+```
+
+```{r replace long marinimicrobia name}
+# Replace the species name in the fdr_deseq dataframe
+all_resultsCcol$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  all_resultsCcol$Species
+)
+
+# Replace the specified string in the 'Species' column
+all_resultsCcol$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  all_resultsCcol$Species
+)
+
+# Verify the replacement
+unique(all_resultsCcol$Species)
+```
+
+```{r filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsCcol <- all_resultsCcol %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup()
+```
+
+```{r scale size to repeat taxa across panels}
+# Identify which species appear in multiple contrasts
+species_countsCcol <- top_resultsCcol %>%
+  group_by(Species) %>%
+  summarise(facet_count = n_distinct(contrast)) %>%
+  mutate(bold_label = ifelse(facet_count > 1, "bold", "plain"))  # Use "bold" for species in multiple contrasts
+
+#  Merge the 'bold_label' and 'facet_count' columns with the original dataset
+top_resultsCcol <- top_resultsCcol %>%
+  left_join(species_countsCcol[, c("Species", "bold_label", "facet_count")], by = "Species")
+
+#Reorder species by padj within each contrast/facet
+top_resultsCcol <- top_resultsCcol %>%
+  arrange(contrast, padj) %>%
+  mutate(Species = factor(Species, levels = rev(unique(Species))))  # Reorder factor by padj within each facet
+
+# Manually reorder the contrast variable to control facet arrangement
+top_resultsCcol$contrast <- factor(top_resultsCcol$contrast,
+                               levels = c(
+                                 "Coiba_non_upwelling vs Coiba_upwelling",
+                                 "Las_Perlas_non_upwelling vs Las_Perlas_upwelling",
+                                 "Las_Perlas_non_upwelling vs Coiba_non_upwelling",
+                                 "Las_Perlas_upwelling vs Coiba_upwelling"
+                               ))
+
+# Create the plot with size adjusted by facet_count (NO bold text applied to species names --> issues with this code)
+Deseq2_Ccol <- ggplot(top_resultsCcol, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
+  geom_point() +
+  facet_wrap(~ contrast, nrow = 2, ncol = 2, scales = "free_y",
+             labeller = as_labeller(c(
+               "Las_Perlas_non_upwelling vs Las_Perlas_upwelling" = "Las Perlas wet vs. Las Perlas dry",
+               "Las_Perlas_non_upwelling vs Coiba_non_upwelling" = "Las Perlas wet vs. Coiba wet",
+               "Las_Perlas_upwelling vs Coiba_upwelling" = "Las Perlas dry vs. Coiba dry",
+               "Coiba_non_upwelling vs Coiba_upwelling" = "Coiba wet vs. Coiba dry"
+             ))) +  # 2x2 facet grid & relabel facets
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(y = "Log2 Fold-Change", x = "", color = "Species") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.text.y = element_text(
+      size = 8,
+      color = "black"
+    ),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 12),  # Increase facet label size
+    plot.margin = margin(10, 40, 10, 30)  # Increase right margin to give space for labels
+  ) +
+  scale_size_continuous(range = c(3, 6))  # Adjust point size range to make it clearer
+Deseq2_Ccol
+```
+```{r code for exporting a-div plot above as a pdf}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 C colonus.pdf", plot = Deseq2_Ccol, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='pdf', dpi=700)
+```
+
+```{r code for exporting a-div plot above as a png}
+ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 C colonus.png", plot = Deseq2_Ccol, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
+```
+
+## MaAsLin2 - C. colonus
+
+
+##### Comparing DA taxa between water and fish
+
+We're interested in knowing whether changes in the surrounding environment (e.g., those linked to upwelling in the Gulf of Panama) are driving, at least in part, changes in our fishes' skin microbiomes. One way in which we can test this is to see, for each pairwise comparison between regions/seasons, if the DA taxa that were detected as significant in the fish skin microbiomes are also among those that changed signficantly in the water microbiome. 
+
+From the tests run above, we can already tell that the fish skin microbiome stays much more constant between regions and seasons, as there are over 50 times more DA taxa between LP wet & dry for the water compared to the avg. DA in our 7 target fish. 
+
+Note: There is some uncertainty associated with the calls from the DA tests, especially for the water samples, given the small sample size when breaking down results by sample type, gulf, and season (water n = 4-6, fish n = 33-38), and that it has been shown that DA tests generally perform relatively poorly with small sample sizes.
+
+We'll now run each of the signfificant (padj <0.05) DA taxa in our fish samples against the water dataset. Since different fish may be more or less responsive to changes in the surrounding water's microbiome, instead of pooling all DA taxa across fish, we'll run the analyses fish-by-fish.
+
+```{r read in water filtered 10% data}
+#read if not starting from top
+ROHR_08_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_10percent_newTaxanames.rds")
+```
+
+# run water DESeq2 (assuming fish have been run above)
+```{r DESeq2}
+dds_water <- phyloseq_to_deseq2(ROHR_08_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
+
+dds_water <- DESeq(dds_water, test = "Wald", fitType = "local", sfType = "poscounts")
+```
+
+```{r compare taxa - filter significant}
+# Create a named list of DESeq2 results
+dds_list <- list(
+  water = dds_water,
+  Acon = dds_Acon,
+  Mdor = dds_Mdor,
+  Axan = dds_Axan,
+  Plat = dds_Plat,
+  Cpan = dds_Cpan,
+  Elab = dds_Elab,
+  Ccol = dds_Ccol
+)
+
+# Define contrasts of interest
+contrasts <- list(
+  contrast1 = c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  contrast2 = c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  contrast4 = c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  contrast5 = c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
+)
+
+# Step 3: Create a function to filter significant taxa
+filter_significant_taxa <- function(dds, contrasts, padj_threshold = 0.05) {
+  results <- results(dds, contrast = contrasts, alpha = 0.05) %>%
+    as.data.frame() %>%
+    rownames_to_column("Species") %>%
+    filter(!is.na(padj) & padj < padj_threshold) %>%
+    select(Species, log2FoldChange, padj)
+  return(results)
+}
+
+# Step 4: Loop through dds_list and contrasts to filter significant taxa
+significant_taxa_list <- list()
+
+for (contrast_name in names(contrasts)) {
+  contrast <- contrasts[[contrast_name]]
+  
+  for (dds_name in names(dds_list)) {
+    dds <- dds_list[[dds_name]]
+    
+    # Filter significant taxa for the current dds and contrast
+    significant_taxa <- filter_significant_taxa(dds, contrast)
+    
+    # Store results in the list with a unique identifier
+    significant_taxa_list[[paste(dds_name, contrast_name, sep = "_")]] <- significant_taxa
+  }
+}
+
+# Step 5: Combine all results into a single data frame for easier inspection
+combined_results <- bind_rows(significant_taxa_list, .id = "contrast")
+
+# Step 6: Save the combined results to a CSV file
+write.csv(combined_results, "significant_taxa_results.csv", row.names = FALSE)
+```
+
+```{r compare sig DA taxa between water and fish}
+# Step 1: Split combined_results by contrast
+water_results <- combined_results %>% 
+  filter(grepl("water", contrast))
+
+fish_results <- combined_results %>% 
+  filter(!grepl("water", contrast))
+
+# Step 2: Define a function to compare fish and water taxa for each contrast
+compare_fish_water <- function(fish_data, water_data, contrast_name) {
+  # Subset data for the specific contrast
+  fish_contrast <- fish_data %>% 
+    filter(grepl(contrast_name, contrast))
+  
+  water_contrast <- water_data %>% 
+    filter(grepl(contrast_name, contrast))
+  
+  # Find shared taxa
+  shared_taxa <- inner_join(
+    fish_contrast, 
+    water_contrast, 
+    by = "Species", 
+    suffix = c("_fish", "_water")
+  )
+  
+  return(shared_taxa)
+}
+
+# Step 3: Apply the function for each contrast
+contrast_names <- unique(combined_results$contrast %>% str_extract("contrast[1-6]"))
+
+shared_taxa_results <- list()
+
+for (contrast_name in contrast_names) {
+  shared_taxa <- compare_fish_water(fish_results, water_results, contrast_name)
+  shared_taxa_results[[contrast_name]] <- shared_taxa
+}
+
+# Step 4: Combine all shared taxa results into one data frame
+final_shared_taxa <- bind_rows(shared_taxa_results, .id = "contrast")
+
+# Step 5: Save the results as a CSV file
+write.csv(final_shared_taxa, "shared_fish_water_taxa.csv", row.names = FALSE)
+
+```
+
+```{r update contrast names}
+# Define a mapping for contrast renaming
+contrast_rename <- c(
+  "contrast1" = "Las Perlas wet vs. Las Perlas dry",
+  "contrast2" = "Las Perlas wet vs. Coiba wet",
+  "contrast4" = "Las Perlas dry vs. Coiba dry",
+  "contrast5" = "Coiba wet vs. Coiba dry"
+)
+
+# Rename the contrast column in final_shared_taxa
+final_shared_taxa <- final_shared_taxa %>%
+  mutate(contrast = recode(contrast, !!!contrast_rename))
+
+# Save the updated results as a CSV file
+write.csv(final_shared_taxa, "updated_shared_fish_water_taxa.csv", row.names = FALSE)
+
+```
+
+```{r plot these shared taxa}
+# Load datasets (if not starting from top)
+significant_taxa <- read.csv("significant_taxa_results.csv")  # Full list of significant taxa
+shared_taxa <- read.csv("updated_shared_fish_water_taxa.csv")        # Shared taxa between fish and water
+
+# Replace the species name in the fdr_deseq dataframe
+significant_taxa$Species <- gsub(
+  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
+  "Marinimicrobia (SAR406 clade)",
+  significant_taxa$Species
+)
+
+# Replace the specified string in the 'Species' column
+significant_taxa$Species <- gsub(
+  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
+  "SAR324 clade(Marine group B)",
+  significant_taxa$Species
+)
+
+# Step 3: Add a "shared" column to identify shared taxa
+significant_taxa <- significant_taxa %>%
+  mutate(shared = ifelse(Species %in% shared_taxa$Species, "Shared", "Not Shared"))
+
+# Manually reorder the contrast variable to control facet arrangement
+significant_taxa$contrast <- factor(significant_taxa$contrast,
+                               levels = c(
+                                 "water_contrast5",
+                                 "water_contrast1",
+                                 "water_contrast2",
+                                 "water_contrast4",
+                                 "Acon_contrast5",
+                                 "Acon_contrast1",
+                                 "Acon_contrast2",
+                                 "Acon_contrast4",
+                                 "Mdor_contrast5",
+                                 "Mdor_contrast1",
+                                 "Mdor_contrast2",
+                                 "Mdor_contrast4",
+                                 "Cpan_contrast5",
+                                 "Cpan_contrast1",
+                                 "Cpan_contrast2",
+                                 "Cpan_contrast4",
+                                 "Elab_contrast5",
+                                 "Elab_contrast1",
+                                 "Elab_contrast2",
+                                 "Elab_contrast4",
+                                 "Ccol_contrast5",
+                                 "Ccol_contrast1",
+                                 "Ccol_contrast2",
+                                 "Ccol_contrast4"
+                               ))
+
+# Step 4: Add a new column 'region_season' based on the 'contrast' column
+significant_taxa <- significant_taxa %>%
+  mutate(region_season = recode(contrast,
+                               "water_contrast1" = "Water Las Perlas wet vs. Las Perlas dry",
+                               "Acon_contrast1" = "A. concolor Las Perlas wet vs. Las Perlas dry",
+                               "Mdor_contrast1" = "M. dorsalis Las Perlas wet vs. Las Perlas dry",
+                               "Axan_contrast1" = "A. xanthopterus Las Perlas wet vs. Las Perlas dry",
+                               "Plat_contrast1" = "P. laticlavius Las Perlas wet vs. Las Perlas dry",
+                               "Cpan_contrast1" = "C. panamensis Las Perlas wet vs. Las Perlas dry",
+                               "Elab_contrast1" = "E. labriformis Las Perlas wet vs. Las Perlas dry",
+                               "Ccol_contrast1" = "C. colonus Las Perlas wet vs. Las Perlas dry",
+                               "water_contrast2" = "Water Las Perlas wet vs. Coiba wet",
+                               "Acon_contrast2" = "A. concolor Las Perlas wet vs. Coiba wet",
+                               "Mdor_contrast2" = "M. dorsalis Las Perlas wet vs. Coiba wet",
+                               "Axan_contrast2" = "A. xanthopterus Las Perlas wet vs. Coiba wet",
+                               "Plat_contrast2" = "P. laticlavius Las Perlas wet vs. Coiba wet",
+                               "Cpan_contrast2" = "C. panamensis Las Perlas wet vs. Coiba wet",
+                               "Elab_contrast2" = "E. labriformis Las Perlas wet vs. Coiba wet",
+                               "Ccol_contrast2" = "C. colonus Las Perlas wet vs. Coiba wet",
+                               "water_contrast4" = "Water Las Perlas dry vs. Coiba dry",
+                               "Acon_contrast4" = "A. concolor Las Perlas dry vs. Coiba dry",
+                               "Mdor_contrast4" = "M. dorsalis Las Perlas dry vs. Coiba dry",
+                               "Axan_contrast4" = "A. xanthopterus Las Perlas dry vs. Coiba dry",
+                               "Plat_contrast4" = "P. laticlavius Las Perlas dry vs. Coiba dry",
+                               "Cpan_contrast4" = "C. panamensis Las Perlas dry vs. Coiba dry",
+                               "Elab_contrast4" = "E. labriformis Las Perlas dry vs. Coiba dry",
+                               "Ccol_contrast4" = "C. colonus Las Perlas dry vs. Coiba dry",
+                               "water_contrast5" = "Water Coiba wet vs. Coiba dry",
+                               "Acon_contrast5" = "A. concolor Coiba wet vs. Coiba dry",
+                               "Mdor_contrast5" = "M. dorsalis Coiba wet vs. Coiba dry",
+                               "Axan_contrast5" = "A. xanthopterus Coiba wet vs. Coiba dry",
+                               "Plat_contrast5" = "P. laticlavius Coiba wet vs. Coiba dry",
+                               "Cpan_contrast5" = "C. panamensis Coiba wet vs. Coiba dry",
+                               "Elab_contrast5" = "E. labriformis Coiba wet vs. Coiba dry",
+                               "Ccol_contrast5" = "C. colonus Coiba wet vs. Coiba dry"
+                                                          ))
+
+# Step 5: Define fish prefixes for filtering contrasts
+fish_prefixes <- c("Acon_", "Mdor_", "Axan_", "Plat_", "Cpan_", "Elab_", "Ccol_")
+
+# Step 6: Loop through each fish prefix to create plots
+for (prefix in fish_prefixes) {
+  # Filter data for contrasts starting with the current prefix
+  fish_data <- significant_taxa %>%
+    filter(grepl(paste0("^", prefix), contrast)) %>%
+    arrange(contrast, padj)  # Reorder by padj within each contrast
+  
+  # Ensure there is data to plot for the current prefix
+  if (nrow(fish_data) > 0) {
+    # Generate the plot
+    plot <- ggplot(fish_data, aes(x = reorder(Species, -padj), y = log2FoldChange, color = shared)) +
+      geom_point(size = 3, alpha = 0.8) +
+      facet_wrap(~ region_season, scales = "free_y", ncol = 2) +  # Use 'region_season' for facets
+      scale_color_manual(values = c("Shared" = "blue", "Not Shared" = "gray")) +
+      labs(
+        x = "Microbial Taxa",
+        y = "Log2 Fold-Change",
+        color = "Shared with Water"
+      ) +
+      coord_flip() +  # Flip coordinates for better readability
+      geom_vline(xintercept = 0, linetype = "dashed") +  # Vertical dashed line at zero
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = element_text(size = 8),
+        strip.text = element_text(size = 12),  # Facet label size
+        legend.position = "bottom",
+        plot.title = element_blank(),  # Remove plot title
+        panel.grid = element_blank()  # Remove grid lines
+      )
+    
+    # Save the plot as a PDF
+    ggsave(
+      filename = paste0("DA_Taxa_", gsub("_", "", prefix), ".pdf"),
+      plot = plot,
+      width = 12,
+      height = 8
+    )
+  }
+}
+
+
+```
+
+```{r count shared taxa by region_season}
+# Count the number of rows (shared taxa) per "contrast_fish"
+shared_taxa_summary <- shared_taxa %>%
+  group_by(contrast_fish) %>%
+  summarise(shared_taxa_count = n()) %>%
+  arrange(desc(shared_taxa_count))  # Optional: sort by count in descending order
+
+# View the summary
+print(shared_taxa_summary)
+```
+```{r count all and unique DA taxa for each object}
+
+# List of DESeq2 objects
+dds_list <- list(
+  water = dds_water,
+  Acon = dds_Acon,
+  Mdor = dds_Mdor,
+  Axan = dds_Axan,
+  Plat = dds_Plat,
+  Cpan = dds_Cpan,
+  Elab = dds_Elab,
+  Ccol = dds_Ccol
+)
+
+# Define contrasts for each DESeq2 object (example with 4 contrasts each)
+contrasts_list <- list(
+  water = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  Acon = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  # Repeat for all other dds objects
+  Mdor = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  Axan = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  Plat = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  Cpan = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  Elab = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
+  Ccol = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
+  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
+  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
+  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling"))
+)
+
+# Function to process multiple contrasts for each dds object
+process_dds <- function(dds, contrasts) {
+  contrast_results <- list()
+  for (contrast in contrasts) {
+    # Get results for the current contrast
+    res <- results(dds, contrast = contrast, alpha = 0.05)
+    sig_res <- res[!is.na(res$padj) & res$padj < 0.05, ]
+    significant_taxa <- rownames(sig_res)
+    contrast_results[[paste(contrast, collapse = "_")]] <- significant_taxa
+  }
+  # Calculate unique taxa for all contrasts within this dds object
+  all_taxa <- unlist(contrast_results)
+  unique_taxa <- unique(all_taxa)
+  unique_per_contrast <- lapply(contrast_results, unique)  # Unique taxa per contrast
+  list(
+    significant_counts = sapply(contrast_results, length),  # Count per contrast
+    unique_taxa = unique_taxa,                             # Unique taxa for the object
+    unique_per_contrast = unique_per_contrast              # Unique taxa for each contrast
+  )
+}
+
+# Apply the function to each dds object
+results_list <- mapply(
+  process_dds,
+  dds = dds_list,
+  contrasts = contrasts_list,
+  SIMPLIFY = FALSE
+)
+
+# Summarize results for unique taxa
+unique_counts_per_object <- sapply(results_list, function(res) length(res$unique_taxa))
+unique_counts_per_contrast <- lapply(results_list, function(res) res$significant_counts)
+unique_taxa_per_contrast <- lapply(results_list, function(res) res$unique_per_contrast)
+
+# Combine all unique taxa across all dds objects
+all_unique_taxa <- unique(unlist(lapply(results_list, function(res) res$unique_taxa)))
+
+# Summary
+print("Unique significant counts per object:")
+print(unique_counts_per_object)
+
+print("Unique significant counts per contrast for each object:")
+print(unique_counts_per_contrast)
+
+print("Total unique significant taxa across all objects:")
+print(length(all_unique_taxa))
+
+```
+
+Here, we have all the significant taxa across all 4 of these region-season comparisons:
+"Total significant counts per object (all contrasts combined):"
+water  Acon  Mdor  Axan  Plat  Cpan  Elab  Ccol 
+ 1455    17    42    58    73    18    33    17 
+ 
+ And among those, these are the unique taxa (removing repeats across comparisons)
+"Unique significant counts per object (across contrasts):"
+water  Acon  Mdor  Axan  Plat  Cpan  Elab  Ccol 
+  732     9    27    37    47    11    20     9 
+[1] "Total unique significant taxa across all objects:"
+[1] 824
