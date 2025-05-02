@@ -56,7 +56,8 @@ Note: Start with scripts #1 & #2, which perform basic metabarcoding data cleanin
     - script used to refine and clean manuscript figures, especially the multi-panel plots (some figures coded directly in scripts above)
 
 ### Water Microbiome Scripts
-**Note: first run water microbiome samples through the same pre-processing script (Fish script #1) and/or merge the datasets (fish + water) prior to pre-processing and run everything together
+Note: first run water microbiome samples through the same pre-processing script (Fish script #1) and/or merge the datasets (fish + water) prior to pre-processing and run everything together
+
 (1) Water Alpha Diversity 16S Version 1.Rmd
     - Same as fish above, but with water samples:
         - additional cleaning & visualizing of phyloseq object
@@ -64,11 +65,13 @@ Note: Start with scripts #1 & #2, which perform basic metabarcoding data cleanin
         - calculating phylogenetic tree for microbial ASVs & adding to new phyloseq
         - rarefying dataset
         - creating various a-div plots
+        
 (2) Water Beta Diversity 16S Version 1.Rmd
     - Same as fish above, but with water samples:
         - Bray Curtis, Jaccard, Unifrac, WUnifrac... = different diversity metrics run to assess microbial community composition.
         - PERMANOVAs to test significance of different predictors in explaining microbial community variation across species, regions, and seasons
         - ordinations (PCoAs, NMDS) to visualize microbiome (dis)similarity across groups
+        
 (3) Water Differential Abundance 16S Version 1.Rmd
     - Same as fish above, but with water samples & comparing water to fish:
         - 2 differential abundance analyses (MaAsLin2 and DESeq2) tested on water samples
