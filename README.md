@@ -25,8 +25,8 @@ Note: Start with scripts #1 & #2, which perform basic metabarcoding data cleanin
 
 ### Fish Microbiome Scripts
 (1) Skin Pre-Processing RRR Fish 16S Version 1.R
-    - sequence pre-processing (following cutadapt step in terminal), quality control & creation of initial phyloseq object with tax table, OTU table, and metadata
-    - follows DADA2 pipeline
+ - sequence pre-processing (following cutadapt step in terminal), quality control & creation of initial phyloseq object with tax table, OTU table, and metadata
+ - follows DADA2 pipeline
 
 (2) Skin Alpha Diversity 16S Version 1.Rmd
     - additional cleaning & visualizing of phyloseq object
