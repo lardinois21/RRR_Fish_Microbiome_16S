@@ -58,7 +58,7 @@ Note: Start with scripts #1 & #2, which perform basic metabarcoding data cleanin
 ### Water Microbiome Scripts
 Note: first run water microbiome samples through the same pre-processing script (Fish script #1) and/or merge the datasets (fish + water) prior to pre-processing and run everything together
 
-(1) Script_8_Water_Alpha_Diversity_16S.Rmd
+(1) W-Script_1_Water_Alpha_Diversity_16S.Rmd
 - Same as fish above, but with water samples:
         - additional cleaning & visualizing of phyloseq object
         -  alpha diversity analyses, including Hill numbers
@@ -66,18 +66,18 @@ Note: first run water microbiome samples through the same pre-processing script 
         - rarefying dataset
         - creating various a-div plots
         
-(2) Script_9_Water_Beta_Diversity_16S.Rmd
+(2) W-Script_2_Water_Beta_Diversity_16S.Rmd
 - Same as fish above, but with water samples:
         - Bray Curtis, Jaccard, Unifrac, WUnifrac... = different diversity metrics run to assess microbial community composition.
         - PERMANOVAs to test significance of different predictors in explaining microbial community variation across species, regions, and seasons
         - ordinations (PCoAs, NMDS) to visualize microbiome (dis)similarity across groups
         
-(3) Script_10_Water_Differential_Abundance_16S.Rmd
+(3) W-Script_3_Water_Differential_Abundance_16S.Rmd
 - Same as fish above, but with water samples & comparing water to fish:
         - 2 differential abundance analyses (MaAsLin2 and DESeq2) tested on water samples
 
 ### Environmental Data Scripts
-(1) Script_11_Environmental_Data_Temp_DO_TEP.Rmd
+(1) T-Script_1_Environmental_Data_Temp_DO_TEP.Rmd
 - cleans HOBO logger temperature and dissolved oxygen data from the RRR project
 - takes averages of publicly available data from the STRI Environmental Monitoring Program and adds these to the RRR data
 - creates plots for temperature, DO, and the two together
