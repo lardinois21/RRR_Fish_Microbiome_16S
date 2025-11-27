@@ -1,9 +1,9 @@
-# Cryptic biodiversity: untangling coral reef fishes' microbiomes in changing environments
+# Host matters: coral reef fish species show distinct skin microbiome responses to abrupt environmental change
 
 ## TLDR
-Repository for fish skin microbiome work (16S), to be included in an upcoming manuscript (stay tuned for pre-print soon!)
+Repository for fish skin microbiome analyses (16S), to be included in an upcoming manuscript (stay tuned for pre-print soon!)
 
-This repository holds code for processing, analyzing, and visualizing 16S sequences of fish skin microbiome samples collected from tropical reef fish in the Tropical Eastern Pacific of Panama, as well as associated environmental water samples. There is also code to parse through various types of environmental data, including water temperature and dissolved oxygen, collected in various sites in Panama.
+This repository holds code for processing, analyzing, and visualizing 16S sequences of fish skin microbiome samples collected from tropical reef fish in the Tropical Eastern Pacific of Panama, as well as associated environmental water samples. There is also code to parse through different types of environmental data, including water temperature and dissolved oxygen, collected in various sites in Panama.
 
 These scripts should work for any kind of 16S metabarcoding data, and can easily be adapted to work with other primers/DNA barcodes (i.e. 18S, 23S), with some modifications at the taxonomic assignment step in sequence pre-processing. The alpha and beta diversity analyses are adapted for microbiome work from classic community ecology metrics, following current practices for microbial ecology. 
 
