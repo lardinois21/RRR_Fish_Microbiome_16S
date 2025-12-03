@@ -1,7 +1,7 @@
 # Host matters: coral reef fish species show distinct skin microbiome responses to abrupt environmental change
 
 ## TLDR
-Repository for fish skin microbiome analyses (16S), to be included in an upcoming manuscript (stay tuned for pre-print soon!)
+Repository for fish skin microbiome analyses (16S), to be included in an upcoming manuscript (Preprint available at: https://doi.org/10.21203/rs.3.rs-8158492/v1)
 
 This repository holds code for processing, analyzing, and visualizing 16S sequences of fish skin microbiome samples collected from tropical reef fish in the Tropical Eastern Pacific of Panama, as well as associated environmental water samples. There is also code to parse through different types of environmental data, including water temperature and dissolved oxygen, collected in various sites in Panama.
 
