@@ -492,6 +492,7 @@ write.csv(ROHR06.div, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021
 #if not starting from beginning: read csv file:
 ROHR06.div <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft/ROHR06_skin_alpha_div_metrics.csv")
 ```
+
 ```{r save this table to word doc}
 
 # Create a flextable object from your data
