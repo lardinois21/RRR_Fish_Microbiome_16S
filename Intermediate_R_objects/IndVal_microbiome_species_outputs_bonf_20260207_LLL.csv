@@ -1,0 +1,2501 @@
+"group","species_name","indval","pval","padj","freq"
+1,"Abudefduf concolor",0.446720771896626,0.001,1,58
+1,"Abudefduf concolor",0.29323048879401,0.001,1,30
+1,"Abudefduf concolor",0.289473684210526,0.001,1,11
+1,"Abudefduf concolor",0.289473684210526,0.001,1,11
+1,"Abudefduf concolor",0.289473684210526,0.001,1,11
+1,"Abudefduf concolor",0.288474167971267,0.001,1,14
+1,"Abudefduf concolor",0.269752612081522,0.001,1,14
+1,"Abudefduf concolor",0.263157894736842,0.001,1,10
+1,"Abudefduf concolor",0.262930962408063,0.001,1,11
+1,"Abudefduf concolor",0.262624930925085,0.001,1,12
+1,"Abudefduf concolor",0.261686828291093,0.001,1,12
+1,"Abudefduf concolor",0.236842105263158,0.001,1,9
+1,"Abudefduf concolor",0.224033689026614,0.001,1,17
+1,"Abudefduf concolor",0.210526315789474,0.001,1,8
+1,"Abudefduf concolor",0.210526315789474,0.001,1,8
+1,"Abudefduf concolor",0.210526315789474,0.001,1,8
+1,"Abudefduf concolor",0.17135778760107,0.002,1,50
+1,"Abudefduf concolor",0.167169082330713,0.001,1,8
+1,"Abudefduf concolor",0.166642939311428,0.007,1,12
+1,"Abudefduf concolor",0.140098310595994,0.003,1,12
+1,"Abudefduf concolor",0.134798828740718,0.006,1,15
+1,"Abudefduf concolor",0.131578947368421,0.001,1,5
+1,"Abudefduf concolor",0.130384678468034,0.003,1,12
+1,"Abudefduf concolor",0.126379114441643,0.004,1,27
+1,"Abudefduf concolor",0.121168477410063,0.001,1,6
+1,"Abudefduf concolor",0.121090356177015,0.017,1,33
+1,"Abudefduf concolor",0.119907138642293,0.006,1,11
+1,"Abudefduf concolor",0.119844596318696,0.004,1,8
+1,"Abudefduf concolor",0.117043590655581,0.003,1,7
+1,"Abudefduf concolor",0.112624708723326,0.019,1,41
+1,"Abudefduf concolor",0.105937893886493,0.013,1,12
+1,"Abudefduf concolor",0.105263157894737,0.002,1,4
+1,"Abudefduf concolor",0.105263157894737,0.001,1,4
+1,"Abudefduf concolor",0.105263157894737,0.003,1,4
+1,"Abudefduf concolor",0.101049191861017,0.017,1,16
+1,"Abudefduf concolor",0.100176742805488,0.013,1,23
+1,"Abudefduf concolor",0.0982823189797681,0.002,1,9
+1,"Abudefduf concolor",0.0975753991720875,0.006,1,8
+1,"Abudefduf concolor",0.0939101120589324,0.009,1,6
+1,"Abudefduf concolor",0.0932069938132842,0.005,1,7
+1,"Abudefduf concolor",0.092652557776655,0.037,1,28
+1,"Abudefduf concolor",0.0921390009233844,0.009,1,11
+1,"Abudefduf concolor",0.0874102098092306,0.029,1,7
+1,"Abudefduf concolor",0.0864541561781958,0.037,1,18
+1,"Abudefduf concolor",0.0792429264174745,0.01,1,8
+1,"Abudefduf concolor",0.0789473684210526,0.01,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.012,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.014,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.006,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.013,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.015,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.015,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.01,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.013,1,3
+1,"Abudefduf concolor",0.0789473684210526,0.015,1,3
+1,"Abudefduf concolor",0.0788237771328652,0.015,1,8
+1,"Abudefduf concolor",0.0783728758894555,0.029,1,4
+1,"Abudefduf concolor",0.0778407656914326,0.016,1,4
+1,"Abudefduf concolor",0.0768835498972944,0.045,1,8
+1,"Abudefduf concolor",0.0767110657747612,0.02,1,4
+1,"Abudefduf concolor",0.076259543598186,0.028,1,6
+1,"Abudefduf concolor",0.0754679996079584,0.029,1,5
+1,"Abudefduf concolor",0.075103678478708,0.025,1,4
+1,"Abudefduf concolor",0.0749298390472291,0.044,1,7
+1,"Abudefduf concolor",0.0746846847147902,0.031,1,17
+1,"Abudefduf concolor",0.0742226842297714,0.015,1,16
+1,"Abudefduf concolor",0.0739932095862619,0.019,1,13
+1,"Abudefduf concolor",0.0738342777383721,0.019,1,9
+1,"Abudefduf concolor",0.0736029503687961,0.046,1,5
+1,"Abudefduf concolor",0.0720013439828241,0.047,1,5
+1,"Abudefduf concolor",0.0719206090457277,0.03,1,10
+1,"Abudefduf concolor",0.0713137806347931,0.014,1,4
+1,"Abudefduf concolor",0.0710046803662325,0.026,1,5
+1,"Abudefduf concolor",0.0708502024291498,0.03,1,4
+1,"Abudefduf concolor",0.0705808345565108,0.041,1,4
+1,"Abudefduf concolor",0.0704010555446079,0.017,1,6
+1,"Abudefduf concolor",0.0699803896761133,0.039,1,11
+1,"Abudefduf concolor",0.0688463583200425,0.032,1,4
+1,"Abudefduf concolor",0.0677011899380129,0.047,1,8
+1,"Abudefduf concolor",0.0674420951708129,0.032,1,4
+1,"Abudefduf concolor",0.067068142346768,0.029,1,10
+1,"Abudefduf concolor",0.0661954341388862,0.032,1,5
+1,"Abudefduf concolor",0.0647552981607586,0.014,1,7
+1,"Abudefduf concolor",0.0636020998788531,0.035,1,5
+1,"Abudefduf concolor",0.063011815784181,0.039,1,13
+1,"Abudefduf concolor",0.0621604570991189,0.046,1,5
+1,"Abudefduf concolor",0.061818127322863,0.045,1,11
+1,"Abudefduf concolor",0.0603362811722942,0.041,1,10
+1,"Abudefduf concolor",0.0586154902781177,0.048,1,12
+1,"Abudefduf concolor",0.0568076763683892,0.021,1,6
+1,"Abudefduf concolor",0.0547234609520145,0.036,1,5
+2,"Abudefduf troschelii",0.314285714285714,0.001,1,11
+2,"Abudefduf troschelii",0.314285714285714,0.001,1,11
+2,"Abudefduf troschelii",0.314285714285714,0.001,1,11
+2,"Abudefduf troschelii",0.314285714285714,0.001,1,11
+2,"Abudefduf troschelii",0.314285714285714,0.001,1,11
+2,"Abudefduf troschelii",0.314195952806445,0.001,1,12
+2,"Abudefduf troschelii",0.314144054809339,0.001,1,12
+2,"Abudefduf troschelii",0.314125865415555,0.001,1,12
+2,"Abudefduf troschelii",0.314093426763426,0.001,1,12
+2,"Abudefduf troschelii",0.314082687338501,0.001,1,12
+2,"Abudefduf troschelii",0.313939715292257,0.001,1,12
+2,"Abudefduf troschelii",0.313725772766946,0.001,1,13
+2,"Abudefduf troschelii",0.313672864575935,0.001,1,13
+2,"Abudefduf troschelii",0.285714285714286,0.001,1,10
+2,"Abudefduf troschelii",0.171428571428571,0.001,1,6
+2,"Abudefduf troschelii",0.155435619805955,0.003,1,154
+2,"Abudefduf troschelii",0.142857142857143,0.001,1,5
+2,"Abudefduf troschelii",0.140716210275481,0.006,1,111
+2,"Abudefduf troschelii",0.138127544097693,0.001,1,8
+2,"Abudefduf troschelii",0.114285714285714,0.001,1,4
+2,"Abudefduf troschelii",0.105947100797862,0.009,1,9
+2,"Abudefduf troschelii",0.0936011744465544,0.012,1,11
+2,"Abudefduf troschelii",0.0934347643258534,0.009,1,49
+2,"Abudefduf troschelii",0.0901106120614679,0.008,1,23
+2,"Abudefduf troschelii",0.088816518253173,0.011,1,9
+2,"Abudefduf troschelii",0.0857142857142857,0.008,1,3
+2,"Abudefduf troschelii",0.0857142857142857,0.018,1,3
+2,"Abudefduf troschelii",0.0857142857142857,0.01,1,3
+2,"Abudefduf troschelii",0.0847326103216156,0.017,1,4
+2,"Abudefduf troschelii",0.0820454240021502,0.03,1,5
+2,"Abudefduf troschelii",0.0819526973010627,0.019,1,10
+2,"Abudefduf troschelii",0.0814295298740737,0.027,1,24
+2,"Abudefduf troschelii",0.0812489911061484,0.032,1,6
+2,"Abudefduf troschelii",0.08018769894819,0.014,1,9
+2,"Abudefduf troschelii",0.079712561373555,0.02,1,11
+2,"Abudefduf troschelii",0.0784185658699278,0.017,1,5
+2,"Abudefduf troschelii",0.077579527389815,0.015,1,16
+2,"Abudefduf troschelii",0.0765772298767223,0.015,1,4
+2,"Abudefduf troschelii",0.0752163880372781,0.037,1,34
+2,"Abudefduf troschelii",0.0748839608045384,0.02,1,5
+2,"Abudefduf troschelii",0.0697882040398541,0.041,1,34
+2,"Abudefduf troschelii",0.0696675137277202,0.033,1,6
+2,"Abudefduf troschelii",0.0614535735839296,0.031,1,5
+2,"Abudefduf troschelii",0.0592715782471312,0.036,1,5
+2,"Abudefduf troschelii",0.0590197477691399,0.032,1,10
+2,"Abudefduf troschelii",0.0544572075715904,0.046,1,5
+2,"Abudefduf troschelii",0.053125,0.04,1,4
+2,"Abudefduf troschelii",0.0513766104410183,0.047,1,7
+3,"Acanthurus xanthopterus",0.628071876643073,0.001,1,29
+3,"Acanthurus xanthopterus",0.342857142857143,0.001,1,12
+3,"Acanthurus xanthopterus",0.323959035394151,0.001,1,25
+3,"Acanthurus xanthopterus",0.313870093418308,0.001,1,13
+3,"Acanthurus xanthopterus",0.257142857142857,0.001,1,9
+3,"Acanthurus xanthopterus",0.257142857142857,0.001,1,9
+3,"Acanthurus xanthopterus",0.257142857142857,0.001,1,9
+3,"Acanthurus xanthopterus",0.257142857142857,0.001,1,9
+3,"Acanthurus xanthopterus",0.257142857142857,0.001,1,9
+3,"Acanthurus xanthopterus",0.257142857142857,0.001,1,9
+3,"Acanthurus xanthopterus",0.227632536836758,0.001,1,11
+3,"Acanthurus xanthopterus",0.212490226461766,0.001,1,9
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.2,0.001,1,7
+3,"Acanthurus xanthopterus",0.19981483930697,0.001,1,8
+3,"Acanthurus xanthopterus",0.199796954314721,0.001,1,8
+3,"Acanthurus xanthopterus",0.199775892428366,0.001,1,8
+3,"Acanthurus xanthopterus",0.199664905271298,0.001,1,9
+3,"Acanthurus xanthopterus",0.199582187105715,0.001,1,9
+3,"Acanthurus xanthopterus",0.190170511534604,0.001,1,8
+3,"Acanthurus xanthopterus",0.188587677725119,0.001,1,8
+3,"Acanthurus xanthopterus",0.188235294117647,0.001,1,8
+3,"Acanthurus xanthopterus",0.187568710359408,0.001,1,8
+3,"Acanthurus xanthopterus",0.185443668993021,0.001,1,8
+3,"Acanthurus xanthopterus",0.185272277227723,0.001,1,8
+3,"Acanthurus xanthopterus",0.184848484848485,0.001,1,8
+3,"Acanthurus xanthopterus",0.171428571428571,0.001,1,6
+3,"Acanthurus xanthopterus",0.171352799980516,0.001,1,7
+3,"Acanthurus xanthopterus",0.142857142857143,0.002,1,5
+3,"Acanthurus xanthopterus",0.142857142857143,0.001,1,5
+3,"Acanthurus xanthopterus",0.133338513539765,0.002,1,7
+3,"Acanthurus xanthopterus",0.130280370944624,0.003,1,8
+3,"Acanthurus xanthopterus",0.114285714285714,0.001,1,4
+3,"Acanthurus xanthopterus",0.114285714285714,0.003,1,4
+3,"Acanthurus xanthopterus",0.109016225798095,0.016,1,13
+3,"Acanthurus xanthopterus",0.100174452413258,0.002,1,5
+3,"Acanthurus xanthopterus",0.0857142857142857,0.008,1,3
+3,"Acanthurus xanthopterus",0.0839650145772595,0.008,1,5
+3,"Acanthurus xanthopterus",0.0781277384651026,0.025,1,27
+3,"Acanthurus xanthopterus",0.0705814335128142,0.037,1,28
+3,"Acanthurus xanthopterus",0.0587072925708824,0.05,1,16
+3,"Acanthurus xanthopterus",0.0479958089784026,0.047,1,9
+4,"Cephalopholis colonus",0.290243902439024,0.001,1,10
+4,"Cephalopholis colonus",0.289355410999409,0.001,1,10
+4,"Cephalopholis colonus",0.233333333333333,0.001,1,7
+4,"Cephalopholis colonus",0.184226397587567,0.001,1,7
+4,"Cephalopholis colonus",0.180444516628937,0.026,1,49
+4,"Cephalopholis colonus",0.16816305035161,0.002,1,39
+4,"Cephalopholis colonus",0.156399726214921,0.001,1,6
+4,"Cephalopholis colonus",0.13520888771598,0.003,1,9
+4,"Cephalopholis colonus",0.134431262201441,0.032,1,151
+4,"Cephalopholis colonus",0.130634761297557,0.002,1,7
+4,"Cephalopholis colonus",0.121054762868917,0.002,1,16
+4,"Cephalopholis colonus",0.11836569579288,0.025,1,14
+4,"Cephalopholis colonus",0.117787310933897,0.038,1,98
+4,"Cephalopholis colonus",0.117275465281649,0.006,1,15
+4,"Cephalopholis colonus",0.1,0.005,1,3
+4,"Cephalopholis colonus",0.1,0.003,1,3
+4,"Cephalopholis colonus",0.1,0.003,1,3
+4,"Cephalopholis colonus",0.096072900476096,0.011,1,17
+4,"Cephalopholis colonus",0.0893613100091007,0.011,1,10
+4,"Cephalopholis colonus",0.089039580935601,0.003,1,8
+4,"Cephalopholis colonus",0.0887323943661972,0.007,1,5
+4,"Cephalopholis colonus",0.0868189806678383,0.022,1,6
+4,"Cephalopholis colonus",0.0837216930299966,0.012,1,20
+4,"Cephalopholis colonus",0.081203007518797,0.008,1,5
+4,"Cephalopholis colonus",0.074295558434098,0.036,1,12
+4,"Cephalopholis colonus",0.0718339390397775,0.025,1,9
+4,"Cephalopholis colonus",0.0707751642590732,0.03,1,19
+4,"Cephalopholis colonus",0.0704014480636625,0.048,1,40
+4,"Cephalopholis colonus",0.0666666666666667,0.011,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.008,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.011,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.011,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.008,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.012,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.01,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.01,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.006,1,2
+4,"Cephalopholis colonus",0.0666666666666667,0.009,1,2
+4,"Cephalopholis colonus",0.0663078579117331,0.019,1,6
+4,"Cephalopholis colonus",0.0648011588095865,0.034,1,5
+4,"Cephalopholis colonus",0.06378896882494,0.02,1,3
+4,"Cephalopholis colonus",0.0637401229148376,0.02,1,3
+4,"Cephalopholis colonus",0.0636415201361316,0.014,1,3
+4,"Cephalopholis colonus",0.0636271529888551,0.022,1,3
+4,"Cephalopholis colonus",0.0633291614518148,0.015,1,3
+4,"Cephalopholis colonus",0.0628606965174129,0.05,1,11
+4,"Cephalopholis colonus",0.0628498727735369,0.017,1,4
+4,"Cephalopholis colonus",0.0622950819672131,0.006,1,3
+4,"Cephalopholis colonus",0.0621468926553672,0.022,1,3
+4,"Cephalopholis colonus",0.0608294930875576,0.029,1,5
+4,"Cephalopholis colonus",0.0603921568627451,0.023,1,3
+4,"Cephalopholis colonus",0.0602254428341385,0.048,1,5
+4,"Cephalopholis colonus",0.0594612909639246,0.05,1,15
+4,"Cephalopholis colonus",0.0582984658298466,0.013,1,3
+4,"Cephalopholis colonus",0.058019887591872,0.038,1,4
+4,"Cephalopholis colonus",0.0578545832851693,0.035,1,8
+4,"Cephalopholis colonus",0.0560600835345059,0.049,1,11
+4,"Cephalopholis colonus",0.0556655665566557,0.028,1,3
+4,"Cephalopholis colonus",0.0549346732882133,0.048,1,11
+4,"Cephalopholis colonus",0.053551912568306,0.02,1,3
+4,"Cephalopholis colonus",0.0527214883463587,0.044,1,8
+4,"Cephalopholis colonus",0.0526019690576653,0.038,1,4
+4,"Cephalopholis colonus",0.0505747126436782,0.03,1,3
+4,"Cephalopholis colonus",0.0458730433778086,0.05,1,4
+4,"Cephalopholis colonus",0.0452952862560954,0.041,1,4
+5,"Cephalopholis panamensis",0.242424242424242,0.001,1,8
+5,"Cephalopholis panamensis",0.22503428266645,0.001,1,232
+5,"Cephalopholis panamensis",0.212121212121212,0.001,1,7
+5,"Cephalopholis panamensis",0.208835887796619,0.001,1,25
+5,"Cephalopholis panamensis",0.192989389387238,0.002,1,279
+5,"Cephalopholis panamensis",0.181818181818182,0.001,1,6
+5,"Cephalopholis panamensis",0.180011902161081,0.001,1,58
+5,"Cephalopholis panamensis",0.172480485219827,0.001,1,12
+5,"Cephalopholis panamensis",0.172379117858691,0.001,1,7
+5,"Cephalopholis panamensis",0.168217609162491,0.001,1,25
+5,"Cephalopholis panamensis",0.166152385473534,0.001,1,7
+5,"Cephalopholis panamensis",0.16361373401292,0.001,1,45
+5,"Cephalopholis panamensis",0.156030185428231,0.02,1,313
+5,"Cephalopholis panamensis",0.145781496867499,0.002,1,19
+5,"Cephalopholis panamensis",0.144608021590242,0.001,1,11
+5,"Cephalopholis panamensis",0.140377239115821,0.003,1,8
+5,"Cephalopholis panamensis",0.138865595125749,0.006,1,10
+5,"Cephalopholis panamensis",0.12456818008866,0.023,1,33
+5,"Cephalopholis panamensis",0.121212121212121,0.003,1,4
+5,"Cephalopholis panamensis",0.121212121212121,0.002,1,4
+5,"Cephalopholis panamensis",0.120093149268127,0.038,1,120
+5,"Cephalopholis panamensis",0.118085064790405,0.016,1,106
+5,"Cephalopholis panamensis",0.117845117845118,0.003,1,6
+5,"Cephalopholis panamensis",0.11196235748326,0.002,1,7
+5,"Cephalopholis panamensis",0.110226983796778,0.009,1,10
+5,"Cephalopholis panamensis",0.10826860382344,0.047,1,94
+5,"Cephalopholis panamensis",0.104405812724935,0.003,1,8
+5,"Cephalopholis panamensis",0.102278712614662,0.016,1,17
+5,"Cephalopholis panamensis",0.100244435060112,0.034,1,14
+5,"Cephalopholis panamensis",0.0988344988344988,0.005,1,6
+5,"Cephalopholis panamensis",0.0975972000388798,0.022,1,61
+5,"Cephalopholis panamensis",0.0966498643286081,0.022,1,23
+5,"Cephalopholis panamensis",0.0942760942760943,0.003,1,6
+5,"Cephalopholis panamensis",0.0930016275284817,0.011,1,7
+5,"Cephalopholis panamensis",0.0923619759236198,0.006,1,8
+5,"Cephalopholis panamensis",0.0909090909090909,0.008,1,3
+5,"Cephalopholis panamensis",0.0909090909090909,0.008,1,3
+5,"Cephalopholis panamensis",0.0909090909090909,0.006,1,3
+5,"Cephalopholis panamensis",0.0909090909090909,0.005,1,3
+5,"Cephalopholis panamensis",0.0909090909090909,0.008,1,3
+5,"Cephalopholis panamensis",0.0909090909090909,0.004,1,3
+5,"Cephalopholis panamensis",0.0909090909090909,0.008,1,3
+5,"Cephalopholis panamensis",0.089094208876423,0.006,1,4
+5,"Cephalopholis panamensis",0.0865038045654786,0.011,1,4
+5,"Cephalopholis panamensis",0.0840442618328809,0.046,1,6
+5,"Cephalopholis panamensis",0.0836433165305058,0.015,1,6
+5,"Cephalopholis panamensis",0.0829049714074061,0.017,1,7
+5,"Cephalopholis panamensis",0.0825971158155963,0.005,1,8
+5,"Cephalopholis panamensis",0.0818451045499417,0.039,1,5
+5,"Cephalopholis panamensis",0.0818181818181818,0.006,1,4
+5,"Cephalopholis panamensis",0.0817160367722165,0.018,1,4
+5,"Cephalopholis panamensis",0.0816883250997395,0.04,1,24
+5,"Cephalopholis panamensis",0.081008100810081,0.016,1,4
+5,"Cephalopholis panamensis",0.0808080808080808,0.013,1,4
+5,"Cephalopholis panamensis",0.077416500774165,0.013,1,9
+5,"Cephalopholis panamensis",0.0763214587153989,0.024,1,13
+5,"Cephalopholis panamensis",0.075844814707592,0.031,1,11
+5,"Cephalopholis panamensis",0.0755840807486109,0.049,1,31
+5,"Cephalopholis panamensis",0.0754650754650755,0.014,1,4
+5,"Cephalopholis panamensis",0.0754150630846069,0.049,1,6
+5,"Cephalopholis panamensis",0.0749123179415526,0.016,1,16
+5,"Cephalopholis panamensis",0.0738874432649989,0.012,1,7
+5,"Cephalopholis panamensis",0.0732856395044495,0.01,1,5
+5,"Cephalopholis panamensis",0.0727272727272727,0.018,1,4
+5,"Cephalopholis panamensis",0.0727272727272727,0.025,1,5
+5,"Cephalopholis panamensis",0.0725351237854003,0.041,1,37
+5,"Cephalopholis panamensis",0.0713731235401069,0.026,1,14
+5,"Cephalopholis panamensis",0.0712938679403987,0.015,1,10
+5,"Cephalopholis panamensis",0.0709885066227373,0.041,1,6
+5,"Cephalopholis panamensis",0.0709838107098381,0.011,1,5
+5,"Cephalopholis panamensis",0.0699593702386998,0.027,1,5
+5,"Cephalopholis panamensis",0.0697476999319348,0.044,1,7
+5,"Cephalopholis panamensis",0.0689944426968648,0.022,1,5
+5,"Cephalopholis panamensis",0.0681077879774948,0.022,1,4
+5,"Cephalopholis panamensis",0.0679598257888268,0.041,1,10
+5,"Cephalopholis panamensis",0.0673548381379046,0.037,1,13
+5,"Cephalopholis panamensis",0.0670804965959151,0.034,1,5
+5,"Cephalopholis panamensis",0.0667726164755415,0.023,1,9
+5,"Cephalopholis panamensis",0.0663412383184644,0.05,1,7
+5,"Cephalopholis panamensis",0.0655419347008132,0.028,1,5
+5,"Cephalopholis panamensis",0.0651737277795506,0.038,1,13
+5,"Cephalopholis panamensis",0.0641711229946524,0.03,1,4
+5,"Cephalopholis panamensis",0.0632018509113481,0.012,1,7
+5,"Cephalopholis panamensis",0.063169342429513,0.035,1,7
+5,"Cephalopholis panamensis",0.0618355391625081,0.05,1,6
+5,"Cephalopholis panamensis",0.060905442195964,0.038,1,6
+5,"Cephalopholis panamensis",0.0606060606060606,0.037,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.05,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.039,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.042,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.043,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.035,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.044,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.039,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.037,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.05,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.042,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.035,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.031,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.043,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.042,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.045,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.045,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.043,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.042,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.032,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.035,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.048,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.041,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.041,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.038,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.044,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.048,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.043,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.038,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.032,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.044,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.048,1,2
+5,"Cephalopholis panamensis",0.0606060606060606,0.045,1,2
+5,"Cephalopholis panamensis",0.0605785255180097,0.041,1,9
+5,"Cephalopholis panamensis",0.0604108720050749,0.05,1,3
+5,"Cephalopholis panamensis",0.0596590909090909,0.047,1,6
+5,"Cephalopholis panamensis",0.0583891168214209,0.047,1,4
+5,"Cephalopholis panamensis",0.0580808080808081,0.039,1,3
+5,"Cephalopholis panamensis",0.0575667371468599,0.038,1,8
+5,"Cephalopholis panamensis",0.0573219883564711,0.04,1,3
+5,"Cephalopholis panamensis",0.0572333793244417,0.043,1,3
+5,"Cephalopholis panamensis",0.0570409982174688,0.04,1,3
+5,"Cephalopholis panamensis",0.056969696969697,0.05,1,3
+5,"Cephalopholis panamensis",0.0568132637724951,0.035,1,10
+5,"Cephalopholis panamensis",0.0564652738565782,0.023,1,3
+5,"Cephalopholis panamensis",0.0563866513233602,0.046,1,7
+5,"Cephalopholis panamensis",0.0561040909943555,0.036,1,3
+5,"Cephalopholis panamensis",0.0550038197097021,0.036,1,3
+5,"Cephalopholis panamensis",0.0548878501823061,0.034,1,4
+5,"Cephalopholis panamensis",0.0546269873624134,0.04,1,3
+5,"Cephalopholis panamensis",0.0541335686966755,0.034,1,3
+5,"Cephalopholis panamensis",0.053475935828877,0.035,1,3
+5,"Cephalopholis panamensis",0.0534617259920345,0.047,1,11
+5,"Cephalopholis panamensis",0.0534118160017441,0.035,1,3
+5,"Cephalopholis panamensis",0.0529285174198802,0.038,1,3
+5,"Cephalopholis panamensis",0.052610629423879,0.032,1,3
+5,"Cephalopholis panamensis",0.0525739320920044,0.048,1,4
+5,"Cephalopholis panamensis",0.0512543835985973,0.045,1,6
+5,"Cephalopholis panamensis",0.0502531549913096,0.041,1,4
+5,"Cephalopholis panamensis",0.0484848484848485,0.049,1,3
+5,"Cephalopholis panamensis",0.0480274442538594,0.035,1,3
+5,"Cephalopholis panamensis",0.0461133069828722,0.045,1,3
+6,"Chaetodon humeralis",0.514538171581738,0.001,1,24
+6,"Chaetodon humeralis",0.411418975650714,0.001,1,15
+6,"Chaetodon humeralis",0.291231992051664,0.001,1,14
+6,"Chaetodon humeralis",0.242338761379664,0.001,1,9
+6,"Chaetodon humeralis",0.211126578999245,0.001,1,10
+6,"Chaetodon humeralis",0.195037045482793,0.001,1,10
+6,"Chaetodon humeralis",0.181818181818182,0.001,1,6
+6,"Chaetodon humeralis",0.181818181818182,0.001,1,6
+6,"Chaetodon humeralis",0.178019535041919,0.003,1,29
+6,"Chaetodon humeralis",0.151515151515152,0.001,1,5
+6,"Chaetodon humeralis",0.151515151515152,0.001,1,5
+6,"Chaetodon humeralis",0.151515151515152,0.001,1,5
+6,"Chaetodon humeralis",0.121212121212121,0.002,1,4
+6,"Chaetodon humeralis",0.121212121212121,0.001,1,4
+6,"Chaetodon humeralis",0.121212121212121,0.001,1,4
+6,"Chaetodon humeralis",0.120168824394177,0.001,1,6
+6,"Chaetodon humeralis",0.120107934660739,0.009,1,6
+6,"Chaetodon humeralis",0.118856017742676,0.001,1,5
+6,"Chaetodon humeralis",0.113112222460856,0.003,1,5
+6,"Chaetodon humeralis",0.109814970562886,0.007,1,14
+6,"Chaetodon humeralis",0.0909090909090909,0.006,1,3
+6,"Chaetodon humeralis",0.0909090909090909,0.005,1,3
+6,"Chaetodon humeralis",0.0909090909090909,0.009,1,3
+6,"Chaetodon humeralis",0.0909090909090909,0.007,1,3
+6,"Chaetodon humeralis",0.0909090909090909,0.005,1,3
+6,"Chaetodon humeralis",0.0909090909090909,0.004,1,3
+6,"Chaetodon humeralis",0.0886363636363636,0.013,1,4
+6,"Chaetodon humeralis",0.0811125850957924,0.016,1,8
+6,"Chaetodon humeralis",0.0606060606060606,0.046,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.046,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.039,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.043,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.031,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.039,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.043,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.041,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.035,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.043,1,2
+6,"Chaetodon humeralis",0.0606060606060606,0.034,1,2
+6,"Chaetodon humeralis",0.0564350491357791,0.026,1,3
+7,"Epinephelus labriformis",0.496398945557632,0.001,1,74
+7,"Epinephelus labriformis",0.419465058979847,0.006,1,206
+7,"Epinephelus labriformis",0.392593082918061,0.001,1,82
+7,"Epinephelus labriformis",0.307388929637848,0.001,1,86
+7,"Epinephelus labriformis",0.272727272727273,0.001,1,9
+7,"Epinephelus labriformis",0.272727272727273,0.001,1,9
+7,"Epinephelus labriformis",0.262442833109382,0.001,1,30
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.242424242424242,0.001,1,8
+7,"Epinephelus labriformis",0.235236367073242,0.001,1,36
+7,"Epinephelus labriformis",0.232265955955121,0.001,1,16
+7,"Epinephelus labriformis",0.230092011174616,0.001,1,13
+7,"Epinephelus labriformis",0.2244551765501,0.001,1,14
+7,"Epinephelus labriformis",0.212121212121212,0.001,1,7
+7,"Epinephelus labriformis",0.212121212121212,0.001,1,7
+7,"Epinephelus labriformis",0.211636936978363,0.001,1,10
+7,"Epinephelus labriformis",0.197659777387837,0.001,1,12
+7,"Epinephelus labriformis",0.197280834084727,0.001,1,29
+7,"Epinephelus labriformis",0.194092044270254,0.001,1,39
+7,"Epinephelus labriformis",0.189992931810573,0.001,1,15
+7,"Epinephelus labriformis",0.187410747766679,0.001,1,21
+7,"Epinephelus labriformis",0.183997165206078,0.001,1,10
+7,"Epinephelus labriformis",0.18363802559415,0.001,1,13
+7,"Epinephelus labriformis",0.182239377447736,0.015,1,115
+7,"Epinephelus labriformis",0.174604677478097,0.036,1,246
+7,"Epinephelus labriformis",0.168712847451305,0.018,1,94
+7,"Epinephelus labriformis",0.166651080109271,0.001,1,29
+7,"Epinephelus labriformis",0.164891519003775,0.001,1,37
+7,"Epinephelus labriformis",0.163628534519879,0.001,1,14
+7,"Epinephelus labriformis",0.159116604353781,0.005,1,47
+7,"Epinephelus labriformis",0.153848276903357,0.001,1,16
+7,"Epinephelus labriformis",0.151515151515152,0.001,1,5
+7,"Epinephelus labriformis",0.151162567071177,0.003,1,6
+7,"Epinephelus labriformis",0.14768307524609,0.001,1,7
+7,"Epinephelus labriformis",0.141991287866948,0.002,1,9
+7,"Epinephelus labriformis",0.138768364878728,0.002,1,16
+7,"Epinephelus labriformis",0.136213271064409,0.001,1,7
+7,"Epinephelus labriformis",0.134104627303172,0.003,1,31
+7,"Epinephelus labriformis",0.133177462980791,0.001,1,12
+7,"Epinephelus labriformis",0.129701621019292,0.002,1,15
+7,"Epinephelus labriformis",0.129633740024896,0.002,1,23
+7,"Epinephelus labriformis",0.129019357250601,0.002,1,15
+7,"Epinephelus labriformis",0.128838180432825,0.002,1,13
+7,"Epinephelus labriformis",0.128168592002246,0.017,1,13
+7,"Epinephelus labriformis",0.127600405113058,0.019,1,13
+7,"Epinephelus labriformis",0.125642355128589,0.009,1,26
+7,"Epinephelus labriformis",0.125092310965917,0.002,1,15
+7,"Epinephelus labriformis",0.124988538659864,0.003,1,19
+7,"Epinephelus labriformis",0.123582615108653,0.015,1,13
+7,"Epinephelus labriformis",0.123030303030303,0.001,1,7
+7,"Epinephelus labriformis",0.122327103823966,0.002,1,15
+7,"Epinephelus labriformis",0.122271318807083,0.001,1,12
+7,"Epinephelus labriformis",0.122093300538927,0.008,1,27
+7,"Epinephelus labriformis",0.122088848221404,0.001,1,20
+7,"Epinephelus labriformis",0.121212121212121,0.001,1,4
+7,"Epinephelus labriformis",0.121212121212121,0.002,1,4
+7,"Epinephelus labriformis",0.121212121212121,0.002,1,4
+7,"Epinephelus labriformis",0.119703995753098,0.003,1,20
+7,"Epinephelus labriformis",0.116003787878788,0.003,1,7
+7,"Epinephelus labriformis",0.114523581194494,0.024,1,49
+7,"Epinephelus labriformis",0.112765488617029,0.012,1,38
+7,"Epinephelus labriformis",0.111905371247471,0.002,1,6
+7,"Epinephelus labriformis",0.11124908095863,0.006,1,26
+7,"Epinephelus labriformis",0.109661095509027,0.003,1,26
+7,"Epinephelus labriformis",0.108004164714837,0.004,1,14
+7,"Epinephelus labriformis",0.107445909178777,0.012,1,8
+7,"Epinephelus labriformis",0.106230847803882,0.001,1,5
+7,"Epinephelus labriformis",0.106160869103648,0.01,1,6
+7,"Epinephelus labriformis",0.105906113473733,0.018,1,40
+7,"Epinephelus labriformis",0.105710593195051,0.019,1,32
+7,"Epinephelus labriformis",0.105574164254407,0.004,1,12
+7,"Epinephelus labriformis",0.103971784399906,0.002,1,10
+7,"Epinephelus labriformis",0.103777501037775,0.002,1,7
+7,"Epinephelus labriformis",0.103386809269162,0.002,1,5
+7,"Epinephelus labriformis",0.103254769921437,0.001,1,5
+7,"Epinephelus labriformis",0.102963220204868,0.036,1,52
+7,"Epinephelus labriformis",0.102083333333333,0.005,1,17
+7,"Epinephelus labriformis",0.10196080769655,0.005,1,21
+7,"Epinephelus labriformis",0.10134109910547,0.005,1,9
+7,"Epinephelus labriformis",0.100345159427728,0.004,1,13
+7,"Epinephelus labriformis",0.100187542801986,0.011,1,54
+7,"Epinephelus labriformis",0.0997394026884643,0.003,1,20
+7,"Epinephelus labriformis",0.0997278992833368,0.015,1,31
+7,"Epinephelus labriformis",0.0982190692834276,0.004,1,17
+7,"Epinephelus labriformis",0.0958572505245147,0.02,1,39
+7,"Epinephelus labriformis",0.0953632950501444,0.008,1,17
+7,"Epinephelus labriformis",0.0953381399469863,0.006,1,7
+7,"Epinephelus labriformis",0.0953293856487231,0.014,1,10
+7,"Epinephelus labriformis",0.0948863149026452,0.005,1,18
+7,"Epinephelus labriformis",0.0946883574888547,0.007,1,9
+7,"Epinephelus labriformis",0.0938967136150235,0.011,1,7
+7,"Epinephelus labriformis",0.093199361380355,0.029,1,50
+7,"Epinephelus labriformis",0.0930788654133456,0.018,1,11
+7,"Epinephelus labriformis",0.091316754993885,0.002,1,7
+7,"Epinephelus labriformis",0.091121619467616,0.007,1,10
+7,"Epinephelus labriformis",0.0909090909090909,0.008,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.007,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.008,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.007,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.005,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.002,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.01,1,3
+7,"Epinephelus labriformis",0.0909090909090909,0.01,1,3
+7,"Epinephelus labriformis",0.0899008993526952,0.008,1,12
+7,"Epinephelus labriformis",0.0898340321430928,0.009,1,10
+7,"Epinephelus labriformis",0.0897950916517571,0.015,1,4
+7,"Epinephelus labriformis",0.0889469947717488,0.013,1,44
+7,"Epinephelus labriformis",0.0888211693920586,0.002,1,8
+7,"Epinephelus labriformis",0.0879120879120879,0.006,1,6
+7,"Epinephelus labriformis",0.0863033486794286,0.016,1,31
+7,"Epinephelus labriformis",0.0859524866074009,0.04,1,24
+7,"Epinephelus labriformis",0.0853586746278698,0.016,1,4
+7,"Epinephelus labriformis",0.0848484848484849,0.009,1,6
+7,"Epinephelus labriformis",0.0846394984326019,0.021,1,4
+7,"Epinephelus labriformis",0.0839564475928112,0.007,1,7
+7,"Epinephelus labriformis",0.082795264813935,0.01,1,8
+7,"Epinephelus labriformis",0.0826542889900945,0.008,1,13
+7,"Epinephelus labriformis",0.0825426827206513,0.008,1,9
+7,"Epinephelus labriformis",0.0824524312896406,0.018,1,5
+7,"Epinephelus labriformis",0.0823010707537266,0.022,1,6
+7,"Epinephelus labriformis",0.081008100810081,0.005,1,4
+7,"Epinephelus labriformis",0.0808080808080808,0.008,1,4
+7,"Epinephelus labriformis",0.0808080808080808,0.018,1,8
+7,"Epinephelus labriformis",0.0804924242424242,0.004,1,9
+7,"Epinephelus labriformis",0.0797682575513784,0.018,1,19
+7,"Epinephelus labriformis",0.0796536796536797,0.005,1,9
+7,"Epinephelus labriformis",0.079442803731644,0.016,1,11
+7,"Epinephelus labriformis",0.0794172288114361,0.012,1,6
+7,"Epinephelus labriformis",0.0792933157125965,0.025,1,8
+7,"Epinephelus labriformis",0.0786890553266495,0.039,1,6
+7,"Epinephelus labriformis",0.0779407911972753,0.008,1,4
+7,"Epinephelus labriformis",0.077639751552795,0.034,1,6
+7,"Epinephelus labriformis",0.0773694390715667,0.015,1,8
+7,"Epinephelus labriformis",0.0772572137759851,0.02,1,6
+7,"Epinephelus labriformis",0.077244494635799,0.035,1,7
+7,"Epinephelus labriformis",0.0772115061099761,0.016,1,5
+7,"Epinephelus labriformis",0.0770353111821123,0.009,1,8
+7,"Epinephelus labriformis",0.0769818972257305,0.007,1,6
+7,"Epinephelus labriformis",0.0767745114852525,0.034,1,26
+7,"Epinephelus labriformis",0.076741440377804,0.027,1,4
+7,"Epinephelus labriformis",0.0767012687427912,0.01,1,13
+7,"Epinephelus labriformis",0.076692529325938,0.029,1,9
+7,"Epinephelus labriformis",0.0765968725152399,0.014,1,4
+7,"Epinephelus labriformis",0.0763032821885519,0.012,1,11
+7,"Epinephelus labriformis",0.0754716981132076,0.029,1,4
+7,"Epinephelus labriformis",0.0752656434474616,0.037,1,6
+7,"Epinephelus labriformis",0.0749852313751231,0.009,1,9
+7,"Epinephelus labriformis",0.0749643027129938,0.009,1,7
+7,"Epinephelus labriformis",0.0748499524946122,0.013,1,10
+7,"Epinephelus labriformis",0.0747669991558565,0.019,1,8
+7,"Epinephelus labriformis",0.0744207238934189,0.011,1,7
+7,"Epinephelus labriformis",0.0738150738150738,0.018,1,4
+7,"Epinephelus labriformis",0.073117231294175,0.01,1,8
+7,"Epinephelus labriformis",0.072887864326001,0.024,1,7
+7,"Epinephelus labriformis",0.0727695169651332,0.022,1,5
+7,"Epinephelus labriformis",0.0724729815638907,0.031,1,5
+7,"Epinephelus labriformis",0.0721162602364977,0.032,1,26
+7,"Epinephelus labriformis",0.071969696969697,0.046,1,5
+7,"Epinephelus labriformis",0.0712000698914638,0.043,1,12
+7,"Epinephelus labriformis",0.0711071107110711,0.011,1,4
+7,"Epinephelus labriformis",0.0709385239570375,0.028,1,23
+7,"Epinephelus labriformis",0.0697112522174376,0.039,1,12
+7,"Epinephelus labriformis",0.0695381386627084,0.027,1,12
+7,"Epinephelus labriformis",0.0690667357334024,0.038,1,5
+7,"Epinephelus labriformis",0.0690595338952629,0.023,1,14
+7,"Epinephelus labriformis",0.068576584705617,0.025,1,4
+7,"Epinephelus labriformis",0.0685461068971594,0.034,1,25
+7,"Epinephelus labriformis",0.0685006293817226,0.023,1,6
+7,"Epinephelus labriformis",0.0679293924867721,0.029,1,27
+7,"Epinephelus labriformis",0.0677686143420213,0.035,1,12
+7,"Epinephelus labriformis",0.0677549815277935,0.038,1,23
+7,"Epinephelus labriformis",0.0674157303370786,0.019,1,5
+7,"Epinephelus labriformis",0.0667556742323098,0.018,1,10
+7,"Epinephelus labriformis",0.0667223808131247,0.035,1,7
+7,"Epinephelus labriformis",0.0665858541356762,0.016,1,10
+7,"Epinephelus labriformis",0.0662921946859703,0.041,1,13
+7,"Epinephelus labriformis",0.0657257506572575,0.032,1,7
+7,"Epinephelus labriformis",0.0655719868039989,0.048,1,12
+7,"Epinephelus labriformis",0.065513024449001,0.03,1,11
+7,"Epinephelus labriformis",0.0653367015217414,0.025,1,15
+7,"Epinephelus labriformis",0.0652680652680653,0.02,1,4
+7,"Epinephelus labriformis",0.0652346116210801,0.014,1,8
+7,"Epinephelus labriformis",0.0651289009497965,0.046,1,5
+7,"Epinephelus labriformis",0.06507915411937,0.033,1,13
+7,"Epinephelus labriformis",0.0650540716114487,0.05,1,7
+7,"Epinephelus labriformis",0.0647297149106558,0.019,1,12
+7,"Epinephelus labriformis",0.0646183931640542,0.033,1,9
+7,"Epinephelus labriformis",0.0644587003898217,0.027,1,14
+7,"Epinephelus labriformis",0.063927213766835,0.044,1,8
+7,"Epinephelus labriformis",0.0638843775042148,0.037,1,21
+7,"Epinephelus labriformis",0.0634952630518041,0.033,1,6
+7,"Epinephelus labriformis",0.0633861551292744,0.025,1,4
+7,"Epinephelus labriformis",0.0630918997399557,0.041,1,9
+7,"Epinephelus labriformis",0.0624262546991192,0.049,1,10
+7,"Epinephelus labriformis",0.061759917389633,0.04,1,11
+7,"Epinephelus labriformis",0.0617578943498879,0.033,1,10
+7,"Epinephelus labriformis",0.0617495711835334,0.043,1,5
+7,"Epinephelus labriformis",0.0615871328272384,0.046,1,7
+7,"Epinephelus labriformis",0.0613564386201106,0.035,1,13
+7,"Epinephelus labriformis",0.061319073083779,0.032,1,9
+7,"Epinephelus labriformis",0.0610227896719708,0.044,1,13
+7,"Epinephelus labriformis",0.0607217210270645,0.046,1,10
+7,"Epinephelus labriformis",0.0606060606060606,0.047,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.041,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.044,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.045,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.04,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.037,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.039,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.039,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.046,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.045,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.044,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.031,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.037,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.037,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.044,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.04,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.043,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.042,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.043,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.036,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.047,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.039,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.032,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.044,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.035,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.048,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.033,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.04,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.046,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.041,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.031,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.047,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.042,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.035,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.041,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.046,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.042,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.045,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.046,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.04,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.042,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.039,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.043,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.035,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.039,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.048,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.042,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.049,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.046,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.048,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.046,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.045,1,2
+7,"Epinephelus labriformis",0.0606060606060606,0.044,1,2
+7,"Epinephelus labriformis",0.0601942373960191,0.045,1,13
+7,"Epinephelus labriformis",0.060069599438146,0.035,1,14
+7,"Epinephelus labriformis",0.0597428375653209,0.035,1,13
+7,"Epinephelus labriformis",0.0596909836584382,0.046,1,14
+7,"Epinephelus labriformis",0.0592138306590182,0.033,1,6
+7,"Epinephelus labriformis",0.0588306654265859,0.042,1,11
+7,"Epinephelus labriformis",0.0582831802343997,0.031,1,3
+7,"Epinephelus labriformis",0.0580834942431209,0.035,1,9
+7,"Epinephelus labriformis",0.057999641577582,0.042,1,6
+7,"Epinephelus labriformis",0.0578512396694215,0.023,1,4
+7,"Epinephelus labriformis",0.0576250941289502,0.038,1,9
+7,"Epinephelus labriformis",0.0575582093412023,0.027,1,3
+7,"Epinephelus labriformis",0.0575310905799657,0.043,1,9
+7,"Epinephelus labriformis",0.0574508248296993,0.035,1,7
+7,"Epinephelus labriformis",0.0574162679425837,0.043,1,3
+7,"Epinephelus labriformis",0.0569877883310719,0.034,1,3
+7,"Epinephelus labriformis",0.0568181818181818,0.046,1,3
+7,"Epinephelus labriformis",0.0567074251284778,0.032,1,3
+7,"Epinephelus labriformis",0.0565500941042588,0.034,1,13
+7,"Epinephelus labriformis",0.0565118357696854,0.033,1,7
+7,"Epinephelus labriformis",0.0564017854374889,0.045,1,13
+7,"Epinephelus labriformis",0.0563049853372434,0.037,1,3
+7,"Epinephelus labriformis",0.0562770562770563,0.033,1,3
+7,"Epinephelus labriformis",0.0561675341968285,0.038,1,3
+7,"Epinephelus labriformis",0.0558213716108453,0.037,1,3
+7,"Epinephelus labriformis",0.0557575757575758,0.036,1,6
+7,"Epinephelus labriformis",0.0557346312396461,0.049,1,6
+7,"Epinephelus labriformis",0.0554045001379202,0.027,1,3
+7,"Epinephelus labriformis",0.0553471609296852,0.039,1,5
+7,"Epinephelus labriformis",0.0549505064742734,0.042,1,17
+7,"Epinephelus labriformis",0.0547797098837733,0.047,1,5
+7,"Epinephelus labriformis",0.0544288213568328,0.047,1,5
+7,"Epinephelus labriformis",0.0542325743090561,0.026,1,3
+7,"Epinephelus labriformis",0.0542118432026689,0.036,1,4
+7,"Epinephelus labriformis",0.0540818954416688,0.035,1,5
+7,"Epinephelus labriformis",0.0539699585587818,0.031,1,8
+7,"Epinephelus labriformis",0.0535885167464115,0.035,1,3
+7,"Epinephelus labriformis",0.0532131259043898,0.049,1,6
+7,"Epinephelus labriformis",0.0529616619289872,0.048,1,10
+7,"Epinephelus labriformis",0.0516095056283326,0.045,1,10
+7,"Epinephelus labriformis",0.0505684194517319,0.035,1,3
+7,"Epinephelus labriformis",0.0490296220633299,0.039,1,4
+7,"Epinephelus labriformis",0.0476676881171263,0.038,1,8
+8,"Johnrandallia nigrirostris",0.428571428571429,0.001,1,15
+8,"Johnrandallia nigrirostris",0.250404332287381,0.001,1,20
+8,"Johnrandallia nigrirostris",0.242978263549924,0.001,1,15
+8,"Johnrandallia nigrirostris",0.23780880773362,0.001,1,12
+8,"Johnrandallia nigrirostris",0.228392657621708,0.001,1,9
+8,"Johnrandallia nigrirostris",0.22832048754257,0.001,1,9
+8,"Johnrandallia nigrirostris",0.227757058922276,0.001,1,12
+8,"Johnrandallia nigrirostris",0.227683458543963,0.001,1,11
+8,"Johnrandallia nigrirostris",0.142857142857143,0.001,1,5
+8,"Johnrandallia nigrirostris",0.141184902054467,0.001,1,6
+8,"Johnrandallia nigrirostris",0.140844781074143,0.002,1,10
+8,"Johnrandallia nigrirostris",0.114285714285714,0.004,1,4
+8,"Johnrandallia nigrirostris",0.114285714285714,0.002,1,4
+8,"Johnrandallia nigrirostris",0.114285714285714,0.001,1,4
+8,"Johnrandallia nigrirostris",0.114285714285714,0.002,1,4
+8,"Johnrandallia nigrirostris",0.114209557173592,0.004,1,5
+8,"Johnrandallia nigrirostris",0.114159152032906,0.003,1,5
+8,"Johnrandallia nigrirostris",0.113685023491301,0.005,1,5
+8,"Johnrandallia nigrirostris",0.112951493454874,0.026,1,14
+8,"Johnrandallia nigrirostris",0.109293737106181,0.003,1,5
+8,"Johnrandallia nigrirostris",0.0996121999790378,0.004,1,7
+8,"Johnrandallia nigrirostris",0.0857142857142857,0.014,1,3
+8,"Johnrandallia nigrirostris",0.0857142857142857,0.011,1,3
+8,"Johnrandallia nigrirostris",0.0857142857142857,0.018,1,3
+8,"Johnrandallia nigrirostris",0.0857142857142857,0.011,1,3
+8,"Johnrandallia nigrirostris",0.0857142857142857,0.016,1,3
+8,"Johnrandallia nigrirostris",0.0856792541274716,0.016,1,4
+8,"Johnrandallia nigrirostris",0.0850469741572076,0.039,1,11
+8,"Johnrandallia nigrirostris",0.0849204249045477,0.014,1,4
+8,"Johnrandallia nigrirostris",0.08486945327272,0.02,1,4
+8,"Johnrandallia nigrirostris",0.0847279605882854,0.026,1,5
+8,"Johnrandallia nigrirostris",0.083429097583871,0.05,1,6
+8,"Johnrandallia nigrirostris",0.0787654222225455,0.038,1,5
+8,"Johnrandallia nigrirostris",0.0785857900096613,0.022,1,6
+8,"Johnrandallia nigrirostris",0.0773577397532829,0.024,1,4
+8,"Johnrandallia nigrirostris",0.073416572077185,0.043,1,5
+8,"Johnrandallia nigrirostris",0.0656353209448555,0.05,1,9
+9,"Microspathodon dorsalis",0.705871691283801,0.001,1,32
+9,"Microspathodon dorsalis",0.609828932527964,0.001,1,25
+9,"Microspathodon dorsalis",0.488314747983478,0.001,1,22
+9,"Microspathodon dorsalis",0.471707709949591,0.001,1,18
+9,"Microspathodon dorsalis",0.372247727251376,0.001,1,22
+9,"Microspathodon dorsalis",0.3656926789839,0.001,1,15
+9,"Microspathodon dorsalis",0.274766408919097,0.001,1,13
+9,"Microspathodon dorsalis",0.265427366569936,0.001,1,31
+9,"Microspathodon dorsalis",0.246457695664675,0.001,1,11
+9,"Microspathodon dorsalis",0.23904986522911,0.002,1,11
+9,"Microspathodon dorsalis",0.234799485848018,0.001,1,13
+9,"Microspathodon dorsalis",0.229322101221613,0.022,1,77
+9,"Microspathodon dorsalis",0.183597828380312,0.047,1,150
+9,"Microspathodon dorsalis",0.167873644494474,0.003,1,15
+9,"Microspathodon dorsalis",0.15949604610642,0.001,1,10
+9,"Microspathodon dorsalis",0.150550768212039,0.001,1,8
+9,"Microspathodon dorsalis",0.13872631898383,0.002,1,6
+9,"Microspathodon dorsalis",0.13315494393476,0.001,1,7
+9,"Microspathodon dorsalis",0.132858980148835,0.005,1,13
+9,"Microspathodon dorsalis",0.118267983767165,0.004,1,34
+9,"Microspathodon dorsalis",0.111111111111111,0.001,1,4
+9,"Microspathodon dorsalis",0.111111111111111,0.001,1,4
+9,"Microspathodon dorsalis",0.111111111111111,0.001,1,4
+9,"Microspathodon dorsalis",0.111111111111111,0.002,1,4
+9,"Microspathodon dorsalis",0.108326888373292,0.002,1,5
+9,"Microspathodon dorsalis",0.103712084478207,0.009,1,6
+9,"Microspathodon dorsalis",0.101296498243063,0.003,1,5
+9,"Microspathodon dorsalis",0.097590001325114,0.003,1,16
+9,"Microspathodon dorsalis",0.0966511020736055,0.004,1,7
+9,"Microspathodon dorsalis",0.0942432997394298,0.008,1,18
+9,"Microspathodon dorsalis",0.0884992820047969,0.011,1,27
+9,"Microspathodon dorsalis",0.0881856540084388,0.003,1,14
+9,"Microspathodon dorsalis",0.0867361155430659,0.012,1,14
+9,"Microspathodon dorsalis",0.0833333333333333,0.01,1,3
+9,"Microspathodon dorsalis",0.0833333333333333,0.012,1,3
+9,"Microspathodon dorsalis",0.0833333333333333,0.017,1,3
+9,"Microspathodon dorsalis",0.0833333333333333,0.01,1,3
+9,"Microspathodon dorsalis",0.0832673160808247,0.014,1,4
+9,"Microspathodon dorsalis",0.0820545609548167,0.017,1,4
+9,"Microspathodon dorsalis",0.0813652454166006,0.01,1,7
+9,"Microspathodon dorsalis",0.079849012775842,0.017,1,4
+9,"Microspathodon dorsalis",0.0786178951142094,0.05,1,16
+9,"Microspathodon dorsalis",0.0776053215077605,0.025,1,10
+9,"Microspathodon dorsalis",0.0772077590607453,0.017,1,4
+9,"Microspathodon dorsalis",0.0770997218236616,0.022,1,11
+9,"Microspathodon dorsalis",0.0769486658251228,0.01,1,23
+9,"Microspathodon dorsalis",0.0748826291079812,0.021,1,4
+9,"Microspathodon dorsalis",0.0735294117647059,0.022,1,4
+9,"Microspathodon dorsalis",0.0694333601355046,0.037,1,25
+9,"Microspathodon dorsalis",0.0689097468495977,0.034,1,10
+9,"Microspathodon dorsalis",0.0679890757510421,0.025,1,9
+9,"Microspathodon dorsalis",0.067188137413092,0.045,1,28
+9,"Microspathodon dorsalis",0.066798528697342,0.026,1,10
+9,"Microspathodon dorsalis",0.0656532436843772,0.021,1,8
+9,"Microspathodon dorsalis",0.0651335187699663,0.047,1,19
+9,"Microspathodon dorsalis",0.0639428666334496,0.022,1,7
+9,"Microspathodon dorsalis",0.0637925880629179,0.028,1,15
+9,"Microspathodon dorsalis",0.0596646942800789,0.026,1,5
+9,"Microspathodon dorsalis",0.0592841901493654,0.032,1,8
+9,"Microspathodon dorsalis",0.0569610889184791,0.036,1,11
+9,"Microspathodon dorsalis",0.0568432671081678,0.04,1,4
+9,"Microspathodon dorsalis",0.0563114929942341,0.032,1,10
+9,"Microspathodon dorsalis",0.0550889635436108,0.036,1,5
+9,"Microspathodon dorsalis",0.0544708545557442,0.05,1,7
+9,"Microspathodon dorsalis",0.0541351820604993,0.05,1,5
+9,"Microspathodon dorsalis",0.0514455782312925,0.042,1,4
+10,"Prionurus laticlavius",0.424242424242424,0.001,1,14
+10,"Prionurus laticlavius",0.363585861349031,0.001,1,13
+10,"Prionurus laticlavius",0.348496575976759,0.001,1,17
+10,"Prionurus laticlavius",0.299638278245909,0.001,1,13
+10,"Prionurus laticlavius",0.272727272727273,0.001,1,9
+10,"Prionurus laticlavius",0.272727272727273,0.001,1,9
+10,"Prionurus laticlavius",0.272521048192142,0.001,1,13
+10,"Prionurus laticlavius",0.271188982478942,0.001,1,17
+10,"Prionurus laticlavius",0.252627696846764,0.001,1,11
+10,"Prionurus laticlavius",0.247336150695292,0.001,1,35
+10,"Prionurus laticlavius",0.244297324114704,0.001,1,13
+10,"Prionurus laticlavius",0.241506184191627,0.001,1,13
+10,"Prionurus laticlavius",0.238885202388852,0.001,1,9
+10,"Prionurus laticlavius",0.231974921630094,0.001,1,9
+10,"Prionurus laticlavius",0.215545648381469,0.001,1,9
+10,"Prionurus laticlavius",0.212121212121212,0.001,1,7
+10,"Prionurus laticlavius",0.208673955152828,0.001,1,10
+10,"Prionurus laticlavius",0.207607994842037,0.001,1,8
+10,"Prionurus laticlavius",0.200426306783421,0.001,1,10
+10,"Prionurus laticlavius",0.198551168248138,0.001,1,8
+10,"Prionurus laticlavius",0.194922194922195,0.001,1,8
+10,"Prionurus laticlavius",0.191424675996302,0.001,1,14
+10,"Prionurus laticlavius",0.181818181818182,0.001,1,6
+10,"Prionurus laticlavius",0.181818181818182,0.001,1,6
+10,"Prionurus laticlavius",0.180426321622806,0.001,1,11
+10,"Prionurus laticlavius",0.179068078040681,0.001,1,9
+10,"Prionurus laticlavius",0.175269645608629,0.001,1,11
+10,"Prionurus laticlavius",0.173818377532048,0.001,1,12
+10,"Prionurus laticlavius",0.171562370069953,0.001,1,12
+10,"Prionurus laticlavius",0.167486602292564,0.001,1,9
+10,"Prionurus laticlavius",0.166469038208169,0.001,1,8
+10,"Prionurus laticlavius",0.164864135996961,0.001,1,11
+10,"Prionurus laticlavius",0.163538805165464,0.001,1,11
+10,"Prionurus laticlavius",0.156119498875683,0.001,1,7
+10,"Prionurus laticlavius",0.15564738292011,0.001,1,7
+10,"Prionurus laticlavius",0.151515151515152,0.001,1,5
+10,"Prionurus laticlavius",0.151515151515152,0.001,1,5
+10,"Prionurus laticlavius",0.151515151515152,0.001,1,5
+10,"Prionurus laticlavius",0.151515151515152,0.001,1,5
+10,"Prionurus laticlavius",0.151515151515152,0.001,1,5
+10,"Prionurus laticlavius",0.148856990962254,0.002,1,6
+10,"Prionurus laticlavius",0.142584061922221,0.002,1,7
+10,"Prionurus laticlavius",0.141785957736878,0.001,1,10
+10,"Prionurus laticlavius",0.141051773338769,0.001,1,7
+10,"Prionurus laticlavius",0.139762403913347,0.001,1,8
+10,"Prionurus laticlavius",0.137952212406963,0.006,1,7
+10,"Prionurus laticlavius",0.136710617626648,0.002,1,7
+10,"Prionurus laticlavius",0.132577315110005,0.005,1,15
+10,"Prionurus laticlavius",0.131818181818182,0.001,1,7
+10,"Prionurus laticlavius",0.125309943920303,0.018,1,35
+10,"Prionurus laticlavius",0.125296402572359,0.001,1,9
+10,"Prionurus laticlavius",0.124430789488122,0.001,1,9
+10,"Prionurus laticlavius",0.123723869713175,0.002,1,7
+10,"Prionurus laticlavius",0.121212121212121,0.004,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.002,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.001,1,4
+10,"Prionurus laticlavius",0.121212121212121,0.002,1,4
+10,"Prionurus laticlavius",0.120866555882487,0.002,1,6
+10,"Prionurus laticlavius",0.120733021918793,0.003,1,5
+10,"Prionurus laticlavius",0.120402417877126,0.001,1,6
+10,"Prionurus laticlavius",0.120118066481572,0.004,1,8
+10,"Prionurus laticlavius",0.119178309085516,0.002,1,5
+10,"Prionurus laticlavius",0.117323296233814,0.003,1,23
+10,"Prionurus laticlavius",0.11672278338945,0.001,1,5
+10,"Prionurus laticlavius",0.116587203283376,0.002,1,10
+10,"Prionurus laticlavius",0.115612648221344,0.003,1,8
+10,"Prionurus laticlavius",0.1133069828722,0.001,1,5
+10,"Prionurus laticlavius",0.112342941611234,0.002,1,9
+10,"Prionurus laticlavius",0.107562107562108,0.003,1,5
+10,"Prionurus laticlavius",0.106875760163548,0.006,1,9
+10,"Prionurus laticlavius",0.104575163398693,0.004,1,7
+10,"Prionurus laticlavius",0.102356902356902,0.005,1,6
+10,"Prionurus laticlavius",0.101010101010101,0.001,1,6
+10,"Prionurus laticlavius",0.0996006577401926,0.003,1,5
+10,"Prionurus laticlavius",0.0963203463203463,0.007,1,6
+10,"Prionurus laticlavius",0.0924189046987235,0.007,1,7
+10,"Prionurus laticlavius",0.0909090909090909,0.01,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.005,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.018,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.006,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.011,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.009,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.005,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.008,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.01,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.009,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.009,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.009,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.013,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.013,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.005,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.008,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.009,1,3
+10,"Prionurus laticlavius",0.0909090909090909,0.008,1,3
+10,"Prionurus laticlavius",0.0901386748844376,0.008,1,4
+10,"Prionurus laticlavius",0.0899289320875336,0.005,1,6
+10,"Prionurus laticlavius",0.0895227073144388,0.007,1,12
+10,"Prionurus laticlavius",0.0893682588597843,0.007,1,4
+10,"Prionurus laticlavius",0.0890330138625964,0.017,1,11
+10,"Prionurus laticlavius",0.0867768595041322,0.009,1,4
+10,"Prionurus laticlavius",0.0857460296712633,0.015,1,9
+10,"Prionurus laticlavius",0.0829170829170829,0.008,1,4
+10,"Prionurus laticlavius",0.0772161970520061,0.035,1,9
+10,"Prionurus laticlavius",0.072326014465484,0.043,1,12
+10,"Prionurus laticlavius",0.0717969840879768,0.028,1,9
+10,"Prionurus laticlavius",0.0707070707070707,0.031,1,4
+10,"Prionurus laticlavius",0.0687851971037812,0.018,1,5
+10,"Prionurus laticlavius",0.0676532769556025,0.013,1,4
+10,"Prionurus laticlavius",0.0643939393939394,0.018,1,5
+10,"Prionurus laticlavius",0.0637140637140637,0.027,1,5
+10,"Prionurus laticlavius",0.0628417095107392,0.045,1,16
+10,"Prionurus laticlavius",0.0614154729149092,0.05,1,11
+10,"Prionurus laticlavius",0.0606060606060606,0.048,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.039,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.038,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.049,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.042,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.038,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.04,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.046,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.036,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.048,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.044,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.04,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.033,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.045,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.038,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.042,1,2
+10,"Prionurus laticlavius",0.0606060606060606,0.038,1,2
+10,"Prionurus laticlavius",0.0601356374701753,0.032,1,11
+10,"Prionurus laticlavius",0.0600581615880642,0.038,1,7
+10,"Prionurus laticlavius",0.05941770647653,0.037,1,5
+10,"Prionurus laticlavius",0.0588079235939158,0.043,1,4
+10,"Prionurus laticlavius",0.0580955664359481,0.045,1,10
+10,"Prionurus laticlavius",0.0580461776292824,0.033,1,4
+10,"Prionurus laticlavius",0.0526922933799725,0.038,1,3
+10,"Prionurus laticlavius",0.0513833992094862,0.046,1,3
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",1,0.001,1,19
+11,"Water",0.947368421052632,0.001,1,18
+11,"Water",0.947368421052632,0.001,1,18
+11,"Water",0.944142689604978,0.001,1,35
+11,"Water",0.926277664060937,0.001,1,33
+11,"Water",0.920973095473877,0.001,1,28
+11,"Water",0.918207756851775,0.001,1,46
+11,"Water",0.894736842105263,0.001,1,17
+11,"Water",0.894736842105263,0.001,1,17
+11,"Water",0.894736842105263,0.001,1,17
+11,"Water",0.894736842105263,0.001,1,17
+11,"Water",0.894736842105263,0.001,1,17
+11,"Water",0.89425465831918,0.001,1,71
+11,"Water",0.89262481915566,0.001,1,28
+11,"Water",0.888039189091228,0.001,1,53
+11,"Water",0.873719619156752,0.001,1,33
+11,"Water",0.869731003288092,0.001,1,50
+11,"Water",0.868244017294983,0.001,1,71
+11,"Water",0.86817493916153,0.001,1,93
+11,"Water",0.859633679491864,0.001,1,133
+11,"Water",0.85674412750925,0.001,1,34
+11,"Water",0.853147410011204,0.001,1,53
+11,"Water",0.843230368355174,0.001,1,253
+11,"Water",0.842105263157895,0.001,1,16
+11,"Water",0.842105263157895,0.001,1,16
+11,"Water",0.842105263157895,0.001,1,16
+11,"Water",0.842105263157895,0.001,1,16
+11,"Water",0.836573033192781,0.001,1,345
+11,"Water",0.83278652219639,0.001,1,155
+11,"Water",0.832199183412057,0.001,1,36
+11,"Water",0.829553723371816,0.001,1,58
+11,"Water",0.828968338088402,0.001,1,42
+11,"Water",0.828715048526131,0.001,1,119
+11,"Water",0.828551171718993,0.001,1,66
+11,"Water",0.825545250467488,0.001,1,41
+11,"Water",0.821975326214876,0.001,1,37
+11,"Water",0.820600212753132,0.001,1,41
+11,"Water",0.819680817235627,0.001,1,119
+11,"Water",0.818769795428653,0.001,1,27
+11,"Water",0.816991304241732,0.001,1,93
+11,"Water",0.816744541297159,0.001,1,50
+11,"Water",0.816301488239567,0.001,1,83
+11,"Water",0.813548689574097,0.001,1,46
+11,"Water",0.810297273963442,0.001,1,46
+11,"Water",0.809678296880801,0.001,1,38
+11,"Water",0.809533165671173,0.001,1,39
+11,"Water",0.80829103878183,0.001,1,91
+11,"Water",0.808204010232329,0.001,1,186
+11,"Water",0.807506369264116,0.001,1,41
+11,"Water",0.805446464737335,0.001,1,110
+11,"Water",0.804439973245465,0.001,1,146
+11,"Water",0.804043976055893,0.001,1,60
+11,"Water",0.797160460059045,0.001,1,151
+11,"Water",0.79653655384452,0.001,1,135
+11,"Water",0.793672051915728,0.001,1,151
+11,"Water",0.791286957069989,0.001,1,29
+11,"Water",0.791256635659316,0.001,1,97
+11,"Water",0.790177766004016,0.001,1,125
+11,"Water",0.789473684210526,0.001,1,15
+11,"Water",0.789473684210526,0.001,1,15
+11,"Water",0.789473684210526,0.001,1,15
+11,"Water",0.789473684210526,0.001,1,15
+11,"Water",0.789473684210526,0.001,1,15
+11,"Water",0.789473684210526,0.001,1,15
+11,"Water",0.787503940914954,0.001,1,72
+11,"Water",0.787091746817391,0.001,1,126
+11,"Water",0.784730864148036,0.001,1,100
+11,"Water",0.781842031457689,0.001,1,51
+11,"Water",0.781643380666787,0.001,1,158
+11,"Water",0.781323285027892,0.001,1,49
+11,"Water",0.780486288910191,0.001,1,62
+11,"Water",0.780213666937626,0.001,1,154
+11,"Water",0.779586191565413,0.001,1,186
+11,"Water",0.779421310130075,0.001,1,127
+11,"Water",0.778683649241006,0.001,1,27
+11,"Water",0.776903703092022,0.001,1,91
+11,"Water",0.776449583307907,0.001,1,76
+11,"Water",0.77601323340829,0.001,1,57
+11,"Water",0.774885688431597,0.001,1,160
+11,"Water",0.774712535438498,0.001,1,45
+11,"Water",0.774706980349036,0.001,1,60
+11,"Water",0.773929099088349,0.001,1,52
+11,"Water",0.77365842786707,0.001,1,65
+11,"Water",0.77166880261442,0.001,1,37
+11,"Water",0.770990447432862,0.001,1,80
+11,"Water",0.769978094380406,0.001,1,107
+11,"Water",0.768441026285303,0.001,1,163
+11,"Water",0.768343827240402,0.001,1,128
+11,"Water",0.76819919220274,0.001,1,45
+11,"Water",0.767468062736805,0.001,1,44
+11,"Water",0.767174900105606,0.001,1,103
+11,"Water",0.764509693199534,0.001,1,88
+11,"Water",0.764263280822595,0.001,1,59
+11,"Water",0.762673833521903,0.001,1,143
+11,"Water",0.762243501970744,0.001,1,130
+11,"Water",0.76145665669521,0.001,1,122
+11,"Water",0.761434324359297,0.001,1,133
+11,"Water",0.760684162644422,0.001,1,29
+11,"Water",0.759573954964601,0.001,1,69
+11,"Water",0.75913127702755,0.001,1,68
+11,"Water",0.756849622640921,0.001,1,243
+11,"Water",0.756666559162251,0.001,1,51
+11,"Water",0.756024073076067,0.001,1,83
+11,"Water",0.755758855799203,0.001,1,87
+11,"Water",0.754868140678989,0.001,1,64
+11,"Water",0.754687247479061,0.001,1,146
+11,"Water",0.754510270913962,0.001,1,26
+11,"Water",0.754128846262259,0.001,1,142
+11,"Water",0.752770554335307,0.001,1,68
+11,"Water",0.752485077877543,0.001,1,118
+11,"Water",0.749303483606811,0.001,1,62
+11,"Water",0.748963166303157,0.001,1,90
+11,"Water",0.748118500852388,0.001,1,118
+11,"Water",0.747998002370414,0.001,1,46
+11,"Water",0.745890271024254,0.001,1,117
+11,"Water",0.745826911901384,0.001,1,53
+11,"Water",0.744428413886481,0.001,1,222
+11,"Water",0.743967427276583,0.001,1,76
+11,"Water",0.74316629839468,0.001,1,47
+11,"Water",0.742856392418409,0.001,1,33
+11,"Water",0.742474979463675,0.001,1,78
+11,"Water",0.74235531523754,0.001,1,194
+11,"Water",0.74170401600765,0.001,1,49
+11,"Water",0.741478257907142,0.001,1,61
+11,"Water",0.740252691468867,0.001,1,51
+11,"Water",0.739241111509138,0.001,1,56
+11,"Water",0.738477658241252,0.001,1,113
+11,"Water",0.738002446064178,0.001,1,176
+11,"Water",0.737976201691774,0.001,1,212
+11,"Water",0.736842105263158,0.001,1,14
+11,"Water",0.736842105263158,0.001,1,14
+11,"Water",0.736842105263158,0.001,1,14
+11,"Water",0.735870440365869,0.001,1,49
+11,"Water",0.734929197572488,0.001,1,41
+11,"Water",0.734453739318321,0.001,1,36
+11,"Water",0.734238019061637,0.001,1,24
+11,"Water",0.73397381736599,0.001,1,153
+11,"Water",0.73383233178683,0.001,1,203
+11,"Water",0.733469899286804,0.001,1,21
+11,"Water",0.733388807275014,0.001,1,204
+11,"Water",0.73273482558842,0.001,1,65
+11,"Water",0.732695008374839,0.001,1,160
+11,"Water",0.732151516918254,0.001,1,209
+11,"Water",0.73090038371654,0.001,1,110
+11,"Water",0.730580424053734,0.001,1,86
+11,"Water",0.730445400304842,0.001,1,30
+11,"Water",0.730027023534162,0.001,1,43
+11,"Water",0.729347409144458,0.001,1,225
+11,"Water",0.72859184470082,0.001,1,108
+11,"Water",0.72768496290618,0.001,1,162
+11,"Water",0.727618077358996,0.001,1,42
+11,"Water",0.727492072905358,0.001,1,210
+11,"Water",0.72748581261928,0.001,1,178
+11,"Water",0.727415993401648,0.001,1,321
+11,"Water",0.727274924811512,0.001,1,54
+11,"Water",0.725582416023315,0.001,1,25
+11,"Water",0.724640438712078,0.001,1,220
+11,"Water",0.724523968057339,0.001,1,57
+11,"Water",0.724183134571167,0.001,1,63
+11,"Water",0.72404623567972,0.001,1,30
+11,"Water",0.72243346724937,0.001,1,105
+11,"Water",0.721751271419977,0.001,1,74
+11,"Water",0.721251824886745,0.001,1,256
+11,"Water",0.720443470722383,0.001,1,75
+11,"Water",0.719686446739876,0.001,1,63
+11,"Water",0.717207966097789,0.001,1,34
+11,"Water",0.716910245131331,0.001,1,22
+11,"Water",0.71493597636704,0.001,1,42
+11,"Water",0.714554447585419,0.001,1,73
+11,"Water",0.714456770559486,0.001,1,84
+11,"Water",0.713577715991858,0.001,1,50
+11,"Water",0.713481978547566,0.001,1,284
+11,"Water",0.713337480682309,0.001,1,112
+11,"Water",0.711941675311686,0.001,1,191
+11,"Water",0.711931899735784,0.001,1,311
+11,"Water",0.710640143217729,0.001,1,88
+11,"Water",0.710107921606887,0.001,1,135
+11,"Water",0.710001642720791,0.001,1,96
+11,"Water",0.707997501970164,0.001,1,143
+11,"Water",0.707939272050221,0.001,1,35
+11,"Water",0.707687259306508,0.001,1,120
+11,"Water",0.707146571147958,0.001,1,24
+11,"Water",0.70705836290401,0.001,1,157
+11,"Water",0.70668635813234,0.001,1,60
+11,"Water",0.70616896917742,0.001,1,66
+11,"Water",0.704483175438915,0.001,1,120
+11,"Water",0.703677131798507,0.001,1,29
+11,"Water",0.703606977125327,0.001,1,319
+11,"Water",0.70321088881485,0.001,1,64
+11,"Water",0.703157089524316,0.001,1,81
+11,"Water",0.702776628377349,0.001,1,50
+11,"Water",0.702207638753113,0.001,1,150
+11,"Water",0.701121042712851,0.001,1,55
+11,"Water",0.699715605198004,0.001,1,246
+11,"Water",0.698674499906312,0.001,1,102
+11,"Water",0.698266110383691,0.001,1,74
+11,"Water",0.696493187888518,0.001,1,81
+11,"Water",0.696313744336941,0.001,1,89
+11,"Water",0.696283997004938,0.001,1,263
+11,"Water",0.695707265900478,0.001,1,37
+11,"Water",0.695047322997069,0.001,1,25
+11,"Water",0.69448200993705,0.001,1,74
+11,"Water",0.688889304173361,0.001,1,197
+11,"Water",0.686942025546651,0.001,1,35
+11,"Water",0.685785796132793,0.001,1,30
+11,"Water",0.684882584399753,0.001,1,270
+11,"Water",0.68438850575242,0.001,1,25
+11,"Water",0.684386176234211,0.001,1,78
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.68421052631579,0.001,1,13
+11,"Water",0.684166548918436,0.001,1,23
+11,"Water",0.683357390669153,0.001,1,101
+11,"Water",0.682027654568878,0.001,1,25
+11,"Water",0.681962469605677,0.001,1,140
+11,"Water",0.681176101287015,0.001,1,17
+11,"Water",0.680407508567816,0.001,1,115
+11,"Water",0.680396029760361,0.001,1,154
+11,"Water",0.680125775074201,0.001,1,21
+11,"Water",0.679633924198182,0.001,1,290
+11,"Water",0.678737052280248,0.001,1,152
+11,"Water",0.677372556988509,0.001,1,190
+11,"Water",0.677022868619231,0.001,1,69
+11,"Water",0.676948951382314,0.001,1,272
+11,"Water",0.676550450126008,0.001,1,43
+11,"Water",0.675721465228636,0.001,1,33
+11,"Water",0.675257916755144,0.001,1,56
+11,"Water",0.674658283629462,0.001,1,25
+11,"Water",0.672995837535468,0.001,1,34
+11,"Water",0.672735629844226,0.001,1,24
+11,"Water",0.672058780185647,0.001,1,37
+11,"Water",0.671704204277581,0.001,1,106
+11,"Water",0.670706069509945,0.001,1,15
+11,"Water",0.669468644035876,0.001,1,110
+11,"Water",0.669271899562159,0.001,1,96
+11,"Water",0.668539836001762,0.001,1,57
+11,"Water",0.668300470007795,0.001,1,19
+11,"Water",0.667240788593925,0.001,1,23
+11,"Water",0.666945511653422,0.001,1,103
+11,"Water",0.666654381894729,0.001,1,28
+11,"Water",0.658144753569843,0.001,1,22
+11,"Water",0.65771718595625,0.001,1,51
+11,"Water",0.65630704957064,0.001,1,94
+11,"Water",0.656135825834376,0.001,1,57
+11,"Water",0.65451900749643,0.001,1,27
+11,"Water",0.653154009640342,0.001,1,263
+11,"Water",0.652998667931265,0.001,1,57
+11,"Water",0.65266857829988,0.001,1,37
+11,"Water",0.652600870548325,0.001,1,201
+11,"Water",0.651147145382548,0.001,1,311
+11,"Water",0.650310076536755,0.001,1,75
+11,"Water",0.64842722608478,0.001,1,56
+11,"Water",0.646133166950353,0.001,1,110
+11,"Water",0.645405830336304,0.001,1,158
+11,"Water",0.644894122902116,0.001,1,87
+11,"Water",0.643599258787061,0.001,1,206
+11,"Water",0.643026611529681,0.001,1,51
+11,"Water",0.641930328526496,0.001,1,26
+11,"Water",0.641807956589083,0.001,1,25
+11,"Water",0.641406064178162,0.001,1,45
+11,"Water",0.641302392703524,0.001,1,228
+11,"Water",0.64119652381324,0.001,1,140
+11,"Water",0.641017251334001,0.001,1,125
+11,"Water",0.640816133811688,0.001,1,66
+11,"Water",0.6392812354788,0.001,1,41
+11,"Water",0.63838428682848,0.001,1,302
+11,"Water",0.63816920058182,0.001,1,29
+11,"Water",0.637390600370789,0.001,1,26
+11,"Water",0.6371742309339,0.001,1,23
+11,"Water",0.636954110843383,0.001,1,52
+11,"Water",0.636892668158207,0.001,1,36
+11,"Water",0.634532882747361,0.001,1,83
+11,"Water",0.631846404593671,0.001,1,82
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.631578947368421,0.001,1,12
+11,"Water",0.630481587119289,0.001,1,123
+11,"Water",0.629993283653692,0.001,1,96
+11,"Water",0.629723072005831,0.001,1,27
+11,"Water",0.629632882786165,0.001,1,28
+11,"Water",0.628729268649071,0.001,1,43
+11,"Water",0.628291554681613,0.001,1,48
+11,"Water",0.627769363470547,0.001,1,51
+11,"Water",0.625951176951715,0.001,1,45
+11,"Water",0.625765546216008,0.001,1,17
+11,"Water",0.625103491866534,0.001,1,105
+11,"Water",0.62422538037982,0.001,1,115
+11,"Water",0.62401406598155,0.001,1,40
+11,"Water",0.622867513611615,0.001,1,15
+11,"Water",0.619466238537891,0.001,1,297
+11,"Water",0.61880592497395,0.001,1,39
+11,"Water",0.617991013062344,0.001,1,40
+11,"Water",0.617377473569975,0.001,1,137
+11,"Water",0.617372237590842,0.001,1,49
+11,"Water",0.617024032248458,0.001,1,20
+11,"Water",0.616909729538299,0.001,1,154
+11,"Water",0.616216920255867,0.001,1,308
+11,"Water",0.615165829555387,0.001,1,18
+11,"Water",0.612564309654405,0.001,1,23
+11,"Water",0.612457414549947,0.001,1,55
+11,"Water",0.611388818572479,0.001,1,48
+11,"Water",0.611141919043259,0.001,1,84
+11,"Water",0.610797585520417,0.001,1,36
+11,"Water",0.609074453340783,0.001,1,244
+11,"Water",0.608180600188074,0.001,1,48
+11,"Water",0.604962018135565,0.001,1,80
+11,"Water",0.604498250460101,0.001,1,20
+11,"Water",0.604096497143838,0.001,1,32
+11,"Water",0.603395942463094,0.001,1,66
+11,"Water",0.602657645389258,0.001,1,82
+11,"Water",0.601385073637877,0.001,1,35
+11,"Water",0.601301952148165,0.001,1,37
+11,"Water",0.599801688628436,0.001,1,64
+11,"Water",0.595916745795565,0.001,1,123
+11,"Water",0.595433196855904,0.001,1,44
+11,"Water",0.594966916383086,0.001,1,69
+11,"Water",0.594661505493262,0.001,1,142
+11,"Water",0.591593756698299,0.001,1,14
+11,"Water",0.590068616971444,0.001,1,19
+11,"Water",0.587980905911784,0.001,1,14
+11,"Water",0.587851512498897,0.001,1,74
+11,"Water",0.587151271909353,0.001,1,63
+11,"Water",0.585199400324488,0.001,1,105
+11,"Water",0.584678163177931,0.001,1,130
+11,"Water",0.582417807666449,0.001,1,43
+11,"Water",0.581265212641484,0.001,1,32
+11,"Water",0.580567911066029,0.001,1,35
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578947368421053,0.001,1,11
+11,"Water",0.578783949631058,0.001,1,85
+11,"Water",0.57873051000358,0.001,1,37
+11,"Water",0.578038822949416,0.001,1,308
+11,"Water",0.577945441740544,0.001,1,53
+11,"Water",0.577206727615723,0.001,1,34
+11,"Water",0.576178762492904,0.001,1,34
+11,"Water",0.575389980359474,0.001,1,49
+11,"Water",0.575015420039814,0.001,1,25
+11,"Water",0.574703599207854,0.001,1,35
+11,"Water",0.573507113895828,0.001,1,52
+11,"Water",0.572328293868566,0.001,1,19
+11,"Water",0.571206208717031,0.001,1,32
+11,"Water",0.570432849274986,0.001,1,30
+11,"Water",0.569479306095806,0.001,1,18
+11,"Water",0.568006359721922,0.001,1,87
+11,"Water",0.567803053230316,0.001,1,59
+11,"Water",0.565923307457701,0.001,1,27
+11,"Water",0.565662743440801,0.001,1,58
+11,"Water",0.565555164187759,0.001,1,29
+11,"Water",0.565406437294388,0.001,1,49
+11,"Water",0.564978750668972,0.001,1,39
+11,"Water",0.564899909513015,0.001,1,23
+11,"Water",0.563527999919323,0.001,1,41
+11,"Water",0.56321680891265,0.001,1,78
+11,"Water",0.562530614709823,0.001,1,19
+11,"Water",0.56164785824378,0.001,1,55
+11,"Water",0.561087461849456,0.001,1,33
+11,"Water",0.561012230400558,0.001,1,27
+11,"Water",0.559241091108802,0.001,1,338
+11,"Water",0.558653379798382,0.001,1,103
+11,"Water",0.557883490441461,0.001,1,74
+11,"Water",0.55724231749203,0.001,1,137
+11,"Water",0.555746928464807,0.001,1,37
+11,"Water",0.555048518011678,0.001,1,26
+11,"Water",0.554889392744185,0.001,1,22
+11,"Water",0.554477260652263,0.001,1,26
+11,"Water",0.554287251280908,0.001,1,91
+11,"Water",0.553939662629631,0.001,1,19
+11,"Water",0.551243064440716,0.001,1,81
+11,"Water",0.550763172412581,0.001,1,36
+11,"Water",0.548078968235183,0.001,1,59
+11,"Water",0.547284202239868,0.001,1,59
+11,"Water",0.546293942829287,0.001,1,31
+11,"Water",0.543976011372764,0.001,1,39
+11,"Water",0.543960220426226,0.001,1,22
+11,"Water",0.543659022451498,0.001,1,47
+11,"Water",0.543506556545708,0.001,1,40
+11,"Water",0.540851780976448,0.001,1,58
+11,"Water",0.538243101317288,0.001,1,89
+11,"Water",0.538214921151606,0.001,1,28
+11,"Water",0.537711999969538,0.001,1,31
+11,"Water",0.534902549466756,0.001,1,40
+11,"Water",0.533170942728355,0.001,1,36
+11,"Water",0.532971758054039,0.001,1,17
+11,"Water",0.531303511835713,0.001,1,21
+11,"Water",0.529833486737512,0.001,1,20
+11,"Water",0.529544830448515,0.001,1,35
+11,"Water",0.529379892554769,0.001,1,96
+11,"Water",0.529190757965415,0.001,1,62
+11,"Water",0.527132369413996,0.001,1,59
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.526315789473684,0.001,1,10
+11,"Water",0.52499655764967,0.001,1,47
+11,"Water",0.523625531487645,0.001,1,49
+11,"Water",0.522761385631982,0.001,1,32
+11,"Water",0.522627883342059,0.001,1,14
+11,"Water",0.522102032002583,0.001,1,65
+11,"Water",0.521437571526004,0.001,1,30
+11,"Water",0.520814823944431,0.001,1,36
+11,"Water",0.520613193887417,0.001,1,149
+11,"Water",0.516573491646379,0.001,1,71
+11,"Water",0.515313127136133,0.001,1,40
+11,"Water",0.51438986346878,0.001,1,66
+11,"Water",0.513705704683464,0.001,1,42
+11,"Water",0.513485378537464,0.001,1,29
+11,"Water",0.513340188837992,0.001,1,16
+11,"Water",0.513089671379783,0.001,1,17
+11,"Water",0.512718225642262,0.001,1,60
+11,"Water",0.512209293133705,0.001,1,26
+11,"Water",0.511251880733112,0.001,1,71
+11,"Water",0.509851232941811,0.001,1,249
+11,"Water",0.508804171605193,0.001,1,16
+11,"Water",0.508573919435794,0.001,1,123
+11,"Water",0.508216241962372,0.001,1,12
+11,"Water",0.506099686301847,0.001,1,14
+11,"Water",0.505499108872195,0.001,1,37
+11,"Water",0.504393764452897,0.001,1,18
+11,"Water",0.501639911550959,0.001,1,14
+11,"Water",0.501126226361551,0.001,1,21
+11,"Water",0.500491442510402,0.001,1,54
+11,"Water",0.500465052454642,0.001,1,36
+11,"Water",0.499994112076435,0.001,1,27
+11,"Water",0.499806144983428,0.001,1,39
+11,"Water",0.498538011695906,0.001,1,13
+11,"Water",0.498057559010791,0.001,1,107
+11,"Water",0.495467286394307,0.001,1,44
+11,"Water",0.494828575522696,0.001,1,25
+11,"Water",0.493924130720302,0.001,1,19
+11,"Water",0.493861546933331,0.001,1,71
+11,"Water",0.492148233819524,0.001,1,17
+11,"Water",0.48738626694727,0.001,1,13
+11,"Water",0.487344190520885,0.001,1,69
+11,"Water",0.486849572746249,0.001,1,18
+11,"Water",0.486767635496233,0.001,1,93
+11,"Water",0.486653423283625,0.001,1,24
+11,"Water",0.484736514658295,0.001,1,30
+11,"Water",0.484434934142261,0.001,1,22
+11,"Water",0.482335227248808,0.001,1,24
+11,"Water",0.481225411746456,0.001,1,86
+11,"Water",0.480410888854786,0.001,1,29
+11,"Water",0.479594591666387,0.001,1,24
+11,"Water",0.479547321563615,0.001,1,43
+11,"Water",0.4780841242948,0.001,1,54
+11,"Water",0.476877667906727,0.001,1,42
+11,"Water",0.476221879127947,0.001,1,201
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473684210526316,0.001,1,9
+11,"Water",0.473190963175392,0.001,1,20
+11,"Water",0.473018362605981,0.001,1,14
+11,"Water",0.470381612355153,0.001,1,20
+11,"Water",0.467152300581834,0.001,1,34
+11,"Water",0.466861420735962,0.001,1,19
+11,"Water",0.466617679665818,0.001,1,35
+11,"Water",0.464844730560071,0.001,1,18
+11,"Water",0.464529623828852,0.001,1,52
+11,"Water",0.46431825513071,0.001,1,38
+11,"Water",0.463766597076371,0.001,1,28
+11,"Water",0.463745800080614,0.001,1,29
+11,"Water",0.462385907152632,0.001,1,20
+11,"Water",0.459482351880097,0.001,1,17
+11,"Water",0.458307863628979,0.001,1,64
+11,"Water",0.457847090802668,0.001,1,21
+11,"Water",0.457377830722289,0.001,1,19
+11,"Water",0.456861793040184,0.001,1,47
+11,"Water",0.456486454671924,0.001,1,44
+11,"Water",0.456276421767763,0.001,1,22
+11,"Water",0.45544385935632,0.001,1,30
+11,"Water",0.455199848539593,0.001,1,61
+11,"Water",0.454340106080738,0.001,1,18
+11,"Water",0.453807147806927,0.001,1,77
+11,"Water",0.452499765767458,0.001,1,61
+11,"Water",0.451371554176006,0.001,1,28
+11,"Water",0.450386282925662,0.001,1,41
+11,"Water",0.450248065123921,0.001,1,43
+11,"Water",0.45013895523232,0.001,1,22
+11,"Water",0.449939888047132,0.001,1,19
+11,"Water",0.449652817277554,0.001,1,15
+11,"Water",0.449332711745609,0.001,1,26
+11,"Water",0.449325543063431,0.001,1,22
+11,"Water",0.448702987952122,0.001,1,35
+11,"Water",0.448280880887605,0.001,1,22
+11,"Water",0.446064836454665,0.001,1,24
+11,"Water",0.445745456878083,0.001,1,27
+11,"Water",0.445234357770196,0.001,1,12
+11,"Water",0.444993212935058,0.001,1,23
+11,"Water",0.44391107220276,0.001,1,19
+11,"Water",0.442430914869044,0.001,1,38
+11,"Water",0.440522034992294,0.001,1,31
+11,"Water",0.440177580058316,0.001,1,19
+11,"Water",0.440068340288109,0.001,1,30
+11,"Water",0.438218920482292,0.001,1,32
+11,"Water",0.436874002709915,0.001,1,143
+11,"Water",0.435616101729624,0.001,1,33
+11,"Water",0.435513635727217,0.001,1,19
+11,"Water",0.435482303131109,0.001,1,22
+11,"Water",0.43470649484313,0.001,1,15
+11,"Water",0.434030590093728,0.001,1,30
+11,"Water",0.431322983825984,0.001,1,18
+11,"Water",0.429326360771443,0.001,1,16
+11,"Water",0.428003005840128,0.001,1,24
+11,"Water",0.426003065639034,0.001,1,45
+11,"Water",0.424652400451726,0.001,1,18
+11,"Water",0.424554792905043,0.001,1,33
+11,"Water",0.423019291871017,0.001,1,26
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.421052631578947,0.001,1,8
+11,"Water",0.420250806247163,0.001,1,11
+11,"Water",0.419402472924675,0.001,1,27
+11,"Water",0.416623446284789,0.001,1,17
+11,"Water",0.415276487933675,0.001,1,25
+11,"Water",0.414864010103714,0.001,1,24
+11,"Water",0.414418096043454,0.001,1,83
+11,"Water",0.414334061846238,0.001,1,21
+11,"Water",0.411805867946219,0.001,1,15
+11,"Water",0.407089619617396,0.001,1,39
+11,"Water",0.406650339320439,0.001,1,35
+11,"Water",0.406583969093035,0.001,1,23
+11,"Water",0.405955126860977,0.001,1,18
+11,"Water",0.405725407440137,0.001,1,13
+11,"Water",0.404938765324884,0.001,1,47
+11,"Water",0.404711904216332,0.001,1,14
+11,"Water",0.40462498588757,0.001,1,19
+11,"Water",0.4039650715353,0.001,1,36
+11,"Water",0.403754828780099,0.001,1,19
+11,"Water",0.403560996443725,0.001,1,17
+11,"Water",0.403293264141983,0.001,1,29
+11,"Water",0.402967771852539,0.001,1,15
+11,"Water",0.402605392174623,0.001,1,143
+11,"Water",0.401514067084483,0.001,1,38
+11,"Water",0.400223470753792,0.001,1,10
+11,"Water",0.400071441328809,0.001,1,11
+11,"Water",0.399521860463127,0.001,1,23
+11,"Water",0.398826608386715,0.001,1,24
+11,"Water",0.398351048990934,0.001,1,27
+11,"Water",0.394966774711636,0.001,1,13
+11,"Water",0.393985439487043,0.001,1,15
+11,"Water",0.393925310063218,0.001,1,20
+11,"Water",0.393584820420149,0.001,1,14
+11,"Water",0.391874813240489,0.001,1,14
+11,"Water",0.39078893688622,0.001,1,11
+11,"Water",0.390612631943045,0.001,1,15
+11,"Water",0.390241567554764,0.001,1,24
+11,"Water",0.38878665085703,0.001,1,33
+11,"Water",0.388620869166864,0.001,1,29
+11,"Water",0.388587804325525,0.001,1,12
+11,"Water",0.388481599218377,0.001,1,23
+11,"Water",0.388448522192027,0.001,1,56
+11,"Water",0.387220143390434,0.001,1,30
+11,"Water",0.385766472737113,0.001,1,11
+11,"Water",0.385356848618505,0.001,1,28
+11,"Water",0.383703374662228,0.001,1,29
+11,"Water",0.382303523188809,0.001,1,46
+11,"Water",0.381123045876153,0.001,1,24
+11,"Water",0.38079683849963,0.001,1,37
+11,"Water",0.380473039148701,0.001,1,36
+11,"Water",0.379241674691569,0.001,1,86
+11,"Water",0.378811305584761,0.001,1,16
+11,"Water",0.378793749815031,0.001,1,33
+11,"Water",0.375510037797094,0.001,1,95
+11,"Water",0.374996357844232,0.001,1,24
+11,"Water",0.374623343555069,0.001,1,14
+11,"Water",0.373025820441588,0.001,1,62
+11,"Water",0.371448981812075,0.001,1,26
+11,"Water",0.370589767185638,0.001,1,34
+11,"Water",0.37053796781734,0.001,1,54
+11,"Water",0.370163706444385,0.001,1,11
+11,"Water",0.369498829325665,0.001,1,20
+11,"Water",0.369035529404814,0.001,1,15
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368421052631579,0.001,1,7
+11,"Water",0.368192632806578,0.001,1,26
+11,"Water",0.367192441558183,0.001,1,10
+11,"Water",0.366067736191298,0.001,1,53
+11,"Water",0.365839741325435,0.001,1,18
+11,"Water",0.365296147211041,0.001,1,19
+11,"Water",0.364832627553447,0.001,1,62
+11,"Water",0.363354279073389,0.001,1,15
+11,"Water",0.363188924443015,0.001,1,34
+11,"Water",0.361210887767952,0.001,1,62
+11,"Water",0.361203614026243,0.001,1,15
+11,"Water",0.359309995989775,0.001,1,15
+11,"Water",0.359117795324142,0.001,1,29
+11,"Water",0.358241581058219,0.001,1,13
+11,"Water",0.357169687704739,0.001,1,14
+11,"Water",0.35672642455295,0.001,1,60
+11,"Water",0.356113741318219,0.001,1,39
+11,"Water",0.353958484472631,0.001,1,18
+11,"Water",0.353905052624307,0.001,1,63
+11,"Water",0.351173515442073,0.001,1,21
+11,"Water",0.35087707360347,0.001,1,52
+11,"Water",0.349184847372966,0.001,1,16
+11,"Water",0.349035893083597,0.001,1,17
+11,"Water",0.349006064895603,0.001,1,28
+11,"Water",0.347205463308156,0.001,1,35
+11,"Water",0.346439273575609,0.001,1,12
+11,"Water",0.346291960039565,0.001,1,27
+11,"Water",0.344749463601309,0.001,1,33
+11,"Water",0.344675242795684,0.001,1,26
+11,"Water",0.342584012918452,0.001,1,23
+11,"Water",0.339703541738246,0.001,1,25
+11,"Water",0.338405603141427,0.001,1,17
+11,"Water",0.337893356508291,0.001,1,15
+11,"Water",0.336447356115905,0.001,1,30
+11,"Water",0.335078824111908,0.001,1,21
+11,"Water",0.333300843915753,0.001,1,30
+11,"Water",0.333041639335929,0.001,1,54
+11,"Water",0.33189068190448,0.001,1,83
+11,"Water",0.331228368075787,0.001,1,65
+11,"Water",0.327383266062485,0.001,1,26
+11,"Water",0.327044699960743,0.001,1,31
+11,"Water",0.326386435888379,0.001,1,11
+11,"Water",0.325889882854982,0.001,1,31
+11,"Water",0.325832288251867,0.001,1,48
+11,"Water",0.323680249186303,0.001,1,266
+11,"Water",0.323234090002241,0.001,1,13
+11,"Water",0.32298176015272,0.001,1,20
+11,"Water",0.321392632376204,0.001,1,14
+11,"Water",0.321191423822185,0.001,1,23
+11,"Water",0.319885973095051,0.001,1,16
+11,"Water",0.319581764905614,0.001,1,10
+11,"Water",0.31820854402204,0.001,1,18
+11,"Water",0.317742697190751,0.001,1,24
+11,"Water",0.317574498893131,0.001,1,37
+11,"Water",0.316231982419079,0.001,1,12
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31578947368421,0.001,1,6
+11,"Water",0.31553729602505,0.001,1,19
+11,"Water",0.315038639866651,0.001,1,22
+11,"Water",0.31493811083434,0.001,1,27
+11,"Water",0.314258083841075,0.001,1,13
+11,"Water",0.313504713567361,0.001,1,11
+11,"Water",0.312917580579115,0.001,1,13
+11,"Water",0.312550397026063,0.001,1,44
+11,"Water",0.311656599589023,0.001,1,50
+11,"Water",0.310839030986174,0.001,1,28
+11,"Water",0.308376429605537,0.001,1,27
+11,"Water",0.306416789259353,0.001,1,54
+11,"Water",0.306270787061316,0.001,1,34
+11,"Water",0.30391748469591,0.001,1,8
+11,"Water",0.302098412729921,0.001,1,16
+11,"Water",0.300948529886219,0.001,1,12
+11,"Water",0.298482105789581,0.001,1,16
+11,"Water",0.296241083747444,0.001,1,19
+11,"Water",0.295446852477726,0.001,1,34
+11,"Water",0.294143418230229,0.001,1,33
+11,"Water",0.293602468929852,0.001,1,12
+11,"Water",0.293449361365913,0.001,1,27
+11,"Water",0.293165024003287,0.001,1,49
+11,"Water",0.292341674625169,0.001,1,11
+11,"Water",0.291741505404346,0.001,1,45
+11,"Water",0.291588707688753,0.001,1,12
+11,"Water",0.289604326298197,0.001,1,38
+11,"Water",0.288827981791787,0.001,1,14
+11,"Water",0.287826439510236,0.001,1,22
+11,"Water",0.285833737980116,0.001,1,15
+11,"Water",0.285157524402395,0.001,1,9
+11,"Water",0.282374651984358,0.001,1,93
+11,"Water",0.281465797729237,0.001,1,9
+11,"Water",0.281060138542149,0.001,1,11
+11,"Water",0.280008637173125,0.001,1,40
+11,"Water",0.279701133198553,0.001,1,16
+11,"Water",0.279636253179086,0.001,1,20
+11,"Water",0.278576620667854,0.001,1,59
+11,"Water",0.278307172509673,0.001,1,19
+11,"Water",0.277479461457611,0.001,1,9
+11,"Water",0.277183205270769,0.001,1,11
+11,"Water",0.277048200673381,0.001,1,12
+11,"Water",0.27669828947143,0.001,1,12
+11,"Water",0.27652704555911,0.001,1,98
+11,"Water",0.275755743958874,0.001,1,25
+11,"Water",0.27536670398363,0.001,1,25
+11,"Water",0.274291015209787,0.001,1,52
+11,"Water",0.274056334413342,0.001,1,32
+11,"Water",0.27128606076324,0.001,1,12
+11,"Water",0.269468950456456,0.001,1,12
+11,"Water",0.269361725728928,0.001,1,50
+11,"Water",0.26921732391348,0.001,1,17
+11,"Water",0.268273841173662,0.001,1,98
+11,"Water",0.266813672541159,0.001,1,42
+11,"Water",0.266773400384088,0.001,1,51
+11,"Water",0.26666548267074,0.001,1,13
+11,"Water",0.266541980749459,0.001,1,12
+11,"Water",0.266120412630741,0.001,1,21
+11,"Water",0.265639480492101,0.001,1,17
+11,"Water",0.264691327179173,0.001,1,31
+11,"Water",0.264056710112855,0.001,1,10
+11,"Water",0.264006201146812,0.001,1,57
+11,"Water",0.263981078217453,0.001,1,22
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.263157894736842,0.001,1,5
+11,"Water",0.260721936955387,0.001,1,90
+11,"Water",0.258819718807409,0.001,1,42
+11,"Water",0.25573927692531,0.001,1,22
+11,"Water",0.255708408425788,0.001,1,13
+11,"Water",0.254614131683871,0.001,1,11
+11,"Water",0.253728007685109,0.001,1,53
+11,"Water",0.252131923572132,0.001,1,13
+11,"Water",0.251861820354197,0.001,1,21
+11,"Water",0.251207764172596,0.001,1,91
+11,"Water",0.249872596074864,0.001,1,24
+11,"Water",0.24916693387518,0.001,1,26
+11,"Water",0.248659117688009,0.001,1,18
+11,"Water",0.248468295563593,0.001,1,8
+11,"Water",0.248367309056139,0.001,1,21
+11,"Water",0.248136067789154,0.001,1,13
+11,"Water",0.2441461051625,0.001,1,14
+11,"Water",0.243617214693713,0.001,1,29
+11,"Water",0.243240186456212,0.001,1,20
+11,"Water",0.242799408551275,0.001,1,35
+11,"Water",0.242530506874787,0.001,1,66
+11,"Water",0.242166764788296,0.001,1,17
+11,"Water",0.241207617759064,0.001,1,10
+11,"Water",0.238311726482272,0.001,1,33
+11,"Water",0.238072662662374,0.001,1,14
+11,"Water",0.237641490111733,0.001,1,17
+11,"Water",0.237200878203692,0.001,1,18
+11,"Water",0.235744527442236,0.001,1,18
+11,"Water",0.233171726259645,0.001,1,22
+11,"Water",0.231626218025161,0.001,1,80
+11,"Water",0.231606042076497,0.001,1,27
+11,"Water",0.231215542275111,0.001,1,25
+11,"Water",0.231152352542314,0.001,1,47
+11,"Water",0.230240984104905,0.001,1,15
+11,"Water",0.229992460676466,0.001,1,11
+11,"Water",0.227833454918612,0.001,1,25
+11,"Water",0.225474605455084,0.001,1,12
+11,"Water",0.223629950361708,0.001,1,17
+11,"Water",0.223418535330671,0.001,1,21
+11,"Water",0.223101834067796,0.001,1,13
+11,"Water",0.222590128214105,0.001,1,45
+11,"Water",0.221816740178913,0.001,1,63
+11,"Water",0.221557947673182,0.001,1,14
+11,"Water",0.219612059439343,0.001,1,11
+11,"Water",0.219212369721217,0.001,1,32
+11,"Water",0.217413295422381,0.001,1,18
+11,"Water",0.217301228790643,0.001,1,12
+11,"Water",0.214620970672117,0.001,1,9
+11,"Water",0.214249359240699,0.001,1,16
+11,"Water",0.212723143382235,0.001,1,65
+11,"Water",0.212232786476944,0.001,1,10
+11,"Water",0.211605937921727,0.001,1,9
+11,"Water",0.211334268889447,0.001,1,9
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.002,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.210526315789474,0.001,1,4
+11,"Water",0.2099204846649,0.001,1,11
+11,"Water",0.209386758803647,0.001,1,16
+11,"Water",0.208325817971935,0.001,1,13
+11,"Water",0.207959292029966,0.002,1,26
+11,"Water",0.207537714039491,0.001,1,27
+11,"Water",0.205432937181664,0.001,1,7
+11,"Water",0.205171877069511,0.001,1,37
+11,"Water",0.204604919519676,0.001,1,18
+11,"Water",0.203383674828244,0.003,1,18
+11,"Water",0.202193493045769,0.001,1,8
+11,"Water",0.202122014634611,0.001,1,10
+11,"Water",0.201450234976825,0.001,1,15
+11,"Water",0.198285237360581,0.001,1,8
+11,"Water",0.19596659056894,0.001,1,15
+11,"Water",0.195756050465012,0.001,1,30
+11,"Water",0.194309350795224,0.001,1,22
+11,"Water",0.193872111128689,0.001,1,19
+11,"Water",0.193351547173445,0.001,1,28
+11,"Water",0.193034510279437,0.001,1,18
+11,"Water",0.188726241958984,0.001,1,10
+11,"Water",0.187495244134432,0.001,1,9
+11,"Water",0.187330244168068,0.001,1,24
+11,"Water",0.186585828089223,0.001,1,13
+11,"Water",0.184999725914924,0.001,1,13
+11,"Water",0.18440427720228,0.001,1,21
+11,"Water",0.184260855244505,0.001,1,23
+11,"Water",0.184016086274277,0.001,1,22
+11,"Water",0.183116473312366,0.001,1,34
+11,"Water",0.182555429053125,0.001,1,15
+11,"Water",0.179640601167674,0.001,1,10
+11,"Water",0.179350709493651,0.008,1,40
+11,"Water",0.177979972997501,0.001,1,6
+11,"Water",0.175610881581428,0.001,1,37
+11,"Water",0.175045850833003,0.001,1,12
+11,"Water",0.1709080940863,0.001,1,19
+11,"Water",0.170428532814014,0.001,1,47
+11,"Water",0.169749715849783,0.001,1,14
+11,"Water",0.169296789075508,0.001,1,9
+11,"Water",0.169258549185888,0.001,1,55
+11,"Water",0.169053076253706,0.001,1,11
+11,"Water",0.167966242817441,0.001,1,34
+11,"Water",0.167789916146428,0.001,1,16
+11,"Water",0.167608337046338,0.001,1,71
+11,"Water",0.167151291653799,0.002,1,56
+11,"Water",0.16625672260061,0.003,1,32
+11,"Water",0.165371867957046,0.003,1,11
+11,"Water",0.164844213161188,0.001,1,10
+11,"Water",0.164749381456505,0.001,1,51
+11,"Water",0.164257791735871,0.001,1,8
+11,"Water",0.164203417942718,0.001,1,20
+11,"Water",0.162794149648749,0.001,1,62
+11,"Water",0.161969596316536,0.002,1,10
+11,"Water",0.161673567221395,0.001,1,12
+11,"Water",0.161304622507537,0.001,1,19
+11,"Water",0.161048309070219,0.001,1,26
+11,"Water",0.16019769853989,0.002,1,16
+11,"Water",0.159313731160331,0.046,1,32
+11,"Water",0.159286276257601,0.002,1,44
+11,"Water",0.158598087228948,0.002,1,22
+11,"Water",0.15841699065746,0.001,1,7
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.002,1,3
+11,"Water",0.157894736842105,0.002,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.002,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.002,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157894736842105,0.001,1,3
+11,"Water",0.157521550133945,0.002,1,14
+11,"Water",0.155561755094457,0.001,1,16
+11,"Water",0.155121862523013,0.001,1,33
+11,"Water",0.154148690620528,0.003,1,37
+11,"Water",0.153798539933369,0.001,1,8
+11,"Water",0.153247899445874,0.001,1,11
+11,"Water",0.152796835641667,0.001,1,7
+11,"Water",0.150166227089624,0.001,1,14
+11,"Water",0.148747388201226,0.001,1,23
+11,"Water",0.148466042341379,0.001,1,9
+11,"Water",0.148448771722359,0.012,1,48
+11,"Water",0.147525526158411,0.003,1,44
+11,"Water",0.14730712636414,0.001,1,13
+11,"Water",0.146635244828489,0.001,1,6
+11,"Water",0.145947502477616,0.001,1,18
+11,"Water",0.14474994907892,0.004,1,69
+11,"Water",0.144393741275744,0.001,1,43
+11,"Water",0.143552959281668,0.003,1,57
+11,"Water",0.142476910056544,0.001,1,7
+11,"Water",0.141454401777884,0.01,1,94
+11,"Water",0.141306864436528,0.002,1,12
+11,"Water",0.141139209596319,0.001,1,20
+11,"Water",0.140877707203543,0.001,1,11
+11,"Water",0.140460248702928,0.001,1,17
+11,"Water",0.139919062225968,0.001,1,11
+11,"Water",0.138921658080728,0.005,1,68
+11,"Water",0.137481412956166,0.003,1,41
+11,"Water",0.137380600165878,0.008,1,40
+11,"Water",0.136613020538361,0.001,1,9
+11,"Water",0.130338049717659,0.018,1,91
+11,"Water",0.12729783938252,0.002,1,16
+11,"Water",0.127155596597687,0.001,1,29
+11,"Water",0.126173951698071,0.002,1,7
+11,"Water",0.124975965650439,0.011,1,84
+11,"Water",0.124828008456453,0.002,1,17
+11,"Water",0.1243390682952,0.011,1,23
+11,"Water",0.120475557435495,0.002,1,9
+11,"Water",0.119925573462288,0.002,1,12
+11,"Water",0.118110143313267,0.002,1,11
+11,"Water",0.116454639943611,0.003,1,20
+11,"Water",0.115966435452596,0.005,1,12
+11,"Water",0.115468207127794,0.003,1,16
+11,"Water",0.115123967266827,0.006,1,20
+11,"Water",0.114999276582654,0.006,1,17
+11,"Water",0.114985669102106,0.013,1,22
+11,"Water",0.114507809476831,0.003,1,12
+11,"Water",0.113697130654799,0.001,1,10
+11,"Water",0.113414204760918,0.002,1,10
+11,"Water",0.113054217733293,0.01,1,34
+11,"Water",0.112965340179718,0.004,1,7
+11,"Water",0.110204583261047,0.001,1,8
+11,"Water",0.109867290403046,0.018,1,10
+11,"Water",0.109413619641114,0.002,1,8
+11,"Water",0.108279016617111,0.002,1,24
+11,"Water",0.107934424580521,0.001,1,10
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.005,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.007,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.006,1,2
+11,"Water",0.105263157894737,0.005,1,2
+11,"Water",0.105263157894737,0.007,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.008,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.006,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.005,1,2
+11,"Water",0.105263157894737,0.007,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.005,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.005,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.006,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.005,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.006,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.105263157894737,0.004,1,2
+11,"Water",0.105263157894737,0.002,1,2
+11,"Water",0.105263157894737,0.003,1,2
+11,"Water",0.104651786347853,0.015,1,34
+11,"Water",0.104204051959727,0.022,1,86
+11,"Water",0.102922161402519,0.008,1,54
+11,"Water",0.101168145822844,0.045,1,27
+11,"Water",0.100278425896412,0.027,1,31
+11,"Water",0.0990268536659874,0.017,1,43
+11,"Water",0.0984172959623075,0.004,1,13
+11,"Water",0.0968525849262558,0.002,1,30
+11,"Water",0.095717095100809,0.025,1,53
+11,"Water",0.0952525528967039,0.005,1,8
+11,"Water",0.0941272928710275,0.012,1,26
+11,"Water",0.0926063436194117,0.004,1,15
+11,"Water",0.0919470987212569,0.014,1,28
+11,"Water",0.0919017971884141,0.006,1,13
+11,"Water",0.0918979863635829,0.003,1,19
+11,"Water",0.0909928648534794,0.012,1,15
+11,"Water",0.0909035950806321,0.01,1,17
+11,"Water",0.090898360881772,0.011,1,30
+11,"Water",0.0906990270663104,0.012,1,23
+11,"Water",0.089850015256664,0.005,1,18
+11,"Water",0.0895405919374223,0.018,1,18
+11,"Water",0.0856524873828407,0.012,1,7
+11,"Water",0.0842045859569918,0.007,1,7
+11,"Water",0.0833949558112988,0.015,1,6
+11,"Water",0.082687808513225,0.009,1,14
+11,"Water",0.0826422370427612,0.012,1,11
+11,"Water",0.081841524514906,0.05,1,37
+11,"Water",0.0811709395496635,0.014,1,13
+11,"Water",0.0777857007418807,0.007,1,8
+11,"Water",0.0766133155711313,0.042,1,17
+11,"Water",0.0757259274513842,0.011,1,8
+11,"Water",0.0739939526537034,0.042,1,12
+11,"Water",0.0715762361473549,0.023,1,7
+11,"Water",0.0703162761957439,0.024,1,19
+11,"Water",0.0668016194331984,0.03,1,5
+11,"Water",0.0639014355593837,0.032,1,15
+11,"Water",0.062952912922564,0.038,1,25
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.035,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.038,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.036,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.029,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.037,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.038,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.038,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.043,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.039,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.031,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.04,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.045,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.046,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.047,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.049,1,1
+11,"Water",0.0526315789473684,0.042,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.041,1,1
+11,"Water",0.0526315789473684,0.048,1,1
+11,"Water",0.0526315789473684,0.044,1,1
+11,"Water",0.0526315789473684,0.05,1,1
+11,"Water",0.0526315789473684,0.05,1,1
