@@ -296,7 +296,7 @@ sample_data(ROHR_06_obj)$is.neg <- sample_data(ROHR_06_obj)$control_sample == "Y
 contamdf.prev <- isContaminant(ROHR_06_obj, method="prevalence", neg="is.neg")
 contaminants <- table(contamdf.prev$contaminant)
 #check how many contaminants were ID'd
-contaminants #52 true (cont), 25530 false (not cont)
+contaminants #35 true (cont), 26270 false (not cont)
 
 # write .csv with these contaminants
 write.csv(contamdf.prev, file='~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_contamdf.prev.csv')
