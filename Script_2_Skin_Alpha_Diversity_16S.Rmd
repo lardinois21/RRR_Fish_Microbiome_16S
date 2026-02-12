@@ -333,6 +333,7 @@ rarcurve_ROHR06b <- vegan::rarecurve(otu_tab_ROHR06b,
                       sample = min(rowSums(otu_tab_ROHR06b), 
                                    col = "blue", cex = 0.6))
 ```
+
 ```{r rarefaction curves for full (trimmed) dataset - unassigned phyla removed, echo=FALSE}
 otu_tab_ROHR06 <- t(abundances(ROHR_06_obj_clean_updated_P))
 rarcurve_ROHR06 <- vegan::rarecurve(otu_tab_ROHR06, 
@@ -360,6 +361,7 @@ physeqROHR06_transposed2 <- phyloseq(otu_table(abundance_transposed), sample_dat
 #note that doing this repeated sampling takes time (on laptop took ~5 hrs to run 1000 iterations and maxed out memory), re-ran with 10 iterations (for now - computer is able to deal with ~100 reps, but this takes ~1 hr to run) and would need to switch to cluster to run with higher computational power.
 ROHR06.rar.rep.2 <- mirl(physeqROHR06_transposed2, libsize = 2500, rep = 10, set.seed = 777, replace = FALSE) #62 samples removed at this step
 ```
+
 ```{r a-div with mirlyn package}
 
 # Generates dataframe of alpha-diversity metric from mirl_object (from Cameron et al. 2021) w/ uncertainty & variation due to rarefaction characterized
@@ -1223,6 +1225,7 @@ ROHR_06_obj_phylo_root.phylo.hill
 #save new phyloseq object with Hill numbers integrated
 saveRDS(ROHR_06_obj_phylo_root.phylo.hill, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_phylo_root_obj_phylo_tree_Hill.rds")
 ```
+
 ```{r read phyloseq with hill numbers}
 ROHR_06_obj_phylo_root.phylo.hill <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_phylo_root_obj_phylo_tree_Hill.rds")
 ```
