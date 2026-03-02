@@ -194,7 +194,7 @@ saveRDS(ROHR_06_obj_phylo_root, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish
 ```
 
 ```{r read phyloseq with diet data}
-ROHR_06_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_with_rooted_phylogenetic_tree_updated_names.rds")
+ROHR_06_obj_phylo_root <- readRDS("./Intermediate_R_objects/ROHR_06_obj_with_rooted_phylogenetic_tree_updated_names.rds")
 ```
 PERMANOVA (Permutational Multivariate Analysis of Variance)
 
