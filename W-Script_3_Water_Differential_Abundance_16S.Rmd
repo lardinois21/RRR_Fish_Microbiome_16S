@@ -9,10 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Script N. 4.1 - Differential abundance analyses - water & merged skin & water
+Script N. 3 - Differential abundance analyses - water & merged skin & water
 
 Most recent updates: 
 
+Feb 16, 2026 - LLL - 
 December 11, 2024 - LLL - DA analyses --> split by gulf - water
 November 20, 2024 - LLL - test DA analyses (water & whole dataset)
 August 29, 2024 - LLL - intro questions
@@ -38,13 +39,13 @@ We are looking for differentially abundant (DA) microbes - that is, microbes tha
 
 Loading our phyloseq object - filtered & trimmed (not rarefied) with phylogenetic tree - from "ROHR_06_Swab_stats_alpha.Rmd"
 ```{r read phyloseq object, echo=FALSE}
-ROHR_06_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_with_rooted_phylogenetic_tree.rds")
+ROHR_06_obj_phylo_root <- readRDS("./Intermediate_R_objects/ROHR_06_obj_with_rooted_phylogenetic_tree.rds")
 ```
 
 We'll also load our water phyloseq object, which contains water samples from both gulfs during both seasons
 ```{r also loading our water phyloseq, echo = FALSE}
 #unrarefied dataset
-ROHR_08_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree_rooted.rds")
+ROHR_08_obj_phylo_root <- readRDS("./Intermediate_R_objects/ROHR_08_with_phylogenetic_tree_rooted.rds")
 ```
 
 ```{r load required packages}
@@ -62,6 +63,7 @@ Looking at our data
 summary(ROHR_06_obj_phylo_root@sam_data) #fish
 summary(ROHR_06_obj_phylo_root@sam_data) #water
 ```
+
 #Clean up fish and skin data
 
 Before we do our differential abundance analyses, we want to remove some of the extra columns in both the fish skin and water phyloseq objects, ensure that the nomenclature and class assignment of each column is appropriate and matches the other dataset, and then merge the two to be able to explicitly test differential abundance between fish skin and water microbiomes.
@@ -87,6 +89,7 @@ ROHR06_new <- phyloseq(
 # View the new phyloseq object
 ROHR06_new
 ```
+
 ```{r select columns of interest - water}
 # Extract sample_data
 ROHR_08_data_df <- as.data.frame(sample_data(ROHR_08_obj_phylo_root))
@@ -111,16 +114,16 @@ ROHR08_new
 
 ```{r save modified dataset with new taxa names}
 #Save phyloseq object with filtered taxa - fish
-saveRDS(ROHR06_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+saveRDS(ROHR06_new, "./Intermediate_R_objects/ROHR_06_obj_newMetadata_cleaned.rds")
 
 #read if not starting from top
-ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+ROHR06_new = readRDS("./Intermediate_R_objects/ROHR_06_obj_newMetadata_cleaned.rds")
 
 #Save phyloseq object with filtered taxa - water
-saveRDS(ROHR08_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+saveRDS(ROHR08_new, "./Intermediate_R_objects/ROHR_08_obj_newMetadata_cleaned.rds")
 
 #read if not starting from top
-ROHR08_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+ROHR08_new = readRDS("./Intermediate_R_objects/ROHR_08_obj_newMetadata_cleaned.rds")
 ```
 
 Now that we have the same columns and column names, we can begin merging the two datasets. However, before this, we'll want to change the "species" column in the water dataset from "NA" to "Water", so that when we call for comparisons between fish species, we also compare against the water samples.
@@ -153,6 +156,7 @@ sample_names(ROHR08_new) <- paste("RRR", gsub("-", "_", sample_names(ROHR08_new)
 # Check if the replacement worked
 head(sample_data(ROHR08_new))
 ```
+
 ```{r change non-upwelling to remove dash}
 # DESeq2 doesn't like there being a dash in "non-upwelling", so we'll need to update both the season and region_season columns of both datasets
 
@@ -176,6 +180,7 @@ sample_data(ROHR08_new) <- sample_data(sample_data_df)
 # Verify the changes
 head(sample_data(ROHR08_new))
 ```
+
 ```{r replace any spaces with _}
 # Convert sample_data to a data frame
 sample_data_df <- as.data.frame(sample_data(ROHR06_new))  # Extract as data frame
@@ -202,19 +207,20 @@ sample_data(ROHR08_new) <- sample_data(sample_data_df)
 head(sample_data(ROHR08_new))
 
 ```
+
 ##Start here for individual cleaned fish and water datasets
 ```{r save modified dataset with new ID names}
 #Save phyloseq object with filtered taxa - fish
-saveRDS(ROHR06_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+saveRDS(ROHR06_new, "./Intermediate_R_objects/ROHR_06_obj_newMetadata_cleaned.rds")
 
 #read if not starting from top
-ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+ROHR06_new = readRDS("./Intermediate_R_objects/ROHR_06_obj_newMetadata_cleaned.rds")
 
 #Save phyloseq object with filtered taxa - water
-saveRDS(ROHR08_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+saveRDS(ROHR08_new, "./Intermediate_R_objects/ROHR_08_obj_newMetadata_cleaned.rds")
 
 #read if not starting from top
-ROHR08_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_newMetadata_cleaned.rds")
+ROHR08_new = readRDS("./Intermediate_R_objects/ROHR_08_obj_newMetadata_cleaned.rds")
 ```
 
 #Merge fish skin and water microbiome datasets
@@ -229,19 +235,22 @@ ROHR06_no_tree <- phyloseq(otu_table(ROHR06_new), tax_table(ROHR06_new), sample_
 ROHR_merged <- merge_phyloseq(ROHR08_no_tree, ROHR06_no_tree)
 
 # Check the merged object
-ROHR_merged
+ROHR_merged #7815 taxa & 360 samples
 ```
+
 ```{r save phyloseq merged datasets}
 #Save phyloseq object with filtered taxa - fish
-saveRDS(ROHR_merged, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_skin_and_water_NO_TREE.rds")
+saveRDS(ROHR_merged, "./Intermediate_R_objects/ROHR_merged_skin_and_water_NO_TREE.rds")
+```
 
+```{r read merged water and fish datasets}
 #read if not starting from top
-ROHR_merged = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_skin_and_water_NO_TREE.rds")
+ROHR_merged = readRDS("./Intermediate_R_objects/ROHR_merged_skin_and_water_NO_TREE.rds")
 ```
 
 Beautiful! We now have a single merged dataset with both our fish skin samples and our water samples, which includes a "species" column that we can call to compare DA across fish species & water samples, as well as a "sample" column that defines the fish ("Swab") vs water ("Water) samples, if we're only interested in checking DA between the whole pool of fish skin samples & the surrounding seawater microbiome. We can also still work with the individual datasets to check out what microbes are differentially abundant between/among fish OR water samples. We'll start with the water dataset, which is the smallest AND the most responsive to seasonal changes.
 
-#DA analyses
+# DA analyses
 Starting off following tutorial by Nicholas Ollberding (2021):
 https://www.nicholas-ollberding.com/post/identifying-differentially-abundant-features-in-microbiome-data/
 as well as the reference files for both DESeq2 and MaAsLin2
@@ -256,7 +265,7 @@ https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442#s
 https://huttenhower.sph.harvard.edu/maaslin/
 https://docs.cosmosid.com/docs/running-maaslin2
 
-#Prep Water Data for DA analysis
+# Prep Water Data for DA analysis
 
 We want to filter out some of the rarer taxa, as these can impact model assumptions and FDR penalty applied due to the lower powered taxa seen across few samples (Ollberding recommends filtering for taxa present in 10-50% of samples; given the high diversity & variability of our microbiomes, we'll use the 10%). Interestingly, when comparing the number of DA microbes found, at 10% cutoff, there are fewer DA microbes than when we filter out more rare taxa (e.g., setting this first step to 50%)
 
@@ -288,12 +297,17 @@ tax_tab[1:5,1:6] # for my table show me [1 to 5 otu ids, 1 to 6 first six ranks]
 
 Again, as we noticed before, the OTU IDs are currently the sequences, not names of taxa --> this is left over from the phylogenetic tree addition step, where we propagated sequences to tree tips, but did not switch the names back to assigned taxonomy --> will need to find a workaround to fix this 
 
-```{r attempt to change OTU IDs}
+*LLL NOTE*: (2-16-26) updating this to keep the ASVs and the new taxa names together as a key, which can then be used downstream to compare sequences (& run BLAST, among other things)
+
+```{r change OTU IDs from sequences to taxonomy}
 # Extract the tax_table
-tax_table_data <- tax_table(ROHR_08_filt)
+tax_table_data_W <- tax_table(ROHR_08_filt)
+
+# Store original taxa names (sequences / OTU IDs)
+original_taxa_names_W <- taxa_names(ROHR_08_filt)
 
 # Create a vector of new taxa names
-new_taxa_names <- apply(tax_table_data, 1, function(row) {
+new_taxa_names_W <- apply(tax_table_data_W, 1, function(row) {
   # Extract the phylum
   phylum <- row["Phylum"]
   
@@ -310,24 +324,38 @@ new_taxa_names <- apply(tax_table_data, 1, function(row) {
 })
 
 # Make taxa names unique
-new_taxa_names <- make.unique(new_taxa_names)
+new_taxa_names_W <- make.unique(new_taxa_names_W)
+
+# Create key table BEFORE overwriting taxa_names (to be able to link taxa back to sequences)
+taxa_key_table_W <- data.frame(
+  original_taxa_name = original_taxa_names_W,
+  new_taxa_name = new_taxa_names_W,
+  stringsAsFactors = FALSE
+)
 
 # Assign the new taxa names to the taxa_names
-taxa_names(ROHR_08_filt) <- new_taxa_names
+taxa_names(ROHR_08_filt) <- new_taxa_names_W
 
 # Verify the updated taxa_names
 head(taxa_names(ROHR_08_filt))
-
 ```
 Beautiful, this worked! We now have the phylum followed by the highest taxonomic resolution assigned to a given taxa, and, if multiple versions of this occur (since we're not going to species level right now), a sequential number (.1, .2, .3 etc) that indicates that two taxa are different members of the same genus.
 
-###START Here if already filtered data 12/6/24
+We also have a key table we can refer back to for when we want to recover the original ASVs linked to each of these taxa, which we'll want to save as well.
+
+```{r save key table as csv}
+write_csv(taxa_key_table_W, file = "./Intermediate_R_objects/ROHR_08_obj_newTaxanames_KEY_WATER.csv")
+```
+
 ```{r save modified dataset with new taxa names}
 #Save phyloseq object with filtered taxa
-saveRDS(ROHR_08_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_10percent_newTaxanames.rds")
+saveRDS(ROHR_08_filt, "./Intermediate_R_objects/ROHR_08_obj_10percent_newTaxanames.rds")
+```
 
+### START Here if already filtered data
+```{r read modified water dataset w/ new taxa names}
 #read if not starting from top
-ROHR_08_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_10percent_newTaxanames.rds")
+ROHR_08_filt = readRDS("./Intermediate_R_objects/ROHR_08_obj_10percent_newTaxanames.rds")
 ```
 
 # DESeq2 with apeglm - water
@@ -345,7 +373,7 @@ ntd <- normTransform(dds)
 select <- order(rowMeans(counts(dds,normalized=TRUE)),
                 decreasing=TRUE)[1:20]
 df <- as.data.frame(colData(dds)[,c("region_season", "season")])
-pheatmap(assay(ntd)[select,], cluster_rows=FALSE, show_rownames=FALSE,
+pheatmap(assay(ntd)[select,], cluster_rows=FALSE, show_rownames=TRUE, #can switch to rownames = FALSE for cleaner plot
          cluster_cols=FALSE, annotation_col=df)
 ```
 
@@ -356,6 +384,11 @@ Visualizing results of the DESEq2 differential abundance analysis: basic call "r
 
 When we use region_season, there are four sample classes (upwelling vs. non-upwelling in both Coiba and Las Perlas), which means we need to specify the "contrasts" between the two --> this is not needed if you only have 2 levels. 
 
+For example: contrast=c("condition","treated","untreated") = log2(treated / untreated)
+--> this means that the first contrast group (e.g. Las_Perlas_non_upwelling) is treated as the "treatment" group and the second one (e.g. Las_Perlas_upwelling) is treated as the "control" group. 
+--> thus, a LFC > 0 (positive) means taxa are ENRICHED in the *first* group (or less abundant in the second, depending on your point of view)
+--> on the flip side, a LFC < 0 (negative) means taxa are ENRICHED in the *second* group relative to the first group
+
 ```{r DESeq2 specify contrasts}
 	contrast1 <- c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling")
 	contrast2 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling")
@@ -364,6 +397,7 @@ When we use region_season, there are four sample classes (upwelling vs. non-upwe
 	contrast5 <- c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
 	contrast6 <- c("region_season", "Las_Perlas_upwelling", "Coiba_non_upwelling")
 ```
+
 ```{r results of DESeq2}
 resDeSeq <- results(dds, contrast = contrast1, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
 resDeSeq
@@ -405,7 +439,6 @@ summary(resOrderedLC_Un)
 #Note --> LFC = log fold change
 # outliers calculated with Cook's distance: fromDESeq2 documentation:
 #"theshold on Cook's distance, such that if one or more samples for a row have a distance higher, the p-value for the row is set to NA. The default cutoff is the .99 quantile of the F(p, m-p) distribution, where p is the number of coefficients being fitted and m is the number of samples. Set to Inf or FALSE to disable the resetting of p-values to NA. Note: this test excludes the Cook's distance of samples belonging to experimental groups with only 2 samples."
-
 ```
 
 ```{r checking padj <0.05 in our comparisons}
@@ -416,8 +449,10 @@ sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #465
 sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #350
 sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #540
 ```
-#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+##### DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
 --> testing for seasonal upwelling driven differences
+
+non-upwelling (wet) = reference, so positive (up) taxa are enriched in the wet (non-upwelling) season, whiel LFC < 0 (down) are enriched during the upwelling (dry) season
 
 adjusted p-value < 0.05
 LFC > 0 (up)       : 318, 24%
@@ -429,7 +464,7 @@ low counts [2]     : 126, 9.7%
 --> total significant p-adj values (Wald test results)
 524
 
-#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+##### DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
 --> testing for regional differences (same season; similar enviro conditions)
 
 adjusted p-value < 0.05
@@ -442,7 +477,7 @@ low counts [2]     : 371, 29%
 --> total significant p-adj values (Wald test results)
 116
 
-#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+##### DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
 --> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
 
 adjusted p-value < 0.05
@@ -455,7 +490,7 @@ low counts [2]     : 76, 5.9%
 --> total significant p-adj values (Wald test results)
 459
 
-#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+##### DESeq2 - Las Perlas upwelling vs. Coiba upwelling
 --> testing for regional differences (same season; DIFFERENT enviro conditions)
 --> would expect to have MOST differences here
 
@@ -469,7 +504,7 @@ low counts [2]     : 200, 15%
 --> total significant p-adj values (Wald test results)
 465
 
-#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+##### DESeq2 - Coiba non-upwelling vs. Coiba upwelling
 adjusted p-value < 0.05
 LFC > 0 (up)       : 208, 16%
 LFC < 0 (down)     : 142, 11%
@@ -480,7 +515,7 @@ low counts [2]     : 200, 15%
 --> total significant p-adj values (Wald test results)
 350
 
-#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+##### DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
 adjusted p-value < 0.05
 LFC > 0 (up)       : 230, 18%
 LFC < 0 (down)     : 310, 24%
@@ -616,8 +651,131 @@ ggsave(filename = "Log2Fold Change Top 25 DA microbes 4 pairwise comparisons DES
 ggsave(filename = "Log2Fold Change Top 25 DA microbes 4 pairwise comparisons DESeq2.png", plot = Deseq2_water, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
 
-```{r add padj values to points}
+```{r ALT filter only significant DA taxa per group}
+# Filter for significant padj values (< 0.05) per contrast
+top_resultsWater <- all_results %>%
+  filter(!is.na(padj), padj < 0.05) %>%  # Remove NA values and filter for significant padj
+  group_by(contrast) %>%
+  ungroup() #1455 obs (too much to plot, but helpful for our comparisons downstream)
+```
 
+```{r extract DA sequences (and their tax assignments as of now) for all water samples}
+WaterDA_seqs <- taxa_key_table_W %>%
+  filter(new_taxa_name %in% top_resultsWater$Species) %>%  #select only DA taxa
+  left_join(top_resultsWater %>%
+      select(Species, contrast, log2FoldChange), #add back in taxonomy, seasonal comparison, and direction of change
+    by = c("new_taxa_name" = "Species")
+    ) %>%
+  mutate(host_species = "Water") %>%  #add column to specify which host species this was found in
+  select(host_species, contrast, new_taxa_name, everything()) #reorder columns to be more readable
+
+WaterDA_seqs
+```
+
+# IN PROGRESS 2-16-26
+
+```{r rename problem taxa}
+top_resultsWater2 <- top_resultsWater %>%
+  mutate(
+    Species = ifelse(
+      str_detect(Species, "^Marinimicrobia"),
+      paste0("Marinimicrobia (SAR406 clade); ", Species),
+      Species
+    )
+  )
+```
+
+# IN PROGRESS 2-16-26 - LLL: still need transfer this code to the fish dataset
+
+```{r extract correct sequence inf}
+#dereplicate taxa names
+top_resultsWater_collapsed <- top_resultsWater2 %>%
+  
+  # Merge contrast + log2FC
+  mutate(
+    contrast_log2FC = paste(contrast, log2FoldChange)
+  ) %>%
+  
+  # Count duplicates per Species
+  group_by(Species) %>%
+  mutate(n_occur = n()) %>%
+  
+  # Collapse duplicate Species rows
+  summarise(
+    contrast_log2FC = paste(contrast_log2FC, collapse = " ; "),
+    n_occur = first(n_occur),
+    .groups = "drop"
+  )
+
+#check this worked
+top_resultsWater_collapsed #732 obs
+
+# First pass: exact match
+first_pass <- taxa_key_table_W %>%
+  left_join(
+    top_resultsWater_collapsed,
+    by = c("new_taxa_name" = "Species")
+  ) #1298 obs
+
+#flag unmatched
+matched_species <- first_pass %>%
+  filter(!is.na(contrast_log2FC)) %>%
+  pull(new_taxa_name) #732
+
+unmatched_species <- setdiff(
+  top_resultsWater_collapsed$Species,
+  matched_species
+) #0 YAY!
+
+#second pass: search for matches after ';', since some don't have phylum appended (e.g. Marinimicrobia)
+#second_pass <- taxa_key_table_W %>%
+#  filter(
+#    str_replace(new_taxa_name, "^[^;]+;\\s*", "") %in% unmatched_species
+#  ) %>%
+#  left_join(
+#    top_resultsWater_collapsed,
+#    by = c("new_taxa_name" = "Species")
+#  )
+
+#merge both of these
+WaterDA_seqs <- bind_rows(
+  first_pass %>% filter(!is.na(contrast_log2FC)),
+  second_pass
+) %>%
+  mutate(host_species = "Water") %>%
+  select(
+    host_species,
+    new_taxa_name,
+    n_occur,
+    contrast_log2FC,
+    original_taxa_name
+  )
+
+#check we're recovering all significant DA taxa (should be 1455 for water based on the 'top_resultsWater' df)
+total_n_occur <- WaterDA_seqs %>%
+  summarise(total_n = sum(n_occur, na.rm = TRUE)) %>%
+  pull(total_n)
+
+total_n_occur #1455 - finally!!!
+
+#troubleshoot this (if needed)
+#species_top <- unique(top_resultsWater2$Species)
+#species_final <- unique(WaterDA_seqs$new_taxa_name)
+
+#missing_species <- setdiff(species_top, species_final)
+
+#length(missing_species)
+#missing_species
+```
+
+Beautiful! We now have a data frame with all the unique DA ASVs for the water dataset, as well as some extra info on how many times they are differentially abundant, and a string (separated by ";") of contrasts + log2FoldChange values that show the region-season comparisons for which these taxa were differentially abundant, as well as the direction of change.
+
+```{r save DA taxa list}
+write_csv(WaterDA_seqs, file = "./Intermediate_R_objects/WaterDAsequences_DESeq2_20260216.csv")
+```
+
+
+```{r add padj values to points}
 #Create the plot with size adjusted by facet_count and reordered species by padj
 ggplot(top_results, aes(x = Species, y = log2FoldChange, color = Species, size = facet_count)) +
   geom_point() +
@@ -677,6 +835,7 @@ dim(fdr_deseq) #113, 6 season (controlling for region)
 
 head(fdr_deseq)
 ```
+
 ```{r visualize DA w DESeq2}
 ggplot(fdr_deseq, aes(x = Species, y = log2FoldChange, color = Species)) +
     geom_point(size = 4) +
@@ -755,10 +914,10 @@ Again, as we noticed before, the OTU IDs are currently the sequences, not names 
 
 ```{r attempt to change OTU IDs}
 # Extract the tax_table
-tax_table_data <- tax_table(ROHR_08_filt_Perlas)
+tax_table_data_W <- tax_table(ROHR_08_filt_Perlas)
 
 # Create a vector of new taxa names
-new_taxa_names <- apply(tax_table_data, 1, function(row) {
+new_taxa_names_W <- apply(tax_table_data_W, 1, function(row) {
   # Extract the phylum
   phylum <- row["Phylum"]
   
@@ -775,10 +934,10 @@ new_taxa_names <- apply(tax_table_data, 1, function(row) {
 })
 
 # Make taxa names unique
-new_taxa_names <- make.unique(new_taxa_names)
+new_taxa_names_W <- make.unique(new_taxa_names_W)
 
 # Assign the new taxa names to the taxa_names
-taxa_names(ROHR_08_filt_Perlas) <- new_taxa_names
+taxa_names(ROHR_08_filt_Perlas) <- new_taxa_names_W
 
 # Verify the updated taxa_names
 head(taxa_names(ROHR_08_filt_Perlas))
@@ -787,10 +946,10 @@ head(taxa_names(ROHR_08_filt_Perlas))
 
 ```{r save modified dataset with new taxa names}
 #Save phyloseq object with filtered taxa
-saveRDS(ROHR_08_filt_Perlas, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_PERLAS_20percent_newTaxanames.rds")
+saveRDS(ROHR_08_filt_Perlas, "./Intermediate_R_objects/ROHR_08_PERLAS_20percent_newTaxanames.rds")
 
 #read if not starting from top
-ROHR_08_filt_Perlas = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_PERLAS_20percent_newTaxanames.rds")
+ROHR_08_filt_Perlas = readRDS("./Intermediate_R_objects/ROHR_08_PERLAS_20percent_newTaxanames.rds")
 ```
 
 DESeq2 with apeglm
@@ -804,12 +963,15 @@ dds <- phyloseq_to_deseq2(ROHR_08_filt_Perlas, ~ season)  #convert to DESeq2 obj
 
 dds <- DESeq(dds, test = "Wald", fitType = "local", sfType = "poscounts")
 ```
+
 ```{r plot dds}
 plotDispEsts(dds)
 ```
+
 ```{r residuals apeglm}
 res <- lfcShrink(dds, coef=2, type="apeglm") 
 ```
+
 ```{r reorder by p-val}
 resOrdered2 <- resDeSeq[order(res$pvalue),]
 resOrdered2
@@ -824,6 +986,7 @@ summary(resOrdered2)
 #it finds 13 outliers (1.3%) --> how is this calculated?
 # and 0 (0%) taxa with low counts --> likely since for this we removed all taxa not present in at least 50% of samples
 ```
+
 ```{r checking padj <0.05 in our comparisons}
 sum(resOrdered2$padj < 0.05, na.rm=TRUE) #515
 ```
@@ -832,6 +995,7 @@ sum(resOrdered2$padj < 0.05, na.rm=TRUE) #515
 ```{r MA-plot from base means and log fold changes}
 plotMA(dds) #"shows the mean of the normalized counts versus the log2 foldchanges"
 ```
+
 ```{r Deseq residuals}
 deseq_res_df <- data.frame(res) %>%
   rownames_to_column(var = "Species") %>%
@@ -844,6 +1008,7 @@ dim(fdr_deseq) #615, 6 (this would make 60% of the 1018 original filtered taxa "
 
 head(fdr_deseq)
 ```
+
 ```{r visualize DA w DESeq2}
 ggplot(fdr_deseq, aes(x = Species, y = log2FoldChange, color = Species)) +
     geom_point(size = 4) +
@@ -917,7 +1082,7 @@ https://github.com/biobakery/biobakery/wiki/maaslin2#33-maaslin-2-output
 mas_1 <- Maaslin2(
   input_data = data.frame(otu_table(ROHR_08_filt)),
   input_metadata = data.frame(sample_data(ROHR_08_filt)),
-  output = "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output_Water",
+  output = "./Intermediate_R_objects/Maaslin_default_output_Water",
   min_abundance = 0.0,
   min_prevalence = 0.0,
   normalization = "TSS", #total sum scaling (ASV read count/total # reads in each sample)
@@ -933,7 +1098,7 @@ mas_1 <- Maaslin2(
 
 ```{r read in maaslin results if not starting from top}
 #filepath to results folder
-results_folder <- "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output_Water"
+results_folder <- "./Intermediate_R_objects/Maaslin_default_output_Water"
 
 # List all TSV files in the folder
 tsv_files <- list.files(path = results_folder, pattern = "\\.tsv$", full.names = TRUE)
@@ -955,6 +1120,7 @@ head(all_results)
 head(significant_results)
 
 ```
+
 ```{r count unique significant DA taxa per comparison}
 
 # Count the number of "features" for each unique "value"
@@ -967,6 +1133,7 @@ feature_counts <- significant_results %>%
 print(feature_counts)
 
 ```
+
 ```{r within these categories count up and down regulated taxa}
 # Group by "value" and summarize increases and decreases
 value_summary <- significant_results %>%
@@ -981,6 +1148,7 @@ value_summary <- significant_results %>%
 # View the summarized results
 print(value_summary)
 ```
+
 ```{r Maaaslin DA results}
 mas_res_df <- mas_1$results
 
@@ -992,6 +1160,7 @@ dim(fdr_mas) #1295 10
 head(fdr_mas, n = 10)
 tail(fdr_mas, n = 10)
 ```
+
 ```{r count unique taxa names}
 # unique taxa names in the "feature" column
 num_unique_taxa <- fdr_mas %>%
@@ -1000,6 +1169,7 @@ num_unique_taxa <- fdr_mas %>%
 # Print the result
 print(num_unique_taxa) #we get 785, which is quite a bit less than the 1295 we get by looking at the dimensions of the fdr_mas table
 ```
+
 ```{r look for repeats}
 
 # Count occurrences of each taxon
@@ -1067,6 +1237,7 @@ fdr_mas_unique <- fdr_mas %>%
 # View the updated dataset
 print(fdr_mas_unique)
 ```
+
 ```{r replace long marinimicrobia name}
 # Replace the specific string in the feature column
 fdr_mas_unique <- fdr_mas_unique %>%
@@ -1318,10 +1489,10 @@ Again, as we noticed before, the OTU IDs are currently the sequences, not names 
 
 ```{r attempt to change OTU IDs}
 # Extract the tax_table
-tax_table_data <- tax_table(ROHR_merged_filt)
+tax_table_data_W <- tax_table(ROHR_merged_filt)
 
 # Create a vector of new taxa names
-new_taxa_names <- apply(tax_table_data, 1, function(row) {
+new_taxa_names_W <- apply(tax_table_data_W, 1, function(row) {
   # Extract the phylum
   phylum <- row["Phylum"]
   
@@ -1338,10 +1509,10 @@ new_taxa_names <- apply(tax_table_data, 1, function(row) {
 })
 
 # Make taxa names unique
-new_taxa_names <- make.unique(new_taxa_names)
+new_taxa_names_W <- make.unique(new_taxa_names_W)
 
 # Assign the new taxa names to the taxa_names
-taxa_names(ROHR_merged_filt) <- new_taxa_names
+taxa_names(ROHR_merged_filt) <- new_taxa_names_W
 
 # Verify the updated taxa_names
 head(taxa_names(ROHR_merged_filt))
@@ -1351,10 +1522,10 @@ Beautiful, this worked! We now have the phylum followed by the highest taxonomic
 
 ```{r save modified dataset with new taxa names}
 #Save phyloseq object with filtered taxa
-saveRDS(ROHR_merged_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_10percent_newTaxanames.rds")
+saveRDS(ROHR_merged_filt, "./Intermediate_R_objects/ROHR_merged_10percent_newTaxanames.rds")
 
 #read if not starting from top
-ROHR_merged_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_merged_10percent_newTaxanames.rds")
+ROHR_merged_filt = readRDS("./Intermediate_R_objects/ROHR_merged_10percent_newTaxanames.rds")
 ```
 
 # DESeq2 with apeglm - fish & water
@@ -1447,7 +1618,7 @@ ggplot(fdr_deseq2, aes(x = Species, y = log2FoldChange, color = Species)) +
 mas_2 <- Maaslin2(
   input_data = data.frame(otu_table(ROHR_merged_filt)),
   input_metadata = data.frame(sample_data(ROHR_merged_filt)),
-  output = "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output2",
+  output = "./Intermediate_R_objects/Maaslin_default_output2",
   min_abundance = 0.0,
   min_prevalence = 0.0,
   normalization = "TSS",
