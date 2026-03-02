@@ -1,0 +1,85 @@
+comparison,Z_Obs,P.adj_Obs,Z_Shan,P.adj_Shan,Z_Simp,P.adj_Simp
+Abudefduf concolor Las Perlas upwelling-Acanthurus xanthopterus Coiba upwelling,2.866159743843398,0.043794315530763225,NA,NA,NA,NA
+Abudefduf concolor Las Perlas upwelling-Chaetodon humeralis Coiba non-upwelling,3.5327987053457104,0.011878689970777675,NA,NA,NA,NA
+Acanthurus xanthopterus Coiba non-upwelling-Chaetodon humeralis Coiba non-upwelling,2.9586510021319463,0.03707865804865045,NA,NA,NA,NA
+Cephalopholis colonus Las Perlas upwelling-Chaetodon humeralis Coiba non-upwelling,2.9976160301680137,0.03537303343809025,NA,NA,NA,NA
+Cephalopholis panamensis Las Perlas non-upwelling-Chaetodon humeralis Coiba non-upwelling,3.1690583612985463,0.024851723483586125,NA,NA,NA,NA
+Cephalopholis panamensis Las Perlas upwelling-Chaetodon humeralis Coiba non-upwelling,2.873109954003809,0.04403236801712355,NA,NA,NA,NA
+Abudefduf concolor Las Perlas upwelling-Chaetodon humeralis Coiba upwelling,2.8674963227204002,0.04420715309734185,NA,NA,NA,NA
+Abudefduf concolor Las Perlas upwelling-Chaetodon humeralis Las Perlas upwelling,3.7098819510456607,0.010782507346221893,NA,NA,NA,NA
+Acanthurus xanthopterus Coiba non-upwelling-Chaetodon humeralis Las Perlas upwelling,3.144739865861407,0.026461829948202245,3.985529345266869,0.01312932173541843,4.040618140232729,0.0069303651713253705
+Cephalopholis colonus Las Perlas non-upwelling-Chaetodon humeralis Las Perlas upwelling,2.889008668951047,0.042455995429719076,3.8602748219760725,0.008031133207056737,3.7535765243579866,0.015108537570488113
+Cephalopholis colonus Las Perlas upwelling-Chaetodon humeralis Las Perlas upwelling,3.1735728855538916,0.024989057606785912,3.903830553136363,0.01055028922011368,4.042833010520019,0.008238240203726262
+Cephalopholis panamensis Las Perlas non-upwelling-Chaetodon humeralis Las Perlas upwelling,3.346319514336644,0.018250210982012727,3.6480447164271417,0.01288187819821463,NA,NA
+Cephalopholis panamensis Las Perlas upwelling-Chaetodon humeralis Las Perlas upwelling,3.0612358015641465,0.03243996834859685,3.886369514328322,0.009921071704046438,4.0014761017043545,0.007014267430798886
+Chaetodon humeralis Coiba non-upwelling-Epinephelus labriformis Coiba non-upwelling,-3.2782664326230173,0.02088935221652833,-3.3508348578830467,0.029925381237796794,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Epinephelus labriformis Coiba non-upwelling,-3.4596973875268238,0.014060351742994711,-4.399283511529572,0.0028238304112163585,-4.196055740616521,0.010592533774852548
+Acanthurus xanthopterus Coiba upwelling-Epinephelus labriformis Coiba upwelling,-3.007016148704467,0.034878658125899624,NA,NA,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Epinephelus labriformis Coiba upwelling,-3.65971691920853,0.010365544220250988,NA,NA,NA,NA
+Chaetodon humeralis Coiba upwelling-Epinephelus labriformis Coiba upwelling,-3.0083208997091115,0.035328027655965044,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Epinephelus labriformis Coiba upwelling,-3.831489332074454,0.008279043372725102,-3.103407607589882,0.04973954896531779,NA,NA
+Acanthurus xanthopterus Coiba upwelling-Epinephelus labriformis Las Perlas non-upwelling,-3.1405366051781,0.025791790681929307,NA,NA,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Epinephelus labriformis Las Perlas non-upwelling,-3.7454111856601635,0.010034062300036757,NA,NA,NA,NA
+Chaetodon humeralis Coiba upwelling-Epinephelus labriformis Las Perlas non-upwelling,-3.1417615999533286,0.026197815229234003,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Epinephelus labriformis Las Perlas non-upwelling,-3.9099236221601834,0.0072013741066277726,-3.9470962013260555,0.012340345321320806,NA,NA
+Abudefduf concolor Las Perlas non-upwelling-Epinephelus labriformis Las Perlas upwelling,-3.6686417015954857,0.011188069078339262,NA,NA,NA,NA
+Abudefduf troschelii Coiba non-upwelling-Epinephelus labriformis Las Perlas upwelling,-3.700273849172347,0.01049913799998121,NA,NA,NA,NA
+Abudefduf troschelii Coiba upwelling-Epinephelus labriformis Las Perlas upwelling,-2.956855721192571,0.03673014176400842,NA,NA,NA,NA
+Abudefduf troschelii Las Perlas non-upwelling-Epinephelus labriformis Las Perlas upwelling,-3.5100701471619207,0.012479679448667987,NA,NA,NA,NA
+Abudefduf troschelii Las Perlas upwelling-Epinephelus labriformis Las Perlas upwelling,-3.646739404331897,0.010357972170966687,NA,NA,NA,NA
+Acanthurus xanthopterus Coiba upwelling-Epinephelus labriformis Las Perlas upwelling,-4.049960242502114,0.004994567691377558,-3.4970726555217055,0.02038372700840603,NA,NA
+Acanthurus xanthopterus Las Perlas non-upwelling-Epinephelus labriformis Las Perlas upwelling,-3.1806930046560606,0.02491307017768888,NA,NA,NA,NA
+Cephalopholis colonus Coiba non-upwelling-Epinephelus labriformis Las Perlas upwelling,-3.314067551797518,0.019922346189145786,NA,NA,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Epinephelus labriformis Las Perlas upwelling,-4.733627750790793,8.601139678681017e-4,-3.504465800576399,0.02099229272441697,NA,NA
+Chaetodon humeralis Coiba upwelling-Epinephelus labriformis Las Perlas upwelling,-4.051228232559253,0.005677227726995755,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas non-upwelling-Epinephelus labriformis Las Perlas upwelling,-2.9176090530365926,0.03987340593965912,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Epinephelus labriformis Las Perlas upwelling,-4.877449200029558,8.382387995270758e-4,-4.520470538487979,0.002406390949492908,-3.876221578413558,0.010343880230062807
+Abudefduf concolor Las Perlas upwelling-Johnrandallia nigrirostris Coiba non-upwelling,2.912638168792981,0.03993484224860915,NA,NA,NA,NA
+Epinephelus labriformis Coiba upwelling-Johnrandallia nigrirostris Coiba non-upwelling,3.0544322132450015,0.03197815147298666,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas non-upwelling-Johnrandallia nigrirostris Coiba non-upwelling,3.1830532450068088,0.025260007565290676,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas upwelling-Johnrandallia nigrirostris Coiba non-upwelling,4.123593064012625,0.004849099455208322,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas non-upwelling-Johnrandallia nigrirostris Coiba upwelling,2.943312446366347,0.03780328350062706,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas upwelling-Johnrandallia nigrirostris Coiba upwelling,3.8458138433027274,0.008519937306490076,NA,NA,NA,NA
+Abudefduf concolor Las Perlas upwelling-Johnrandallia nigrirostris Las Perlas non-upwelling,3.3048396235561475,0.01950631418750581,NA,NA,NA,NA
+Cephalopholis panamensis Las Perlas non-upwelling-Johnrandallia nigrirostris Las Perlas non-upwelling,2.9621888654116084,0.037227980490603614,NA,NA,NA,NA
+Epinephelus labriformis Coiba non-upwelling-Johnrandallia nigrirostris Las Perlas non-upwelling,3.0563873553776175,0.03235868108637952,3.3265498907578332,0.028576690307196756,NA,NA
+Epinephelus labriformis Coiba upwelling-Johnrandallia nigrirostris Las Perlas non-upwelling,3.4378378419631304,0.014754045607822683,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas non-upwelling-Johnrandallia nigrirostris Las Perlas non-upwelling,3.538541689773226,0.012070312271266537,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas upwelling-Johnrandallia nigrirostris Las Perlas non-upwelling,4.518705867368849,0.001617687714217472,3.480942307788396,0.020512074650385476,NA,NA
+Epinephelus labriformis Las Perlas upwelling-Johnrandallia nigrirostris Las Perlas upwelling,3.664491265131844,0.010739330210719869,3.426066104140554,0.023883261593163414,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Microspathodon dorsalis Coiba non-upwelling,-3.307703126121578,0.019829806704398496,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Microspathodon dorsalis Coiba non-upwelling,-3.4883887272989886,0.013070138195842526,-3.167962311291675,0.0412892784382976,NA,NA
+Johnrandallia nigrirostris Las Perlas non-upwelling-Microspathodon dorsalis Coiba non-upwelling,-3.085824048876179,0.030448335333967822,NA,NA,NA,NA
+Acanthurus xanthopterus Coiba upwelling-Microspathodon dorsalis Coiba upwelling,-2.981501017946971,0.036086208488220646,NA,NA,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Microspathodon dorsalis Coiba upwelling,-3.632733283501517,0.009942690031444773,NA,NA,NA,NA
+Chaetodon humeralis Coiba upwelling-Microspathodon dorsalis Coiba upwelling,-2.982805768951616,0.036521797949371756,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Microspathodon dorsalis Coiba upwelling,-3.805188937283304,0.008501759275989276,-3.863718562299885,0.008710562693224145,-3.416617466291173,0.049455356729370306
+Johnrandallia nigrirostris Coiba non-upwelling-Microspathodon dorsalis Coiba upwelling,-3.0281318184538515,0.03367283599997153,NA,NA,NA,NA
+Johnrandallia nigrirostris Las Perlas non-upwelling-Microspathodon dorsalis Coiba upwelling,-3.4108542062561176,0.015306840314955971,NA,NA,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Microspathodon dorsalis Las Perlas upwelling,-3.430356015698913,0.014693001133637305,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Microspathodon dorsalis Las Perlas upwelling,-3.6079359763496734,0.010467010743271792,NA,NA,NA,NA
+Johnrandallia nigrirostris Coiba non-upwelling-Microspathodon dorsalis Las Perlas upwelling,-2.830878857520221,0.04764188593285842,NA,NA,NA,NA
+Johnrandallia nigrirostris Las Perlas non-upwelling-Microspathodon dorsalis Las Perlas upwelling,-3.208476938453514,0.024781716198611324,NA,NA,NA,NA
+Epinephelus labriformis Las Perlas upwelling-Prionurus laticlavius Coiba upwelling,2.966133950558934,0.03733712818608253,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Prionurus laticlavius Las Perlas non-upwelling,-2.9241257117797552,0.03962230396691218,NA,NA,NA,NA
+Abudefduf concolor Las Perlas non-upwelling-Prionurus laticlavius Las Perlas upwelling,-3.1849374697248365,0.025666483125159446,NA,NA,NA,NA
+Abudefduf troschelii Coiba non-upwelling-Prionurus laticlavius Las Perlas upwelling,-3.229221495335892,0.024204904745571736,NA,NA,NA,NA
+Abudefduf troschelii Las Perlas non-upwelling-Prionurus laticlavius Las Perlas upwelling,-3.0458265078695024,0.03232009181529755,NA,NA,NA,NA
+Abudefduf troschelii Las Perlas upwelling-Prionurus laticlavius Las Perlas upwelling,-3.193386379766521,0.02550684553128609,NA,NA,NA,NA
+Acanthurus xanthopterus Coiba upwelling-Prionurus laticlavius Las Perlas upwelling,-3.582934718289114,0.010600372834280777,-3.7505368977475384,0.010587380139290524,-3.3658933693204625,0.049592527031333884
+Cephalopholis colonus Coiba non-upwelling-Prionurus laticlavius Las Perlas upwelling,-2.8568402098096253,0.04449964310933286,NA,NA,NA,NA
+Chaetodon humeralis Coiba non-upwelling-Prionurus laticlavius Las Perlas upwelling,-4.210022135910856,0.003983392433619826,-3.76388953895853,0.010873902199612817,NA,NA
+Chaetodon humeralis Coiba upwelling-Prionurus laticlavius Las Perlas upwelling,-3.5841597130643423,0.010990366499949493,NA,NA,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Prionurus laticlavius Las Perlas upwelling,-4.364257545813854,0.002487327003106037,-4.74073283432702,0.001660983320040776,-4.3963124275737835,0.008588222912255618
+Johnrandallia nigrirostris Coiba non-upwelling-Prionurus laticlavius Las Perlas upwelling,-3.6373871686604793,0.010229803181578637,NA,NA,NA,NA
+Johnrandallia nigrirostris Coiba upwelling-Prionurus laticlavius Las Perlas upwelling,-3.385710559477361,0.01628690958187099,NA,NA,NA,NA
+Johnrandallia nigrirostris Las Perlas non-upwelling-Prionurus laticlavius Las Perlas upwelling,-4.003152640023918,0.005417008682149848,-3.7412473909507327,0.010201796349187497,NA,NA
+Johnrandallia nigrirostris Las Perlas upwelling-Prionurus laticlavius Las Perlas upwelling,-3.210536306619717,0.02520494488182643,-3.68193805191341,0.012036318379850435,NA,NA
+Abudefduf concolor Coiba non-upwelling-Chaetodon humeralis Las Perlas upwelling,NA,NA,3.1990442056666124,0.03983316271210947,NA,NA
+Abudefduf concolor Coiba upwelling-Chaetodon humeralis Las Perlas upwelling,NA,NA,3.182307801003185,0.04070108331913911,NA,NA
+Acanthurus xanthopterus Las Perlas upwelling-Chaetodon humeralis Las Perlas upwelling,NA,NA,3.3439663823324817,0.02800869605318154,NA,NA
+Cephalopholis panamensis Coiba non-upwelling-Chaetodon humeralis Las Perlas upwelling,NA,NA,3.886369514328322,0.008818730403596833,4.082369647996328,0.011590492365059301
+Cephalopholis panamensis Coiba upwelling-Chaetodon humeralis Las Perlas upwelling,NA,NA,3.9312210419058355,0.010987017833565373,4.059023747686002,0.009609268991061461
+Acanthurus xanthopterus Coiba upwelling-Epinephelus labriformis Coiba non-upwelling,NA,NA,-3.345919441610626,0.029076350155278465,NA,NA
+Epinephelus labriformis Coiba non-upwelling-Johnrandallia nigrirostris Las Perlas upwelling,NA,NA,3.2728543030243284,0.033217810987420174,NA,NA
+Chaetodon humeralis Las Perlas upwelling-Microspathodon dorsalis Las Perlas non-upwelling,NA,NA,-3.2588170794645683,0.033563333271057795,NA,NA

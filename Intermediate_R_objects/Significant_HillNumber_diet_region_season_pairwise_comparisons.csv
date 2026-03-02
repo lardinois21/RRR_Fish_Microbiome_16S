@@ -1,0 +1,72 @@
+comparison,Z_Obs,P.adj_Obs,Z_Shan,P.adj_Shan,Z_Simp,P.adj_Simp
+carnivore Coiba non-upwelling-invertivore Coiba non-upwelling,3.7218982281134005,0.0030318710574645446,3.6626818991060928,0.005298953763167641,3.230997924506805,0.0261900297150933
+carnivore Coiba upwelling-invertivore Coiba non-upwelling,3.8884610976180016,0.0023202822249957645,2.7118507851163964,0.04735077546184561,NA,NA
+carnivore Las Perlas non-upwelling-invertivore Coiba non-upwelling,4.512151315201159,5.903950805244367e-4,3.2649484369153194,0.015903992327644507,NA,NA
+carnivore Las Perlas upwelling-invertivore Coiba non-upwelling,4.979599472622568,1.758561541420195e-4,3.7684816088206348,0.004533122909999223,2.982254462803543,0.04387388999406144
+carnivore Coiba non-upwelling-invertivore Coiba upwelling,3.117639927417073,0.014376081627768003,3.3250982057929965,0.014349953672053899,NA,NA
+carnivore Coiba upwelling-invertivore Coiba upwelling,3.2564668800146865,0.01111965462345142,NA,NA,NA,NA
+carnivore Las Perlas non-upwelling-invertivore Coiba upwelling,3.9147385757829674,0.0022707827688028107,2.9658387831911064,0.0333251981001486,NA,NA
+carnivore Las Perlas upwelling-invertivore Coiba upwelling,4.335978723068345,5.721597544977945e-4,3.4339515996925796,0.01172705077120959,NA,NA
+carnivore Coiba non-upwelling-invertivore Las Perlas non-upwelling,2.992047797639608,0.019611064796172147,3.6945892512654215,0.005065578061992643,3.5352723356864684,0.01249222291622227
+carnivore Coiba upwelling-invertivore Las Perlas non-upwelling,3.1275417100050453,0.014309366613121335,2.781936176820202,0.04386424601965642,NA,NA
+carnivore Las Perlas non-upwelling-invertivore Las Perlas non-upwelling,3.7952026842604507,0.002714421138038196,3.317512423955005,0.013926174368333561,NA,NA
+carnivore Las Perlas upwelling-invertivore Las Perlas non-upwelling,4.212247320300886,7.753836133257462e-4,3.797968401122133,0.004473865419495395,3.2940830750053625,0.02477559418824414
+carnivore Coiba non-upwelling-invertivore Las Perlas upwelling,3.5819764247512285,0.00427805735897563,5.128476870295388,4.030921723728445e-5,5.1302165164522044,7.987691142466701e-5
+carnivore Coiba upwelling-invertivore Las Perlas upwelling,3.7371376445914577,0.0032106915010098025,4.241772452087834,0.0012241233114728548,3.9492169582975127,0.0036067340579937525
+carnivore Las Perlas non-upwelling-invertivore Las Perlas upwelling,4.36495953928177,7.018475232659844e-4,4.672305680161504,2.0550770349351416e-4,3.5408386717289044,0.013760579568167996
+carnivore Las Perlas upwelling-invertivore Las Perlas upwelling,4.810831692379418,2.0741889381270472e-4,5.210669576936108,5.1932244422357507e-5,4.860236603354175,1.6179884860434716e-4
+carnivore Las Perlas non-upwelling-omnivore Coiba non-upwelling,2.9406832448121607,0.0215207210526451,NA,NA,NA,NA
+carnivore Las Perlas upwelling-omnivore Coiba non-upwelling,3.2561984667330712,0.01074637350252734,NA,NA,NA,NA
+carnivore Las Perlas non-upwelling-omnivore Las Perlas non-upwelling,2.724362319203782,0.03419522478256771,NA,NA,NA,NA
+carnivore Las Perlas upwelling-omnivore Las Perlas non-upwelling,3.0343847394042136,0.017506159605806697,NA,NA,NA,NA
+carnivore Las Perlas non-upwelling-omnivore Las Perlas upwelling,2.892033392744228,0.023475778787108076,NA,NA,NA,NA
+carnivore Las Perlas upwelling-omnivore Las Perlas upwelling,3.1918443875708284,0.01258626524173116,2.7979532185696963,0.04435627104565844,NA,NA
+carnivore Las Perlas upwelling-planktivore Coiba non-upwelling,2.8058083984372817,0.02947358591670469,NA,NA,NA,NA
+invertivore Coiba non-upwelling-planktivore Las Perlas non-upwelling,-2.7634229708213924,0.0315736224457482,NA,NA,NA,NA
+invertivore Las Perlas upwelling-planktivore Las Perlas non-upwelling,-2.6839597999544416,0.03718632534491062,-3.84427007733336,0.004171456662931216,-3.7384995909989094,0.007299087878839745
+invertivore Coiba non-upwelling-planktivore Las Perlas upwelling,-3.061110066004995,0.016906381143930612,-2.762564884088833,0.043967690779113784,NA,NA
+invertivore Coiba upwelling-planktivore Las Perlas upwelling,-2.667286056964198,0.038372308412937,NA,NA,NA,NA
+invertivore Las Perlas non-upwelling-planktivore Las Perlas upwelling,-2.5759043598785327,0.0459900162489322,-2.836328646103271,0.04198462271169929,-2.8857712621909855,0.048984457464276564
+invertivore Las Perlas upwelling-planktivore Las Perlas upwelling,-2.989424046422925,0.019285771103118996,-3.8536991032524233,0.004587378939996735,-4.021660990150334,0.003987454123163719
+invertivore Coiba non-upwelling-roving herbivore Coiba non-upwelling,-3.404470221635213,0.0073186950769020985,NA,NA,NA,NA
+invertivore Coiba upwelling-roving herbivore Coiba non-upwelling,-2.824303758822433,0.02843007278736234,NA,NA,NA,NA
+invertivore Las Perlas non-upwelling-roving herbivore Coiba non-upwelling,-2.700572356054974,0.0360467865343706,NA,NA,NA,NA
+invertivore Las Perlas upwelling-roving herbivore Coiba non-upwelling,-3.276423498141694,0.01074670293682073,-3.264926091172451,0.015109984678875182,-3.180235445861327,0.029010643184928707
+carnivore Coiba upwelling-roving herbivore Coiba upwelling,2.536045856987467,0.04990794581992449,NA,NA,NA,NA
+carnivore Las Perlas non-upwelling-roving herbivore Coiba upwelling,3.253908990174254,0.010472244130368555,2.7015383869015914,0.04762346366784172,NA,NA
+carnivore Las Perlas upwelling-roving herbivore Coiba upwelling,3.6596240373348286,0.0036691375906234614,3.1686721213435,0.020126582963372948,NA,NA
+invertivore Coiba non-upwelling-roving herbivore Las Perlas non-upwelling,-2.621737688462769,0.04311649111393097,NA,NA,NA,NA
+invertivore Coiba non-upwelling-roving herbivore Las Perlas upwelling,-4.233077173432957,7.952779882041248e-4,-3.365987356529027,0.013156610220080668,NA,NA
+invertivore Coiba upwelling-roving herbivore Las Perlas upwelling,-3.6075884234628357,0.004061881848038542,-3.040726076910133,0.028321012374838354,NA,NA
+invertivore Las Perlas non-upwelling-roving herbivore Las Perlas upwelling,-3.481996293685371,0.005723441677458884,-3.410217122382558,0.011943657386088626,NA,NA
+invertivore Las Perlas upwelling-roving herbivore Las Perlas upwelling,-4.079521474522404,0.0012455466292671043,-4.8396956082638285,1.1963509320230676e-4,-4.47436991533234,7.050600895026305e-4
+omnivore Coiba non-upwelling-roving herbivore Las Perlas upwelling,-2.6206829562896434,0.04249132785098795,NA,NA,NA,NA
+omnivore Las Perlas upwelling-roving herbivore Las Perlas upwelling,-2.5788838523803888,0.04636805032648663,NA,NA,NA,NA
+roving herbivore Coiba upwelling-roving herbivore Las Perlas upwelling,-2.91046457436076,0.023164222750845943,-2.7660373893384214,0.044745142587541906,NA,NA
+invertivore Coiba non-upwelling-territorial herbivore Coiba non-upwelling,-3.5161052188314463,0.00525512873667165,NA,NA,NA,NA
+invertivore Coiba upwelling-territorial herbivore Coiba non-upwelling,-2.9100800068775765,0.02266563721116882,NA,NA,NA,NA
+invertivore Las Perlas non-upwelling-territorial herbivore Coiba non-upwelling,-2.782761443803674,0.030359110198162134,NA,NA,NA,NA
+invertivore Las Perlas upwelling-territorial herbivore Coiba non-upwelling,-3.3783783368809,0.007740174638889591,-3.7645756646557365,0.004185970223933187,-3.323886931136008,0.024501121670111984
+invertivore Coiba non-upwelling-territorial herbivore Coiba upwelling,-3.7988075991203956,0.00286633694439554,-2.726984149450877,0.04767796262903288,NA,NA
+invertivore Coiba upwelling-territorial herbivore Coiba upwelling,-3.1807088365998815,0.012671436519991995,NA,NA,NA,NA
+invertivore Las Perlas non-upwelling-territorial herbivore Coiba upwelling,-3.053390273525979,0.016878627364466336,-2.7970778422865066,0.04312885362798505,NA,NA
+invertivore Las Perlas upwelling-territorial herbivore Coiba upwelling,-3.6533221587064673,0.0035723936415397667,-4.2378063598143765,0.0010382858241078138,-4.005405784375036,0.003417493116586519
+carnivore Las Perlas non-upwelling-territorial herbivore Las Perlas non-upwelling,2.5909005632336832,0.045551966238972535,NA,NA,NA,NA
+carnivore Las Perlas upwelling-territorial herbivore Las Perlas non-upwelling,2.98524215164963,0.019074556234479404,NA,NA,NA,NA
+invertivore Coiba non-upwelling-territorial herbivore Las Perlas upwelling,-4.511306008937686,4.445648727201846e-4,NA,NA,NA,NA
+invertivore Coiba upwelling-territorial herbivore Las Perlas upwelling,-3.8520205257647917,0.002487125184360237,NA,NA,NA,NA
+invertivore Las Perlas non-upwelling-territorial herbivore Las Perlas upwelling,-3.7230953557551505,0.0031950271919232833,NA,NA,NA,NA
+invertivore Las Perlas upwelling-territorial herbivore Las Perlas upwelling,-4.342434097233837,6.481987030573907e-4,-2.8600827116401693,0.04174800934474441,NA,NA
+omnivore Coiba non-upwelling-territorial herbivore Las Perlas upwelling,-2.794455701210608,0.029892618635436633,NA,NA,NA,NA
+omnivore Las Perlas non-upwelling-territorial herbivore Las Perlas upwelling,-2.5660556391769216,0.046540987300265964,NA,NA,NA,NA
+omnivore Las Perlas upwelling-territorial herbivore Las Perlas upwelling,-2.7431549132769772,0.0329316545752784,NA,NA,NA,NA
+roving herbivore Coiba upwelling-territorial herbivore Las Perlas upwelling,-3.1413423096298456,0.014065574296400755,NA,NA,NA,NA
+invertivore Las Perlas upwelling-omnivore Coiba upwelling,NA,NA,-2.808258638180643,0.044347150107901016,-3.1165704078039345,0.03366610890294002
+carnivore Coiba non-upwelling-omnivore Las Perlas upwelling,NA,NA,2.6954077553716664,0.0473256126521562,NA,NA
+invertivore Las Perlas upwelling-planktivore Coiba non-upwelling,NA,NA,-2.942230314808813,0.03459102423326979,-3.250542084432105,0.026492600389013306
+invertivore Las Perlas upwelling-planktivore Coiba upwelling,NA,NA,-2.841659837978143,0.04271275932967252,NA,NA
+invertivore Las Perlas non-upwelling-planktivore Las Perlas non-upwelling,NA,NA,-2.7159619154614267,0.04799750356179954,NA,NA
+carnivore Coiba non-upwelling-roving herbivore Coiba upwelling,NA,NA,3.05481865136998,0.028251942851153705,2.94696058964735,0.04661699566902751
+invertivore Las Perlas upwelling-roving herbivore Las Perlas non-upwelling,NA,NA,-2.9780795797441932,0.03335697615977903,-3.0722748361749,0.034489290159196474
+invertivore Las Perlas upwelling-territorial herbivore Las Perlas non-upwelling,NA,NA,-2.9128555836711563,0.03660988605932966,NA,NA
+invertivore Las Perlas upwelling-omnivore Las Perlas non-upwelling,NA,NA,NA,NA,-3.0892292493083895,0.034616700460508694
