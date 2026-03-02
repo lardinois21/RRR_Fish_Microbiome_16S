@@ -9,7 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Most recent edit: 4/7/24 - messing with temp graph & colored axes of PCoA plots
+Most recent edit: 
+- 2/13/26 - LLL - re-running PCoA multi-panel and adding PERMANOVA results to plot
+- 4/7/24 - LLL - messing with temp graph & colored axes of PCoA plots
 
 RRR TEP Fish Skin Microbiome Project Summary
 
@@ -797,45 +799,45 @@ ggsave(filename = "Water Temperature Data 21-22 V3", plot = water_temp_final2, p
 
 Loading our phyloseq object - filtered & trimmed (not rarefied) with phylogenetic tree - from "ROHR_06_Swab_stats_alpha.Rmd"
 ```{r read phyloseq object, echo=FALSE}
-ROHR_06_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_with_rooted_phylogenetic_tree_updated_names.rds")
+ROHR_06_obj_phylo_root <- readRDS("./Intermediate_R_objects/ROHR_06_obj_with_rooted_phylogenetic_tree_updated_names.rds")
 ```
 
 ## Water microbiome samples for comparison to fish skin
 Loading our phyloseq object - filtered & trimmed (not rarefied) with phylogenetic tree - from "ROHR_08_Water_stats_alpha.Rmd"
 ```{r read phyloseq object - water, echo=FALSE}
-ROHR_08_obj_phylo_root <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_with_phylogenetic_tree_rooted.rds")
+ROHR_08_obj_phylo_root <- readRDS("./Intermediate_R_objects/ROHR_08_with_phylogenetic_tree_rooted.rds")
 ```
 Loading the split phyloseq objects from the initial ROHR_06_phylo_root --> split by host species (see ROHR_06_Swab_Species_by_Species)
 ```{r read split phyloseqs by species, echo=FALSE}
 #A. concolor
-ROHR_06_Aconcolor <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_concolor.rds")
+ROHR_06_Aconcolor <- readRDS("./Intermediate_R_objects/ROHR_06_A_concolor.rds")
 
 #A. troschelii
-ROHR_06_Atroschelii <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_troschelii.rds")
+ROHR_06_Atroschelii <- readRDS("./Intermediate_R_objects/ROHR_06_A_troschelii.rds")
 
 #A. xanthopterus
-ROHR_06_Axanthopterus <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_xanthopterus.rds")
+ROHR_06_Axanthopterus <- readRDS("./Intermediate_R_objects/ROHR_06_A_xanthopterus.rds")
 
 #C. colonus
-ROHR_06_Ccolonus <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_colonus.rds")
+ROHR_06_Ccolonus <- readRDS("./Intermediate_R_objects/ROHR_06_C_colonus.rds")
 
 #C. panamensis
-ROHR_06_Cpanamensis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_panamensis.rds")
+ROHR_06_Cpanamensis <- readRDS("./Intermediate_R_objects/ROHR_06_C_panamensis.rds")
 
 #C. humeralis
-ROHR_06_Chumeralis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_humeralis.rds")
+ROHR_06_Chumeralis <- readRDS("./Intermediate_R_objects/ROHR_06_C_humeralis.rds")
 
 #E. labriformis
-ROHR_06_Elabriformis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_E_labriformis.rds")
+ROHR_06_Elabriformis <- readRDS("./Intermediate_R_objects/ROHR_06_E_labriformis.rds")
 
 #J. nigrirostris
-ROHR_06_Jnigrirostris <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_J_nigrirostris.rds")
+ROHR_06_Jnigrirostris <- readRDS("./Intermediate_R_objects/ROHR_06_J_nigrirostris.rds")
 
 #M. dorsalis
-ROHR_06_Mdorsalis <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_M_dorsalis.rds")
+ROHR_06_Mdorsalis <- readRDS("./Intermediate_R_objects/ROHR_06_M_dorsalis.rds")
 
 #P. laticlavius
-ROHR_06_Platiclavius <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_laticlavius.rds")
+ROHR_06_Platiclavius <- readRDS("./Intermediate_R_objects/ROHR_06_P_laticlavius.rds")
 ```
 
 ```{r load packages for multi-panel plots, echo = FALSE}
@@ -905,6 +907,7 @@ print(c2)
 ROHR_06_Aconcolor_prop = transform_sample_counts(ROHR_06_Aconcolor, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Aconc_pcoa <- ordinate(
   physeq = ROHR_06_Aconcolor_prop, 
   method = "PCoA", 
@@ -920,7 +923,10 @@ Aconc <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1) +
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 Aconc
 
@@ -930,6 +936,7 @@ Aconc
 ROHR_06_Atroschelii_prop = transform_sample_counts(ROHR_06_Atroschelii, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Atro_pcoa <- ordinate(
   physeq = ROHR_06_Atroschelii_prop, 
   method = "PCoA", 
@@ -945,13 +952,17 @@ Atro <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 #### Acanthurus xanthopterus ####
 
 ##transforming to counts
 ROHR_06_Axanthopterus_prop = transform_sample_counts(ROHR_06_Axanthopterus, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Axan_pcoa <- ordinate(
   physeq = ROHR_06_Axanthopterus_prop, 
   method = "PCoA", 
@@ -967,7 +978,10 @@ Axan <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 #### Cephalopholis colonus ####
 
@@ -975,6 +989,7 @@ Axan <- plot_ordination(
 ROHR_06_Ccolonus_prop = transform_sample_counts(ROHR_06_Ccolonus, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Ccol_pcoa <- ordinate(
   physeq = ROHR_06_Ccolonus_prop, 
   method = "PCoA", 
@@ -990,13 +1005,17 @@ Ccol <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 #### Cephalopholis panamensis ####
 
 ##transforming to counts
 ROHR_06_Cpanamensis_prop = transform_sample_counts(ROHR_06_Cpanamensis, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Cpan_pcoa <- ordinate(
   physeq = ROHR_06_Cpanamensis_prop, 
   method = "PCoA", 
@@ -1012,13 +1031,17 @@ Cpan <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 #### Chaetodon humeralis ####
 
 ##transforming to counts
 ROHR_06_Chumeralis_prop = transform_sample_counts(ROHR_06_Chumeralis, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Chum_pcoa <- ordinate(
   physeq = ROHR_06_Chumeralis_prop, 
   method = "PCoA", 
@@ -1034,7 +1057,10 @@ Chum <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 #### Epinephelus labriformis ####
 
@@ -1042,6 +1068,7 @@ Chum <- plot_ordination(
 ROHR_06_Elabriformis_prop = transform_sample_counts(ROHR_06_Elabriformis, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Elab_pcoa <- ordinate(
   physeq = ROHR_06_Elabriformis_prop, 
   method = "PCoA", 
@@ -1057,7 +1084,10 @@ Elab<- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 #### Johnrandallia nigrirostris ####
 
@@ -1065,6 +1095,7 @@ Elab<- plot_ordination(
 ROHR_06_Jnigrirostris_prop = transform_sample_counts(ROHR_06_Jnigrirostris, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Jnig_pcoa <- ordinate(
   physeq = ROHR_06_Jnigrirostris_prop, 
   method = "PCoA", 
@@ -1080,7 +1111,10 @@ Jnig <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 #### Microspathodon dorsalis ####
 
@@ -1088,6 +1122,7 @@ Jnig <- plot_ordination(
 ROHR_06_Mdorsalis_prop = transform_sample_counts(ROHR_06_Mdorsalis, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Mdor_pcoa <- ordinate(
   physeq = ROHR_06_Mdorsalis_prop, 
   method = "PCoA", 
@@ -1103,7 +1138,10 @@ Mdor <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 #### Prionurus laticlavius ####
 
@@ -1111,6 +1149,7 @@ Mdor <- plot_ordination(
 ROHR_06_Platiclavius_prop = transform_sample_counts(ROHR_06_Platiclavius, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Plat_pcoa <- ordinate(
   physeq = ROHR_06_Platiclavius_prop, 
   method = "PCoA", 
@@ -1126,7 +1165,10 @@ Plat <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 
 #### Water Microbiome ####
 
@@ -1134,6 +1176,7 @@ Plat <- plot_ordination(
 ROHR_08_obj_clean_prop = transform_sample_counts(ROHR_08_obj_phylo_root, function(x) x/sum(x))
 
 # Ordinate
+set.seed(505)
 Water_pcoa <- ordinate(
   physeq = ROHR_08_obj_clean_prop, 
   method = "PCoA", 
@@ -1149,7 +1192,10 @@ Water <- plot_ordination(
   scale_color_manual( values = c2) +
   geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
   geom_point(colour = "grey90", size = 1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), # Remove major grid lines
+        panel.grid.minor = element_blank()  # Remove minor grid lines
+        )
 ```
 
 ```{r fish icons and color codes for species}
@@ -1221,161 +1267,14 @@ col_MdorS <- "turquoise"
 col_CcolS <- "darkmagenta"
 col_PlatS <- "darkgreen"
 col_WaterS <- "#BE93D4"
-  
-## Rectangles within legends - **have not used this code yet** (as of 3/3/23)
-rect_Aconc   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_AconcS))
-rect_Acon_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Aconc, alpha = 0.5)
-             )
-rect_Atro   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_AtroS))
-rect_Atro_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Atro, alpha = 0.5)
-             )
-rect_Axan   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_AxanS))
-rect_Axan_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Axan, alpha = 0.5)
-             )
-rect_Chum   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_ChumS))
-rect_Chum_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Chum, alpha = 0.5)
-             )
-rect_Cpan   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_CpanS))
-rect_Cpan_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Cpan, alpha = 0.5)
-             )
-rect_Elab   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_ElabS))
-rect_Elab_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Elab, alpha = 0.5)
-             )
-rect_Jnig   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_JnigS))
-rect_Jnig_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Jnig, alpha = 0.5)
-             )
-rect_Mdor   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_MdorS))
-rect_Mdor_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Mdor, alpha = 0.5)
-             )
-rect_Ccol   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_CcolS))
-rect_Ccol_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Ccol, alpha = 0.5)
-             )
-rect_Plat   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_PlatS))
-rect_Plat_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Plat, alpha = 0.5)
-             )
-rect_Water   <- rectGrob(width = 2, height = 1, gp = gpar(fill = col_WaterS))
-rect_Water_t <- rectGrob(
-               width = 2,
-               height = 1,
-               gp = gpar(fill = col_Water, alpha = 0.5)
-             )
-#points - **have not used this code yet** (as of 3/3/23)
-#point shapes correspond to family (e.g., square = damselfish, triangle = acanthuridae, circle = butterflyfish, diamond = groupers)
-point_Aconc  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 15, #filled square
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_AconcS)
-             )
-point_Atro  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 15, #filled square
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_AtroS)
-             )
-point_Axan  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 17, #filled triangle
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_AxanS)
-             )
-point_Chum  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 19, #filled circle
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_ChumS)
-             )
-point_Cpan  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 18, #filled diamond
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_CpanS)
-             )
-point_Elab  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 18, #filled diamond
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_ElabS)
-             )
-point_Jnig  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 19, #filled circle
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_JnigS)
-             )
-point_Mdor  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 15, #filled square
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_MdorS)
-             )
-point_Ccol  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 18, #filled diamond
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_CcolS)
-             )
-point_Plat  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 17, #filled triangle
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_PlatS)
-             )
-point_Water  <- pointsGrob(
-               x = 0,
-               y = 0,
-               pch = 8, #star for water
-               size = unit(0.5, units = "char"),
-               gp = gpar(fill = col_WaterS)
-             )
 ```
 
 ```{r basic combined PCoA plot, echo = FALSE}
 #place plots in order by trophic group - territorial herbs, roving herbs, invertivores, planktivore, omnivore, carnivores, water
 plot_grid(Aconc, Mdor, Axan, Plat, Jnig, Chum, Ccol, Atro, Cpan, Elab, Water)
 ```
-```{r create 12th plot to contain legend for multipanel figure}
 
+```{r create 12th plot to contain legend for multipanel figure}
 #run one of the ordinations above, including legend
 plotlegend <- plot_ordination(
   physeq = ROHR_06_Aconcolor_prop,
@@ -1385,11 +1284,14 @@ plotlegend <- plot_ordination(
 ) +
   scale_color_manual(values = c2,
                      labels = c("Wet", "Dry")) +
-  geom_point(aes(color = season), alpha = 0.6, size = 4.5) +
+  geom_point(aes(color = season), alpha = 0.6, size = 8) +
   geom_point(color = "grey90", size = 1) +
-  labs(shape = "Region", color = "Season") #change names of legend titles to capitalize
-# + theme(
-   # legend.justification = c("right")) #shift legend to right of panel (to accommodate fish icons)  
+  labs(shape = "Region", color = "Season") +
+  theme_bw(base_size = 14) +   # increases all text globally
+  theme(
+    legend.title = element_text(size = 22),
+    legend.text  = element_text(size = 16),
+  )
 
 legendAC <- cowplot::get_legend(plotlegend)
 cowplot::ggdraw(legendAC)
@@ -1403,6 +1305,7 @@ plot_grid(Aconc, Mdor, Axan, Plat, Jnig, Chum, Ccol, Atro, Cpan, Elab, Water, le
           labels=c("A","B","C","D","E","F","G","H","I","J","K"),
           label_size = 15)
 ```
+
 ```{r combined PCoA plot - w/ icons (in progress), echo = FALSE}
 #place plots in order by trophic group - territorial herbs, roving herbs, invertivores, planktivore, omnivore, carnivores, water
 
@@ -1521,6 +1424,7 @@ multi_PCoA_1 <- ggdraw() +
 
 multi_PCoA_1
 ```
+
 ```{r combined PCoA plot - w/ icons & color codes - axis only, echo = FALSE}
 #place plots in order by trophic group - territorial herbs, roving herbs, invertivores, planktivore, omnivore, carnivores, water
 
@@ -1595,6 +1499,7 @@ multi_PCoA_3 <- ggdraw() +
   draw_image(image = icon_Water2, x =  0.070, y = -0.20, scale = 0.060) # Panel K
 multi_PCoA_3
 ```
+
 ```{r combined PCoA plot - w/ icons & color-coded fish + axis color codes - axes adjusted, echo = FALSE}
 #check that this is a valid thing to do and will not alter results shown
 # across our plots: x-axis ranges from -0.6 to 0.5, y-axis ranges from -0.6 to ~ 0.6
@@ -1741,6 +1646,117 @@ ggsave(filename = "Fish Skin PCoA Plots 21-22 - color coded by trophic group.png
 ggsave(filename = "Fish Skin PCoA Plots 21-22 - color coded by trophic group.pdf", plot = multi_PCoA_troph2, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
 ```
 
+#### test adding PERMANOVA results to upper RH corner of plots
+
+## IN PROGRESS 2-13-26 - LLL
+
+```{r add PERMANOVA results to plot above}
+#make list of p-vals (rounded to 0.001) and r2 vals (rounded to 2 decimals) from species-by-species PERMANOVAS (see supp mat table S7) - using the results on the unrarefied dataset w/ Bray-Curtis dissimilarity
+stats_list <- list(
+  A = list(region_p = 0.00539946, region_r2 = 0.044480298, #Aconc2S
+           season_p = 0.00039996, season_r2 = 0.057418612), 
+  B = list(region_p = 0.00109989, region_r2 = 0.054858075, #Mdor2S
+           season_p = 0.00089991, season_r2 = 0.056269142),
+  C = list(region_p = 0.0159984,  region_r2 = 0.052707625, #Axan2S
+           season_p = 0.055794421, season_r2 = 0.044829817),
+  D = list(region_p = 0.00059994, region_r2 = 0.066797361, #Plat2S
+           season_p = 0.00239976, season_r2 = 0.058879833),
+  E = list(region_p = 0.128387161, region_r2 = 0.034941033, #Jnig2S
+           season_p = 0.092590741, season_r2 = 0.036081443),
+  'F' = list(region_p = 0.119488051,  region_r2 = 0.042552709, #Chum2S
+           season_p = 0.120387961, season_r2 = 0.043454864),
+  G = list(region_p = 0.00039996, region_r2 = 0.056363303, #Cpan2S
+           season_p = 0.00459954, season_r2 = 0.047179285),
+  H = list(region_p = 0.02059794, region_r2 = 0.045115829, #Elab2S
+           season_p = 0.02559744, season_r2 = 0.04361031),
+  I = list(region_p = 0.00959904,  region_r2 = 0.049376738, #Ccol2S
+           season_p = 0.03019698, season_r2 = 0.045760956),
+  J = list(region_p = 0.077292271, region_r2 = 0.037059773, #Atro2S
+           season_p = 0.717428257, season_r2 = 0.026303451),
+  K = list(region_p = 0.00479952, region_r2 = 0.190487786, #Water2S
+           season_p = 0.00009999, season_r2 = 0.312923507)
+)
+
+#add stats annotation function
+add_stats_annotation <- function(p, stats, format_pvals = TRUE) {
+
+  # format p-vals to show only 3 sig figs
+  format_p <- function(x) {
+    if (format_pvals) {
+      ifelse(x < 0.001, "< 0.001", sprintf("%.3f", x))
+    } else {
+      sprintf("%.3f", x)
+    }
+  }
+
+  label_text <- sprintf(
+    "Region p: %s\n R²: %.2f\nSeason p: %s\n R²: %.2f",
+    format_p(stats$region_p),
+    stats$region_r2,
+    format_p(stats$season_p),
+    stats$season_r2
+  )
+
+  p +
+    annotate(
+      "text",
+      x = Inf,
+      y = Inf,
+      label = label_text,
+      hjust = 1.05,
+      vjust = 1.1,
+      size = 3
+    )
+}
+
+#add stats to plots
+Aconc_stat <- add_stats_annotation(Aconc2S, stats_list$A)
+Mdor_stat <- add_stats_annotation(Mdor2S, stats_list$B)
+Axan_stat <- add_stats_annotation(Axan2S, stats_list$C)
+Plat_stat <- add_stats_annotation(Plat2S, stats_list$D)
+Jnig_stat <- add_stats_annotation(Jnig2S, stats_list$E)
+Chum_stat <- add_stats_annotation(Chum2S, stats_list$'F')
+Cpan_stat <- add_stats_annotation(Cpan2S, stats_list$G)
+Elab_stat <- add_stats_annotation(Elab2S, stats_list$H)
+Ccol_stat <- add_stats_annotation(Ccol2S, stats_list$I)
+Atro_stat <- add_stats_annotation(Atro2S, stats_list$J)
+Water_stat <- add_stats_annotation(Water2S, stats_list$K)
+
+#cowplot together
+multi_PCoA_troph_STATS <- plot_grid(Aconc_stat, Mdor_stat, Axan_stat, Plat_stat, Jnig_stat, Chum_stat, Cpan_stat, Elab_stat, Ccol_stat, Atro_stat, Water_stat, legendAC,
+          labels=c("A","B","C","D","E","F","G","H","I","J","K"),
+          label_size = 15)
+
+multi_PCoA_troph_STATS
+```
+
+```{r add fish icons to this plot}
+#add icons to graph
+multi_PCoA_troph_STATS2 <- ggdraw() +
+  draw_plot(multi_PCoA_troph_STATS) +
+  draw_image(image = icon_Aconc2, x = -0.430, y =  0.460, scale = 0.060) +# Panel A
+  draw_image(image = icon_Mdor2, x = -0.180, y = 0.460, scale = 0.060) +# Panel B
+  draw_image(image = icon_Axan2, x =  0.070, y =  0.460, scale = 0.060) +# Panel C
+  draw_image(image = icon_Plat2, x = 0.320, y = 0.460, scale = 0.060) +# Panel D
+  draw_image(image = icon_Jnig2, x = -0.430, y = 0.118, scale = 0.060) +# Panel E
+  draw_image(image = icon_Chum2, x = -0.180, y = 0.118, scale = 0.060) +# Panel F
+  draw_image(image = icon_Cpan2, x =  0.070, y = 0.130, scale = 0.060) +# Panel G
+  draw_image(image = icon_Elab2, x = 0.320, y =  0.130, scale = 0.060) +# Panel H
+  draw_image(image = icon_Ccol2, x = -0.430, y = -0.20, scale = 0.060) +# Panel I
+  draw_image(image = icon_Atro2, x = -0.180, y = -0.20, scale = 0.060) +# Panel J
+  draw_image(image = icon_Water2, x =  0.070, y = -0.20, scale = 0.060) # Panel K
+
+multi_PCoA_troph_STATS2
+```
+
+```{r code for exporting plot above as a png}
+ggsave(filename = "Fish Skin PCoA Plots 21-22 - color coded by trophic group w STATS.png", plot = multi_PCoA_troph_STATS2, path = './Intermediate_R_objects/Figs', width = 16, height = 10, device='png', dpi=700)
+```
+
+```{r code for exporting plot above as a pdf}
+ggsave(filename = "Fish Skin PCoA Plots 21-22 - color coded by trophic group w STATS.pdf", plot = multi_PCoA_troph_STATS2, path = './Intermediate_R_objects/Figs', width = 16, height = 10, device='pdf', dpi=600)
+```
+
 #### testing vertical 2x6 layout
 ```{r 2x6 vertical layout}
 
@@ -1784,34 +1800,34 @@ ggsave(filename = "Fish Skin PCoA Plots 21-22 - color coded by trophic group_VER
 #species by species rarefied data split from main rarefied data pool 
 
 #A. concolor
-ROHR_06_Aconcolor.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_concolor_rar.rds")
+ROHR_06_Aconcolor.rar <- readRDS("./Intermediate_R_objects/ROHR_06_A_concolor_rar.rds")
 
 #A. troschelii
-ROHR_06_Atroschelii.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_troschelii_rar.rds")
+ROHR_06_Atroschelii.rar <- readRDS("./Intermediate_R_objects/ROHR_06_A_troschelii_rar.rds")
 
 #A. xanthopterus
-ROHR_06_Axanthopterus.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_A_xanthopterus_rar.rds")
+ROHR_06_Axanthopterus.rar <- readRDS("./Intermediate_R_objects/ROHR_06_A_xanthopterus_rar.rds")
 
 #C. colonus
-ROHR_06_Ccolonus.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_colonus_rar.rds")
+ROHR_06_Ccolonus.rar <- readRDS("./Intermediate_R_objects/ROHR_06_P_colonus_rar.rds")
 
 #C. panamensis
-ROHR_06_Cpanamensis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_panamensis_rar.rds")
+ROHR_06_Cpanamensis.rar <- readRDS("./Intermediate_R_objects/ROHR_06_C_panamensis_rar.rds")
 
 #C. humeralis
-ROHR_06_Chumeralis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_C_humeralis_rar.rds")
+ROHR_06_Chumeralis.rar <- readRDS("./Intermediate_R_objects/ROHR_06_C_humeralis_rar.rds")
 
 #E. labriformis
-ROHR_06_Elabriformis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_E_labriformis_rar.rds")
+ROHR_06_Elabriformis.rar <- readRDS("./Intermediate_R_objects/ROHR_06_E_labriformis_rar.rds")
 
 #J. nigrirostris
-ROHR_06_Jnigrirostris.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_J_nigrirostris_rar.rds")
+ROHR_06_Jnigrirostris.rar <- readRDS("./Intermediate_R_objects/ROHR_06_J_nigrirostris_rar.rds")
 
 #M. dorsalis
-ROHR_06_Mdorsalis.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_M_dorsalis_rar.rds")
+ROHR_06_Mdorsalis.rar <- readRDS("./Intermediate_R_objects/ROHR_06_M_dorsalis_rar.rds")
 
 #P. laticlavius
-ROHR_06_Platiclavius.rar <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_P_laticlavius_rar.rds")
+ROHR_06_Platiclavius.rar <- readRDS("./Intermediate_R_objects/ROHR_06_P_laticlavius_rar.rds")
 
 #water
 ROHR08.2500.rar <- readRDS("~/OneDrive - McGill University/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_rarefied_2500.rds")
@@ -3234,10 +3250,10 @@ We have 44 unique phyla represented across the different fish and water samples,
 #read in phyloseq objects w/o tree, as this messes with the merge_phyloseq function (alt = separate out phyloseq objects into their component parts and create new one)
 
 #Skin phyloseq object from A-div analyses, pre-tree calc (not rarefied)
-ROHR_06_obj_clean_updated_P = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_clean_updated_phyla.rds")
+ROHR_06_obj_clean_updated_P = readRDS("./Intermediate_R_objects/ROHR_06_obj_clean_updated_phyla.rds")
 
 #Water phyloseq w/o tree
-ROHR_08_obj_clean_updated_P <- readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_clean_updated_phyla.rds")
+ROHR_08_obj_clean_updated_P <- readRDS("./Intermediate_R_objects/ROHR_08_obj_clean_updated_phyla.rds")
 
 #merge phyloseq objects into single master file
 master_phylo <- merge_phyloseq(ROHR_06_obj_clean_updated_P, ROHR_08_obj_clean_updated_P)
