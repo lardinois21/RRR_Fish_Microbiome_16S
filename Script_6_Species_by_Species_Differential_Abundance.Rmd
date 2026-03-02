@@ -13,6 +13,7 @@ Script N. 4.2 - Differential abundance analyses - fish skin, species-by-species
 
 Most recent updates: 
 
+Feb 15-18, 2026 --> (LLL) expanding analysis of DA taxa to investigate ecological importance
 Dec 13, 2024 --> comparing significant (padj <0.05) DA taxa between water and fish skin
 Dec 12, 2024 --> species by species draft code (adjusted from Script N. 4.1; water microbiome)
 
@@ -39,11 +40,11 @@ library(tidyverse)
 library(pheatmap) #make heatmaps of count data
 ```
 
-We're starting with the "ROHR06_new" dataset, which was previously cleaned a bit in script 4.1 to remove extra metadata columns and change characters that R doesn't like (e.g., spaces between Las & Perlas). 
+We're starting with the "ROHR06_new" dataset, which was previously cleaned a bit in the Water differential abundance script (W-Script_3...) to remove extra metadata columns and change characters that R doesn't like (e.g., spaces between Las & Perlas). 
 
-```{r read in cleaned fish skin dataset from Script 4.1}
+```{r read in cleaned fish skin dataset from water DA script}
 #from script 4.1
-ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newMetadata_cleaned.rds")
+ROHR06_new = readRDS("./Intermediate_R_objects/ROHR_06_obj_newMetadata_cleaned.rds")
 ```
 
 Based on the species-by-species PERMANOVAs done in script 3.2: "Skin Species by Species" beta diversity analyses, we know that only a subset of the fish species showed significant season and region differences in their microbiomes. We'll thus restrict the DA analyses to those that were significant: n= 7 species; all 4 herbivores, the 2 carnivores, and the planktivore.
@@ -67,6 +68,9 @@ tax_tab[1:5,1:6] # for my table show me [1 to 5 otu ids, 1 to 6 first six ranks]
 # Extract the tax_table
 tax_table_data <- tax_table(ROHR06_new)
 
+# Store original taxa names (sequences / OTU IDs)
+original_taxa_names <- taxa_names(ROHR06_new)
+
 # Create a vector of new taxa names
 new_taxa_names <- apply(tax_table_data, 1, function(row) {
   # Extract the phylum
@@ -87,22 +91,32 @@ new_taxa_names <- apply(tax_table_data, 1, function(row) {
 # Make taxa names unique
 new_taxa_names <- make.unique(new_taxa_names)
 
+# Create key table BEFORE overwriting taxa_names (to be able to link taxa back to sequences)
+taxa_key_table <- data.frame(
+  original_taxa_name = original_taxa_names,
+  new_taxa_name = new_taxa_names,
+  stringsAsFactors = FALSE
+)
+
 # Assign the new taxa names to the taxa_names
 taxa_names(ROHR06_new) <- new_taxa_names
 
 # Verify the updated taxa_names
 head(taxa_names(ROHR06_new))
-
 ```
 
 ```{r save this new dataset with modified taxa names}
 #Save phyloseq object with filtered taxa
-saveRDS(ROHR06_new, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newTaxanames.rds")
+saveRDS(ROHR06_new, "./Intermediate_R_objects/ROHR_06_obj_newTaxanames.rds")
+```
+
+```{r also save key table as csv}
+write_csv(taxa_key_table, file = "./Intermediate_R_objects/ROHR_06_obj_newTaxanames_KEY.csv")
 ```
 
 ```{r read new names if not starting from top}
 #read if not starting from top
-ROHR06_new = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_obj_newTaxanames.rds")
+ROHR06_new = readRDS("./Intermediate_R_objects/ROHR_06_obj_newTaxanames.rds")
 ```
 
 #Subset by species
@@ -175,42 +189,42 @@ ROHR_06_Ccolonus # 30 samples, 2876 taxa (full dataset = 6551 taxa, 341 samples)
 # Save Phyloseq objects
 
 #A. concolor
-saveRDS(ROHR_06_Aconcolor, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_concolor.rds")
+saveRDS(ROHR_06_Aconcolor, "./Intermediate_R_objects/ROHR06_newA_concolor.rds")
 
 #M. dorsalis
-saveRDS(ROHR_06_Mdorsalis, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newM_dorsalis.rds")
+saveRDS(ROHR_06_Mdorsalis, "./Intermediate_R_objects/ROHR06_newM_dorsalis.rds")
 
 #A. xanthopterus
-saveRDS(ROHR_06_Axanthopterus, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_xanthopterus.rds")
+saveRDS(ROHR_06_Axanthopterus, "./Intermediate_R_objects/ROHR06_newA_xanthopterus.rds")
 
 #P. laticlavius
-saveRDS(ROHR_06_Platiclavius, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_laticlavius.rds")
+saveRDS(ROHR_06_Platiclavius, "./Intermediate_R_objects/ROHR06_newP_laticlavius.rds")
 
 #C. colonus
-saveRDS(ROHR_06_Ccolonus, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_colonus.rds")
+saveRDS(ROHR_06_Ccolonus, "./Intermediate_R_objects/ROHR06_newP_colonus.rds")
 
 #C. panamensis
-saveRDS(ROHR_06_Cpanamensis, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newC_panamensis.rds")
+saveRDS(ROHR_06_Cpanamensis, "./Intermediate_R_objects/ROHR06_newC_panamensis.rds")
 
 #E. labriformis
-saveRDS(ROHR_06_Elabriformis, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newE_labriformis.rds")
+saveRDS(ROHR_06_Elabriformis, "./Intermediate_R_objects/ROHR06_newE_labriformis.rds")
 
 ```
 #Read subsets
 ```{r read subsets}
-ROHR_06_Aconcolor = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_concolor.rds")
+ROHR_06_Aconcolor = readRDS("./Intermediate_R_objects/ROHR06_newA_concolor.rds")
 
-ROHR_06_Mdorsalis = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newM_dorsalis.rds")
+ROHR_06_Mdorsalis = readRDS("./Intermediate_R_objects/ROHR06_newM_dorsalis.rds")
 
-ROHR_06_Axanthopterus = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newA_xanthopterus.rds")
+ROHR_06_Axanthopterus = readRDS("./Intermediate_R_objects/ROHR06_newA_xanthopterus.rds")
 
-ROHR_06_Platiclavius = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_laticlavius.rds")
+ROHR_06_Platiclavius = readRDS( "./Intermediate_R_objects/ROHR06_newP_laticlavius.rds")
 
-ROHR_06_Ccolonus = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newP_colonus.rds")
+ROHR_06_Ccolonus = readRDS( "./Intermediate_R_objects/ROHR06_newP_colonus.rds")
 
-ROHR_06_Cpanamensis = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newC_panamensis.rds")
+ROHR_06_Cpanamensis = readRDS( "./Intermediate_R_objects/ROHR06_newC_panamensis.rds")
 
-ROHR_06_Elabriformis = readRDS( "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR06_newE_labriformis.rds")
+ROHR_06_Elabriformis = readRDS( "./Intermediate_R_objects/ROHR06_newE_labriformis.rds")
 ```
 
 ### Pre-filter = taxa need to be present in at least 10% of samples (approx 3 samples)
@@ -227,26 +241,27 @@ We're doing this with the individual species, rather than across the whole datas
 (ROHR_06_Elabriformis_filt <- filter_taxa(ROHR_06_Elabriformis, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 1005 taxa
 (ROHR_06_Ccolonus_filt <- filter_taxa(ROHR_06_Ccolonus, function(x) sum(x > 0) > (.1*length(x)), TRUE))   #removing species not seen > 10% of samples --> 468 taxa
 ```
+
 ```{r save filtered 10% taxa}
 #Save phyloseq object with filtered taxa
-saveRDS(ROHR_06_Aconcolor_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Aconcolor_filt_10percent_newTaxanames.rds")
-saveRDS(ROHR_06_Mdorsalis_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Mdorsalis_filt_10percent_newTaxanames.rds")
-saveRDS(ROHR_06_Axanthopterus_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Axanthopterus_filt_10percent_newTaxanames.rds")
-saveRDS(ROHR_06_Platiclavius_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Platiclavius_filt_10percent_newTaxanames.rds")
-saveRDS(ROHR_06_Cpanamensis_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Cpanamensis_filt_10percent_newTaxanames.rds")
-saveRDS(ROHR_06_Elabriformis_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Elabriformis_filt_10percent_newTaxanames.rds")
-saveRDS(ROHR_06_Ccolonus_filt, "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Ccolonus_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Aconcolor_filt, "./Intermediate_R_objects/ROHR_06_Aconcolor_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Mdorsalis_filt, "./Intermediate_R_objects/ROHR_06_Mdorsalis_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Axanthopterus_filt, "./Intermediate_R_objects/ROHR_06_Axanthopterus_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Platiclavius_filt, "./Intermediate_R_objects/ROHR_06_Platiclavius_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Cpanamensis_filt, "./Intermediate_R_objects/ROHR_06_Cpanamensis_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Elabriformis_filt, "./Intermediate_R_objects/ROHR_06_Elabriformis_filt_10percent_newTaxanames.rds")
+saveRDS(ROHR_06_Ccolonus_filt, "./Intermediate_R_objects/ROHR_06_Ccolonus_filt_10percent_newTaxanames.rds")
 ```
 
 ```{r read filtered 10% taxa}
 #read if not starting from top
-ROHR_06_Aconcolor_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Aconcolor_filt_10percent_newTaxanames.rds")
-ROHR_06_Mdorsalis_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Mdorsalis_filt_10percent_newTaxanames.rds")
-ROHR_06_Axanthopterus_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Axanthopterus_filt_10percent_newTaxanames.rds")
-ROHR_06_Platiclavius_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Platiclavius_filt_10percent_newTaxanames.rds")
-ROHR_06_Cpanamensis_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Cpanamensis_filt_10percent_newTaxanames.rds")
-ROHR_06_Elabriformis_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Elabriformis_filt_10percent_newTaxanames.rds")
-ROHR_06_Ccolonus_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_06_trimmed/ROHR_06_Ccolonus_filt_10percent_newTaxanames.rds")
+ROHR_06_Aconcolor_filt = readRDS("./Intermediate_R_objects/ROHR_06_Aconcolor_filt_10percent_newTaxanames.rds")
+ROHR_06_Mdorsalis_filt = readRDS("./Intermediate_R_objects/ROHR_06_Mdorsalis_filt_10percent_newTaxanames.rds")
+ROHR_06_Axanthopterus_filt = readRDS("./Intermediate_R_objects/ROHR_06_Axanthopterus_filt_10percent_newTaxanames.rds")
+ROHR_06_Platiclavius_filt = readRDS("./Intermediate_R_objects/ROHR_06_Platiclavius_filt_10percent_newTaxanames.rds")
+ROHR_06_Cpanamensis_filt = readRDS("./Intermediate_R_objects/ROHR_06_Cpanamensis_filt_10percent_newTaxanames.rds")
+ROHR_06_Elabriformis_filt = readRDS("./Intermediate_R_objects/ROHR_06_Elabriformis_filt_10percent_newTaxanames.rds")
+ROHR_06_Ccolonus_filt = readRDS("./Intermediate_R_objects/ROHR_06_Ccolonus_filt_10percent_newTaxanames.rds")
 ```
 ###### Differential Abundance Analyses
 
@@ -278,7 +293,6 @@ contrasts2 <- list(
   c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
 )
 ```
-#### Herbivores
 
 ## DESeq2 - A. concolor
 
@@ -300,6 +314,14 @@ resDeSeq_LC_up <- results(dds_Acon, contrast = contrast4, alpha = 0.05) #adjusti
 resDeSeq_CC <- results(dds_Acon, contrast = contrast5, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
 resDeSeq_LC_Un <- results(dds_Acon, contrast = contrast6, alpha = 0.05) #adjusting FDR cutoff to 0.05 (default is 0.1)
 ```
+
+	contrast1 <- c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling")
+	contrast2 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling")
+	contrast3 <- c("region_season", "Las_Perlas_non_upwelling", "Coiba_upwelling")
+	contrast4 <- c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling")
+	contrast5 <- c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
+	contrast6 <- c("region_season", "Las_Perlas_upwelling", "Coiba_non_upwelling")
+
 We can order our results by smallest p value:
 ```{r reorder by p-val}
 resOrdered <- resDeSeq[order(resDeSeq$pvalue),]
@@ -311,12 +333,12 @@ resOrderedLC_Un <- resDeSeq_LC_Un[order(resDeSeq_LC_Un$pvalue),]
 ```
 
 ```{r summarize results DESeq}
-summary(resOrdered)
-summary(resOrderedLC_n)
-summary(resOrderedLC_nU)
-summary(resOrderedLC_up)
-summary(resOrderedCC)
-summary(resOrderedLC_Un)
+summary(resOrdered) #Las Perlas non-upwelling vs. upwelling
+summary(resOrderedLC_n) #Las Perlas non-upwelling vs. Coiba non-upwelling
+summary(resOrderedLC_nU) #Las Perlas non-upwelling vs. Coiba upwelling
+summary(resOrderedLC_up) #Las Perlas upwelling vs. Coiba upwelling
+summary(resOrderedCC) #Coiba non-upwelling vs. upwelling
+summary(resOrderedLC_Un) #Las Perlas upwelling vs. Coiba non-upwelling
 
 #Note --> LFC = log fold change
 # outliers calculated with Cook's distance: fromDESeq2 documentation:
@@ -331,6 +353,7 @@ sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #4
 sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #2
 sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #5
 ```
+
 A. con DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
 --> testing for seasonal upwelling driven differences
 LFC > 0 (up)       : 0, 0%
@@ -494,8 +517,6 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ```{r code for exporting a-div plot above as a png}
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 A concolor.png", plot = Deseq2_Acon, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
-## MaAsLin2 - A. concolor
-
 
 ## DESeq2 - M. dorsalis
 ```{r DESeq2 -  M. dorsalis}
@@ -605,7 +626,7 @@ outliers [1]       : 0, 0%
 low counts [2]     : 548, 74%
 --> total significant p-adj values (Wald test results)
 24
-# Plotting DESeq2 - M.dor
+## Plotting DESeq2 - M.dor
 
 ```{r extract contrasts}
 # Extract DESeq2 results for each contrast
@@ -710,8 +731,6 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ```{r code for exporting a-div plot above as a png}
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 M dorsalis.png", plot = Deseq2_Mdor, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
-## MaAsLin2 - M. dorsalis
-
 
 ## DESeq2 - A. xanthopterus
 ```{r DESeq2 - A. xanth}
@@ -806,7 +825,7 @@ Axan DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
 
 ***Need to check back in on this, how is it that the greatest differences here are in Coiba, not Las Perlas
 
-# Plotting DESeq2 - A. xanth
+## Plotting DESeq2 - A. xanth
 ```{r extract contrasts}
 # Extract DESeq2 results for each contrast
 results_listAxan <- lapply(contrasts2, function(contrast) {
@@ -835,9 +854,6 @@ all_resultsAxan$Species <- gsub(
   "SAR324 clade(Marine group B)",
   all_resultsAxan$Species
 )
-
-# Verify the replacement
-unique(all_resultsAxan$Species)
 ```
 
 ```{r filter only significant DA taxa per group}
@@ -910,8 +926,6 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ```{r code for exporting a-div plot above as a png}
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 A xanthopterus.png", plot = Deseq2_Axan, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
-## MaAsLin2 - A. xanthopterus
-
 
 ## DESeq2 - P. laticlavius
 ```{r DESeq2 - P. lat}
@@ -963,7 +977,8 @@ sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #4
 sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #2
 sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #5
 ```
-#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
+
+DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
 --> testing for seasonal upwelling driven differences
 LFC > 0 (up)       : 11, 1.8%
 LFC < 0 (down)     : 16, 2.6%
@@ -973,7 +988,7 @@ low counts [2]     : 365, 58%
 --> total significant p-adj values (Wald test results)
 27
 
-#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
+DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
 --> testing for regional differences (same season; similar enviro conditions)
 LFC > 0 (up)       : 9, 1.4%
 LFC < 0 (down)     : 3, 0.48%
@@ -983,7 +998,7 @@ low counts [2]     : 195, 31%
 --> total significant p-adj values (Wald test results)
 12
 
-#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
+DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
 --> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
 LFC > 0 (up)       : 4, 0.64%
 LFC < 0 (down)     : 4, 0.64%
@@ -993,7 +1008,7 @@ low counts [2]     : 0, 0%
 --> total significant p-adj values (Wald test results)
 8
 
-#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
+DESeq2 - Las Perlas upwelling vs. Coiba upwelling
 --> testing for regional differences (same season; DIFFERENT enviro conditions)
 --> would expect to have MOST differences here
 LFC > 0 (up)       : 14, 2.2%
@@ -1004,7 +1019,7 @@ low counts [2]     : 377, 60%
 --> total significant p-adj values (Wald test results)
 20
 
-#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
+DESeq2 - Coiba non-upwelling vs. Coiba upwelling
 --> testing for seasonal differences in Coiba
 LFC > 0 (up)       : 8, 1.3%
 LFC < 0 (down)     : 6, 0.96%
@@ -1014,7 +1029,7 @@ low counts [2]     : 498, 79%
 --> total significant p-adj values (Wald test results)
 14
 
-#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
+DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
 LFC > 0 (up)       : 15, 2.4%
 LFC < 0 (down)     : 7, 1.1%
 outliers [1]       : 0, 0%
@@ -1124,9 +1139,7 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ```{r code for exporting a-div plot above as a png}
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 P laticlavius.png", plot = Deseq2_Plat, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
-## MaAsLin2 - P. laticlavius
 
-#### Carnivores
 ## DESeq2 - C. panamensis
 ```{r DESeq2 - C. panamensis}
 dds_Cpan <- phyloseq_to_deseq2(ROHR_06_Cpanamensis_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
@@ -1177,45 +1190,6 @@ sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #1
 sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #6
 sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #13
 ```
-#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
---> testing for seasonal upwelling driven differences
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
---> testing for regional differences (same season; similar enviro conditions)
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
---> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
---> testing for regional differences (same season; DIFFERENT enviro conditions)
---> would expect to have MOST differences here
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
---> testing for seasonal differences in Coiba
-
-
---> total significant p-adj values (Wald test results)
-
-#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
-
---> total significant p-adj values (Wald test results)
-
 
 # Plotting DESeq2 - C. pan
 ```{r extract contrasts}
@@ -1318,7 +1292,6 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ```{r code for exporting a-div plot above as a png}
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 C panamensis.png", plot = Deseq2_Cpan, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
-## MaAsLin2 - C. panamensis
 
 ## DESeq2 - E. labriformis
 ```{r DESeq2 - E. lab}
@@ -1370,45 +1343,6 @@ sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #7
 sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #12
 sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #13
 ```
-#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
---> testing for seasonal upwelling driven differences
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
---> testing for regional differences (same season; similar enviro conditions)
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
---> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
---> testing for regional differences (same season; DIFFERENT enviro conditions)
---> would expect to have MOST differences here
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
---> testing for seasonal differences in Coiba
-
-
---> total significant p-adj values (Wald test results)
-
-#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
-
---> total significant p-adj values (Wald test results)
-
 
 # Plotting DESeq2 - E. lab
 ```{r extract contrasts}
@@ -1439,7 +1373,6 @@ all_resultsElab$Species <- gsub(
   "SAR324 clade(Marine group B)",
   all_resultsElab$Species
 )
-
 ```
 
 ```{r filter only significant DA taxa per group}
@@ -1512,9 +1445,7 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ```{r code for exporting a-div plot above as a png}
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 E lab.png", plot = Deseq2_Elab, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
-## MaAsLin2 - E. labriformis
 
-#### Planktivore
 ## DESeq2 - C. colonus
 ```{r DESeq2 - C. col}
 dds_Ccol <- phyloseq_to_deseq2(ROHR_06_Ccolonus_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
@@ -1558,52 +1489,14 @@ summary(resOrderedLC_Un)
 ```
 
 ```{r checking padj <0.05 in our comparisons}
-sum(resOrdered$padj < 0.05, na.rm=TRUE) #4
-sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #7
-sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #13
-sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #4
-sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #2
-sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #5
+#NOTE: LLL corrected these 2-16-26 (not sure why the commented in values were wrong when the plot was right)
+sum(resOrdered$padj < 0.05, na.rm=TRUE) #7
+sum(resOrderedLC_n$padj < 0.05, na.rm=TRUE) #4
+sum(resOrderedLC_nU$padj < 0.05, na.rm=TRUE) #3
+sum(resOrderedLC_up$padj < 0.05, na.rm=TRUE) #5
+sum(resOrderedCC$padj < 0.05, na.rm=TRUE) #1
+sum(resOrderedLC_Un$padj < 0.05, na.rm=TRUE) #12
 ```
-#DESeq2 - Las Perlas non-upwelling vs. Las Perlas upwelling
---> testing for seasonal upwelling driven differences
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas non-upwelling vs. Coiba non-upwelling
---> testing for regional differences (same season; similar enviro conditions)
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas non-upwelling vs. Coiba upwelling
---> sanity check: should have similar patterns as comparison above, minus any additional seasonal (not directly upwelling related) differences in Coiba
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Las Perlas upwelling vs. Coiba upwelling
---> testing for regional differences (same season; DIFFERENT enviro conditions)
---> would expect to have MOST differences here
-
-
---> total significant p-adj values (Wald test results)
-
-
-#DESeq2 - Coiba non-upwelling vs. Coiba upwelling
---> testing for seasonal differences in Coiba
-
-
---> total significant p-adj values (Wald test results)
-
-#DESeq2 - Las Perlas upwelling vs. Coiba non-upwelling
-
---> total significant p-adj values (Wald test results)
-
 
 # Plotting DESeq2 - C. col
 ```{r extract contrasts}
@@ -1634,9 +1527,6 @@ all_resultsCcol$Species <- gsub(
   "SAR324 clade(Marine group B)",
   all_resultsCcol$Species
 )
-
-# Verify the replacement
-unique(all_resultsCcol$Species)
 ```
 
 ```{r filter only significant DA taxa per group}
@@ -1710,404 +1600,376 @@ ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise compari
 ggsave(filename = "Log2Fold Change in Significant DA microbes 4 pairwise comparisons DESeq2 C colonus.png", plot = Deseq2_Ccol, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 12, height = 8, device='png', dpi=700)
 ```
 
-## MaAsLin2 - C. colonus
+### Extract ALL fish DA sequences
 
+Right now, we have info on the taxa that are differentially abundant across all our fish, but not very detailed info on what sorts of microbe they are. Furthermore, since we will want to compare the fish and water DA taxa downstream, we want to be able to identify the unique ASVs linked to each of these taxa, then compare ASVs (since we generally have assignations to genus level and above, two different microbial taxa could be counted as the same if we go by taxonomic assignment). To do this, we'll read in the taxa key table we created earlier when we transformed the original phyloseq object to append taxonomy rather than sequences as rownames.
 
-##### Comparing DA taxa between water and fish
+#### read in fish sequences to query NCBI with
+```{r read in sequence key from above}
+taxa_key_table <- read_csv(file = "./Intermediate_R_objects/ROHR_06_obj_newTaxanames_KEY.csv")
+```
+
+```{r define list of species}
+top_results_list <- list(
+  A_concolor  = top_resultsAcon,
+  M_dorsalis = top_resultsMdor,
+  A_xanthopterus = top_resultsAxan,
+  P_laticlavius = top_resultsPlat,
+  C_panamensis = top_resultsCpan,
+  E_labriformis = top_resultsElab,
+  C_colonus = top_resultsCcol
+)
+```
+
+```{r fix marinimicrobia non-matching name issue}
+top_results_list <- imap(top_results_list, function(df, name) {
+  
+  df %>%
+    mutate(
+      Species = if_else(
+        str_detect(Species, "^Marinimicrobia"),
+        paste0("Marinimicrobia (SAR406 clade); ", Species),
+        Species
+      )
+    )
+})
+```
+
+```{r pull and combine all DA taxa and seqs}
+DA_seqs_list <- imap(top_results_list, function(top_df, host_name) {
+
+  # ---- STEP 1: Collapse duplicate taxa entries (Species) ----
+  top_collapsed <- top_df %>%
+    mutate(
+      contrast_log2FC = paste(contrast, log2FoldChange)
+    ) %>%
+    group_by(Species) %>%
+    mutate(n_occur = n()) %>%
+    summarise(
+      contrast_log2FC = paste(contrast_log2FC, collapse = " ; "),
+      n_occur = first(n_occur),
+      .groups = "drop"
+    )
+
+  # ---- STEP 2: First-pass exact match between taxa key and top DA taxa per fish species ----
+  first_pass <- taxa_key_table %>%
+    left_join(
+      top_collapsed,
+      by = c("new_taxa_name" = "Species")
+    )
+
+  # ---- STEP 3: Keep matched only ----
+  fish_DA <- first_pass %>%
+    filter(!is.na(contrast_log2FC)) %>%
+    mutate(host_species = host_name) %>%
+    select(
+      host_species,
+      new_taxa_name,
+      n_occur,
+      contrast_log2FC,
+      original_taxa_name,
+      everything()
+    )
+
+  return(fish_DA)
+})
+```
+
+```{r validate DA seqs}
+#check that the number of recovered DA seqs matches the original number of significant DA taxa
+validation_counts <- imap_dfr(DA_seqs_list, function(df, host_name) {
+  
+  tibble(
+    host_species = host_name,
+    recovered_total = sum(df$n_occur, na.rm = TRUE),
+    original_total  = nrow(top_results_list[[host_name]]),
+    match = recovered_total == original_total
+  )
+})
+
+validation_counts #YAY! this worked!!!
+```
+
+```{r bind all fish DA taxa into one table}
+FishDA_seqs_all <- bind_rows(DA_seqs_list)
+#view all fish DA seqs
+FishDA_seqs_all
+```
+
+```{r save Fish DA taxa table}
+write_csv(FishDA_seqs_all, file = "./Intermediate_R_objects/ALL_Fish_DAtaxa_seqs.csv")
+```
+
+## Start here if already run fish DA analyses
+```{r read Fish DA taxa table}
+FishDA_seqs_all <- read_csv("./Intermediate_R_objects/ALL_Fish_DAtaxa_seqs.csv")
+```
+
+### Merge fish and water DA seqs (significant only)
+
+```{r read in water sequence key}
+taxa_key_table_W <- read_csv(file = "./Intermediate_R_objects/ROHR_08_obj_newTaxanames_KEY_WATER.csv")
+```
+
+```{r read in water DA taxa list}
+WaterDA_seqs <- read_csv(file = "./Intermediate_R_objects/WaterDAsequences_DESeq2_20260216.csv")
+```
+
+```{r merge water and fish DA tables}
+ALL_DA_seqs <- bind_rows(FishDA_seqs_all, WaterDA_seqs)
+```
+
+```{r save MERGED DA taxa table}
+write_csv(ALL_DA_seqs, file = "./Intermediate_R_objects/MERGED_FishANDWater_DAtaxa_seqs.csv")
+```
+
+```{r read MERGED DA taxa table}
+ALL_DA_seqs <- read_csv("./Intermediate_R_objects/MERGED_FishANDWater_DAtaxa_seqs.csv")
+```
+
+```{r look at unique sequences}
+n_distinct(FishDA_seqs_all$original_taxa_name) #129 unique significant DA ASVs across the whole fish dataset
+
+n_distinct(WaterDA_seqs$original_taxa_name) #732 unique significant DA ASVs across the water dataset
+
+n_distinct(ALL_DA_seqs$original_taxa_name) #806 unique significant DA ASVs across the MERGED fish + water dataset (so at least 74 sequences are only DA for the fish dataset) -- note that this does not factor in region-season comparisons
+```
+
+### Comparing DA taxa between water and fish
 
 We're interested in knowing whether changes in the surrounding environment (e.g., those linked to upwelling in the Gulf of Panama) are driving, at least in part, changes in our fishes' skin microbiomes. One way in which we can test this is to see, for each pairwise comparison between regions/seasons, if the DA taxa that were detected as significant in the fish skin microbiomes are also among those that changed signficantly in the water microbiome. 
 
-From the tests run above, we can already tell that the fish skin microbiome stays much more constant between regions and seasons, as there are over 50 times more DA taxa between LP wet & dry for the water compared to the avg. DA in our 7 target fish. 
+From the tests run above, we can already tell that the fish skin microbiome stays much more constant between regions and seasons, as there are over 50 times more DA taxa between LP wet & dry for the water compared to the avg. DA in our 7 target fish. Furthermore, it is clear that quite a few ASVs occur across multiple comparisons (either multiple fish, or multiple region-season comparisons). 
 
 Note: There is some uncertainty associated with the calls from the DA tests, especially for the water samples, given the small sample size when breaking down results by sample type, gulf, and season (water n = 4-6, fish n = 33-38), and that it has been shown that DA tests generally perform relatively poorly with small sample sizes.
 
-We'll now run each of the signfificant (padj <0.05) DA taxa in our fish samples against the water dataset. Since different fish may be more or less responsive to changes in the surrounding water's microbiome, instead of pooling all DA taxa across fish, we'll run the analyses fish-by-fish.
+```{r expand table again to have rows for each contrast}
+ALL_DA_expanded <- ALL_DA_seqs %>%
+  
+  # Expand multiple contrasts into separate rows
+  separate_rows(contrast_log2FC, sep = " ; ") %>%
+  
+  # Extract numeric log2FC (last numeric token)
+  mutate(
+    log2FoldChange = as.numeric(str_extract(contrast_log2FC, "[-0-9\\.eE]+$")),
+    contrast = str_remove(contrast_log2FC, " [-0-9\\.eE]+$")
+  ) %>%
+  
+  select(-contrast_log2FC)
 
-```{r read in water filtered 10% data}
-#read if not starting from top
-ROHR_08_filt = readRDS("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/ROHR_08_obj_10percent_newTaxanames.rds")
+ALL_DA_expanded #1713 entries (WAY more than our 806 unique ASVs)
 ```
 
-# run water DESeq2 (assuming fish have been run above)
-```{r DESeq2}
-dds_water <- phyloseq_to_deseq2(ROHR_08_filt, ~ region_season)  #convert to DESeq2 object, call your dataset (in the form of a phyloseq object) & the "design formula" which expresses the variables used in modeling --> tilde (~), then the variables separated by plus signs --> put variable of interest LAST & the control level FIRST (e.g., if we check for differences between seasons, controlling for gulfs, we'd write: ~ region + season)
-
-dds_water <- DESeq(dds_water, test = "Wald", fitType = "local", sfType = "poscounts")
-```
-
-```{r compare taxa - filter significant}
-# Create a named list of DESeq2 results
-dds_list <- list(
-  water = dds_water,
-  Acon = dds_Acon,
-  Mdor = dds_Mdor,
-  Axan = dds_Axan,
-  Plat = dds_Plat,
-  Cpan = dds_Cpan,
-  Elab = dds_Elab,
-  Ccol = dds_Ccol
-)
-
-# Define contrasts of interest
-contrasts <- list(
-  contrast1 = c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  contrast2 = c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  contrast4 = c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  contrast5 = c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")
-)
-
-# Step 3: Create a function to filter significant taxa
-filter_significant_taxa <- function(dds, contrasts, padj_threshold = 0.05) {
-  results <- results(dds, contrast = contrasts, alpha = 0.05) %>%
-    as.data.frame() %>%
-    rownames_to_column("Species") %>%
-    filter(!is.na(padj) & padj < padj_threshold) %>%
-    select(Species, log2FoldChange, padj)
-  return(results)
-}
-
-# Step 4: Loop through dds_list and contrasts to filter significant taxa
-significant_taxa_list <- list()
-
-for (contrast_name in names(contrasts)) {
-  contrast <- contrasts[[contrast_name]]
-  
-  for (dds_name in names(dds_list)) {
-    dds <- dds_list[[dds_name]]
-    
-    # Filter significant taxa for the current dds and contrast
-    significant_taxa <- filter_significant_taxa(dds, contrast)
-    
-    # Store results in the list with a unique identifier
-    significant_taxa_list[[paste(dds_name, contrast_name, sep = "_")]] <- significant_taxa
-  }
-}
-
-# Step 5: Combine all results into a single data frame for easier inspection
-combined_results <- bind_rows(significant_taxa_list, .id = "contrast")
-
-# Step 6: Save the combined results to a CSV file
-write.csv(combined_results, "significant_taxa_results.csv", row.names = FALSE)
-```
-
-```{r compare sig DA taxa between water and fish}
-# Step 1: Split combined_results by contrast
-water_results <- combined_results %>% 
-  filter(grepl("water", contrast))
-
-fish_results <- combined_results %>% 
-  filter(!grepl("water", contrast))
-
-# Step 2: Define a function to compare fish and water taxa for each contrast
-compare_fish_water <- function(fish_data, water_data, contrast_name) {
-  # Subset data for the specific contrast
-  fish_contrast <- fish_data %>% 
-    filter(grepl(contrast_name, contrast))
-  
-  water_contrast <- water_data %>% 
-    filter(grepl(contrast_name, contrast))
-  
-  # Find shared taxa
-  shared_taxa <- inner_join(
-    fish_contrast, 
-    water_contrast, 
-    by = "Species", 
-    suffix = c("_fish", "_water")
+```{r adjust taxonomic names to make comparable across datasets}
+#pull names w/o numeric identifiers
+ALL_DA_expanded <- ALL_DA_expanded %>%
+  mutate(
+    new_taxa_base = str_remove(new_taxa_name, "\\.\\d+$")
   )
-  
-  return(shared_taxa)
-}
 
-# Step 3: Apply the function for each contrast
-contrast_names <- unique(combined_results$contrast %>% str_extract("contrast[1-6]"))
+#check where multiple ASVs have same name
+taxon_sequence_check <- ALL_DA_expanded %>%
+  group_by(new_taxa_base) %>%
+  summarise(
+    n_unique_sequences = n_distinct(original_taxa_name),
+    .groups = "drop"
+  )
 
-shared_taxa_results <- list()
-
-for (contrast_name in contrast_names) {
-  shared_taxa <- compare_fish_water(fish_results, water_results, contrast_name)
-  shared_taxa_results[[contrast_name]] <- shared_taxa
-}
-
-# Step 4: Combine all shared taxa results into one data frame
-final_shared_taxa <- bind_rows(shared_taxa_results, .id = "contrast")
-
-# Step 5: Save the results as a CSV file
-write.csv(final_shared_taxa, "shared_fish_water_taxa.csv", row.names = FALSE)
-
-```
-
-```{r update contrast names}
-# Define a mapping for contrast renaming
-contrast_rename <- c(
-  "contrast1" = "Las Perlas wet vs. Las Perlas dry",
-  "contrast2" = "Las Perlas wet vs. Coiba wet",
-  "contrast4" = "Las Perlas dry vs. Coiba dry",
-  "contrast5" = "Coiba wet vs. Coiba dry"
-)
-
-# Rename the contrast column in final_shared_taxa
-final_shared_taxa <- final_shared_taxa %>%
-  mutate(contrast = recode(contrast, !!!contrast_rename))
-
-# Save the updated results as a CSV file
-write.csv(final_shared_taxa, "updated_shared_fish_water_taxa.csv", row.names = FALSE)
-
-```
-
-```{r plot these shared taxa}
-# Load datasets (if not starting from top)
-significant_taxa <- read.csv("significant_taxa_results.csv")  # Full list of significant taxa
-shared_taxa <- read.csv("updated_shared_fish_water_taxa.csv")        # Shared taxa between fish and water
-
-# Replace the species name in the fdr_deseq dataframe
-significant_taxa$Species <- gsub(
-  "Marinimicrobia \\(SAR406 clade\\); Marinimicrobia \\(SAR406 clade\\)",
-  "Marinimicrobia (SAR406 clade)",
-  significant_taxa$Species
-)
-
-# Replace the specified string in the 'Species' column
-significant_taxa$Species <- gsub(
-  "SAR324 clade\\(Marine group B\\); SAR324 clade\\(Marine group B\\)",
-  "SAR324 clade(Marine group B)",
-  significant_taxa$Species
-)
-
-# Step 3: Add a "shared" column to identify shared taxa
-significant_taxa <- significant_taxa %>%
-  mutate(shared = ifelse(Species %in% shared_taxa$Species, "Shared", "Not Shared"))
-
-# Manually reorder the contrast variable to control facet arrangement
-significant_taxa$contrast <- factor(significant_taxa$contrast,
-                               levels = c(
-                                 "water_contrast5",
-                                 "water_contrast1",
-                                 "water_contrast2",
-                                 "water_contrast4",
-                                 "Acon_contrast5",
-                                 "Acon_contrast1",
-                                 "Acon_contrast2",
-                                 "Acon_contrast4",
-                                 "Mdor_contrast5",
-                                 "Mdor_contrast1",
-                                 "Mdor_contrast2",
-                                 "Mdor_contrast4",
-                                 "Cpan_contrast5",
-                                 "Cpan_contrast1",
-                                 "Cpan_contrast2",
-                                 "Cpan_contrast4",
-                                 "Elab_contrast5",
-                                 "Elab_contrast1",
-                                 "Elab_contrast2",
-                                 "Elab_contrast4",
-                                 "Ccol_contrast5",
-                                 "Ccol_contrast1",
-                                 "Ccol_contrast2",
-                                 "Ccol_contrast4"
-                               ))
-
-# Step 4: Add a new column 'region_season' based on the 'contrast' column
-significant_taxa <- significant_taxa %>%
-  mutate(region_season = recode(contrast,
-                               "water_contrast1" = "Water Las Perlas wet vs. Las Perlas dry",
-                               "Acon_contrast1" = "A. concolor Las Perlas wet vs. Las Perlas dry",
-                               "Mdor_contrast1" = "M. dorsalis Las Perlas wet vs. Las Perlas dry",
-                               "Axan_contrast1" = "A. xanthopterus Las Perlas wet vs. Las Perlas dry",
-                               "Plat_contrast1" = "P. laticlavius Las Perlas wet vs. Las Perlas dry",
-                               "Cpan_contrast1" = "C. panamensis Las Perlas wet vs. Las Perlas dry",
-                               "Elab_contrast1" = "E. labriformis Las Perlas wet vs. Las Perlas dry",
-                               "Ccol_contrast1" = "C. colonus Las Perlas wet vs. Las Perlas dry",
-                               "water_contrast2" = "Water Las Perlas wet vs. Coiba wet",
-                               "Acon_contrast2" = "A. concolor Las Perlas wet vs. Coiba wet",
-                               "Mdor_contrast2" = "M. dorsalis Las Perlas wet vs. Coiba wet",
-                               "Axan_contrast2" = "A. xanthopterus Las Perlas wet vs. Coiba wet",
-                               "Plat_contrast2" = "P. laticlavius Las Perlas wet vs. Coiba wet",
-                               "Cpan_contrast2" = "C. panamensis Las Perlas wet vs. Coiba wet",
-                               "Elab_contrast2" = "E. labriformis Las Perlas wet vs. Coiba wet",
-                               "Ccol_contrast2" = "C. colonus Las Perlas wet vs. Coiba wet",
-                               "water_contrast4" = "Water Las Perlas dry vs. Coiba dry",
-                               "Acon_contrast4" = "A. concolor Las Perlas dry vs. Coiba dry",
-                               "Mdor_contrast4" = "M. dorsalis Las Perlas dry vs. Coiba dry",
-                               "Axan_contrast4" = "A. xanthopterus Las Perlas dry vs. Coiba dry",
-                               "Plat_contrast4" = "P. laticlavius Las Perlas dry vs. Coiba dry",
-                               "Cpan_contrast4" = "C. panamensis Las Perlas dry vs. Coiba dry",
-                               "Elab_contrast4" = "E. labriformis Las Perlas dry vs. Coiba dry",
-                               "Ccol_contrast4" = "C. colonus Las Perlas dry vs. Coiba dry",
-                               "water_contrast5" = "Water Coiba wet vs. Coiba dry",
-                               "Acon_contrast5" = "A. concolor Coiba wet vs. Coiba dry",
-                               "Mdor_contrast5" = "M. dorsalis Coiba wet vs. Coiba dry",
-                               "Axan_contrast5" = "A. xanthopterus Coiba wet vs. Coiba dry",
-                               "Plat_contrast5" = "P. laticlavius Coiba wet vs. Coiba dry",
-                               "Cpan_contrast5" = "C. panamensis Coiba wet vs. Coiba dry",
-                               "Elab_contrast5" = "E. labriformis Coiba wet vs. Coiba dry",
-                               "Ccol_contrast5" = "C. colonus Coiba wet vs. Coiba dry"
-                                                          ))
-
-# Step 5: Define fish prefixes for filtering contrasts
-fish_prefixes <- c("Acon_", "Mdor_", "Axan_", "Plat_", "Cpan_", "Elab_", "Ccol_")
-
-# Step 6: Loop through each fish prefix to create plots
-for (prefix in fish_prefixes) {
-  # Filter data for contrasts starting with the current prefix
-  fish_data <- significant_taxa %>%
-    filter(grepl(paste0("^", prefix), contrast)) %>%
-    arrange(contrast, padj)  # Reorder by padj within each contrast
-  
-  # Ensure there is data to plot for the current prefix
-  if (nrow(fish_data) > 0) {
-    # Generate the plot
-    plot <- ggplot(fish_data, aes(x = reorder(Species, -padj), y = log2FoldChange, color = shared)) +
-      geom_point(size = 3, alpha = 0.8) +
-      facet_wrap(~ region_season, scales = "free_y", ncol = 2) +  # Use 'region_season' for facets
-      scale_color_manual(values = c("Shared" = "blue", "Not Shared" = "gray")) +
-      labs(
-        x = "Microbial Taxa",
-        y = "Log2 Fold-Change",
-        color = "Shared with Water"
-      ) +
-      coord_flip() +  # Flip coordinates for better readability
-      geom_vline(xintercept = 0, linetype = "dashed") +  # Vertical dashed line at zero
-      theme_minimal() +
-      theme(
-        axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-        axis.text.y = element_text(size = 8),
-        strip.text = element_text(size = 12),  # Facet label size
-        legend.position = "bottom",
-        plot.title = element_blank(),  # Remove plot title
-        panel.grid = element_blank()  # Remove grid lines
-      )
-    
-    # Save the plot as a PDF
-    ggsave(
-      filename = paste0("DA_Taxa_", gsub("_", "", prefix), ".pdf"),
-      plot = plot,
-      width = 12,
-      height = 8
+#reassign standardized names
+ALL_DA_expanded <- ALL_DA_expanded %>%
+  group_by(new_taxa_base) %>%
+  mutate(
+    n_unique_sequences = n_distinct(original_taxa_name)
+  ) %>%
+  arrange(new_taxa_base, original_taxa_name) %>%
+  mutate(
+    seq_id = if_else(
+      n_unique_sequences > 1,
+      dense_rank(original_taxa_name),
+      1L
+    ),
+    new_taxa_name_standardized = if_else(
+      n_unique_sequences > 1,
+      paste0(new_taxa_base, ".", seq_id),
+      new_taxa_base
     )
-  }
-}
+  ) %>%
+  ungroup() %>%
+  select(-n_unique_sequences, -seq_id)
 
+#keep only relevant columns
+ALL_DA_expanded <- ALL_DA_expanded %>%
+  mutate(new_taxa_name = new_taxa_name_standardized) %>%
+  select(-new_taxa_name_standardized, -new_taxa_base)
 
-```
-
-```{r count shared taxa by region_season}
-# Count the number of rows (shared taxa) per "contrast_fish"
-shared_taxa_summary <- shared_taxa %>%
-  group_by(contrast_fish) %>%
-  summarise(shared_taxa_count = n()) %>%
-  arrange(desc(shared_taxa_count))  # Optional: sort by count in descending order
-
-# View the summary
-print(shared_taxa_summary)
-```
-```{r count all and unique DA taxa for each object}
-
-# List of DESeq2 objects
-dds_list <- list(
-  water = dds_water,
-  Acon = dds_Acon,
-  Mdor = dds_Mdor,
-  Axan = dds_Axan,
-  Plat = dds_Plat,
-  Cpan = dds_Cpan,
-  Elab = dds_Elab,
-  Ccol = dds_Ccol
-)
-
-# Define contrasts for each DESeq2 object (example with 4 contrasts each)
-contrasts_list <- list(
-  water = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  Acon = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  # Repeat for all other dds objects
-  Mdor = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  Axan = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  Plat = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  Cpan = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  Elab = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling")),
-  Ccol = list( c("region_season", "Las_Perlas_non_upwelling", "Las_Perlas_upwelling"),
-  c("region_season", "Las_Perlas_non_upwelling", "Coiba_non_upwelling"),
-  c("region_season", "Las_Perlas_upwelling", "Coiba_upwelling"),
-  c("region_season", "Coiba_non_upwelling", "Coiba_upwelling"))
-)
-
-# Function to process multiple contrasts for each dds object
-process_dds <- function(dds, contrasts) {
-  contrast_results <- list()
-  for (contrast in contrasts) {
-    # Get results for the current contrast
-    res <- results(dds, contrast = contrast, alpha = 0.05)
-    sig_res <- res[!is.na(res$padj) & res$padj < 0.05, ]
-    significant_taxa <- rownames(sig_res)
-    contrast_results[[paste(contrast, collapse = "_")]] <- significant_taxa
-  }
-  # Calculate unique taxa for all contrasts within this dds object
-  all_taxa <- unlist(contrast_results)
-  unique_taxa <- unique(all_taxa)
-  unique_per_contrast <- lapply(contrast_results, unique)  # Unique taxa per contrast
-  list(
-    significant_counts = sapply(contrast_results, length),  # Count per contrast
-    unique_taxa = unique_taxa,                             # Unique taxa for the object
-    unique_per_contrast = unique_per_contrast              # Unique taxa for each contrast
+#rename columns to be more informative
+ALL_DA_expanded2 <- ALL_DA_expanded %>%
+  rename(
+    ASV_sequence = original_taxa_name,
+    Taxonomy = new_taxa_name
   )
-}
-
-# Apply the function to each dds object
-results_list <- mapply(
-  process_dds,
-  dds = dds_list,
-  contrasts = contrasts_list,
-  SIMPLIFY = FALSE
-)
-
-# Summarize results for unique taxa
-unique_counts_per_object <- sapply(results_list, function(res) length(res$unique_taxa))
-unique_counts_per_contrast <- lapply(results_list, function(res) res$significant_counts)
-unique_taxa_per_contrast <- lapply(results_list, function(res) res$unique_per_contrast)
-
-# Combine all unique taxa across all dds objects
-all_unique_taxa <- unique(unlist(lapply(results_list, function(res) res$unique_taxa)))
-
-# Summary
-print("Unique significant counts per object:")
-print(unique_counts_per_object)
-
-print("Unique significant counts per contrast for each object:")
-print(unique_counts_per_contrast)
-
-print("Total unique significant taxa across all objects:")
-print(length(all_unique_taxa))
-
 ```
 
-Here, we have all the significant taxa across all 4 of these region-season comparisons:
-"Total significant counts per object (all contrasts combined):"
-water  Acon  Mdor  Axan  Plat  Cpan  Elab  Ccol 
- 1455    17    42    58    73    18    33    17 
- 
- And among those, these are the unique taxa (removing repeats across comparisons)
-"Unique significant counts per object (across contrasts):"
-water  Acon  Mdor  Axan  Plat  Cpan  Elab  Ccol 
-  732     9    27    37    47    11    20     9 
-[1] "Total unique significant taxa across all objects:"
-[1] 824
+```{r save full DA table with harmonized taxa names}
+write_csv(ALL_DA_expanded2, file = "./Intermediate_R_objects/MERGED_FishANDWater_DAtaxa_seqs_NEWNAMES.csv")
+```
+
+```{r read MERGED DA taxa table}
+ALL_DA_expanded2 <- read_csv("./Intermediate_R_objects/MERGED_FishANDWater_DAtaxa_seqs_NEWNAMES.csv")
+```
+
+
+```{r split out water and fish to compare direction of change}
+fish_df <- ALL_DA_expanded %>%
+  filter(host_species != "Water")
+
+water_df <- ALL_DA_expanded %>%
+  filter(host_species == "Water") %>%
+  select(
+    contrast,
+    original_taxa_name,
+    water_log2FC = log2FoldChange
+  )
+```
+
+```{r compare shared taxa}
+shared_fish_water <- fish_df %>%
+  inner_join(
+    water_df,
+    by = c("contrast", "original_taxa_name")
+  ) %>%
+  select(
+    contrast,
+    new_taxa_name,
+    original_taxa_name,
+    fish_species = host_species,
+    fish_log2FC = log2FoldChange,
+    water_log2FC
+  )
+
+#add test of direction of change (i.e. are they either enriched or depleted in the same season)
+shared_fish_water <- shared_fish_water %>%
+  mutate(
+    same_direction = sign(fish_log2FC) == sign(water_log2FC)
+  )
+
+shared_fish_water
+
+#rename columns for export
+shared_fish_water2 <- shared_fish_water %>%
+  rename(
+    ASV_sequence = original_taxa_name,
+    Taxonomy = new_taxa_name,
+    host_species = fish_species
+  ) %>% 
+  select(host_species, Taxonomy, ASV_sequence, everything())
+```
+
+```{r save shared fish and water DA taxa table}
+write_csv(shared_fish_water2, file = "./Intermediate_R_objects/shared_fish_water_significantDAtaxa_20260217.csv")
+```
+
+```{r count total number of shared taxa by species and season-region pairing}
+shared_summary <- shared_fish_water %>%
+  group_by(fish_species, contrast) %>%
+  summarise(
+    n_shared = n_distinct(original_taxa_name),
+    n_same_direction = sum(sign(fish_log2FC) == sign(water_log2FC)),
+    .groups = "drop"
+  )
+
+shared_summary
+```
+
+```{r count number of unique shared ASVs}
+#count number of unique shared ASVs
+n_distinct(shared_fish_water$original_taxa_name) #47
+
+#count number of repeated ASVs (shared multiple times)
+repeated_ASVs <- shared_fish_water %>%
+  count(original_taxa_name) %>%
+  filter(n > 1)
+nrow(repeated_ASVs) #20
+
+#look into repeated ASVs
+asv_vector <- repeated_ASVs$original_taxa_name
+shared_repeated_ASVs <- ALL_DA_expanded %>%
+  filter(original_taxa_name %in% asv_vector)
+shared_repeated_ASVs
+```
+
+
+
+
+
+#### Plotting relationships between shared DA taxa in fish & water
+
+```{r filter for fish with at least 4 shared ASVs to calc stats on}
+# Keep only panels with >=4 shared ASVs
+shared_fish_water_filtered <- shared_fish_water %>%
+  group_by(fish_species, contrast) %>%
+  filter(n_distinct(original_taxa_name) >= 4) %>%
+  ungroup()
+
+# Compute correlation per fish × contrast
+cor_stats <- shared_fish_water_filtered %>%
+  group_by(fish_species, contrast) %>%
+  summarise(
+    r = round(cor(water_log2FC, fish_log2FC), 2),
+    p_val = signif(cor.test(water_log2FC, fish_log2FC)$p.value, 3),
+    n_shared = n_distinct(original_taxa_name),  # fix: count unique ASVs per panel
+    .groups = "drop"
+  ) %>%
+  mutate(
+    label = paste0("n=", n_shared,
+                   "\nr=", r,
+                   "\np=", p_val)
+  )
+
+plot_df <- shared_fish_water_filtered %>%
+  left_join(cor_stats, by = c("fish_species", "contrast"))
+```
+
+```{r plot log2fold change of water against fish samples}
+Water_Fish_DAplot1 <- ggplot(plot_df, aes(x = water_log2FC, y = fish_log2FC)) +
+  geom_point(alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  
+  # Add correlation annotation in top-left corner of each facet
+  geom_text(
+    data = cor_stats,
+    aes(
+      x = min(shared_fish_water_filtered$water_log2FC),
+      y = max(shared_fish_water_filtered$fish_log2FC),
+      label = label
+    ),
+    inherit.aes = FALSE,
+    hjust = 0,
+    vjust = 1,
+    size = 3
+  ) +
+
+  facet_grid(fish_species ~ contrast, scales = "free") +
+  labs(
+    title = "", #can add in: Fish vs Water Differential Abundance Effect Sizes
+    x = "Water log2FoldChange",
+    y = "Fish log2FoldChange"
+  ) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 8)
+  )
+
+Water_Fish_DAplot1 
+```
+
+```{r save plot as PDF}
+ggsave(filename = "Log2Fold Change in Significant DA microbes WATER vs FISH.pdf", plot = Water_Fish_DAplot1, path = "./Intermediate_R_objects/Figs", width = 12, height = 8, device='pdf', dpi=600)
+```
+
+```{r save plot as PNG}
+ggsave(filename = "Log2Fold Change in Significant DA microbes WATER vs FISH.png", plot = Water_Fish_DAplot1, path = "./Intermediate_R_objects/Figs", width = 12, height = 8, device='png', dpi=600)
+```
+
+Here, by plotting log2fold change in ASVs for both water and fish by season-region comparison, and filtering to only include fish which share >4 ASVs for a given region/season comparison, we can see something interesting: M. dorsalis and P. laticlavius (2 herbivores, but from different families) have an almost perfect 1-to-1 relationship with these shared DA taxa (r^2 ranging from 0.84-0.94, p < 0.001), suggesting that this portion of their microbiome is likely shifting due to changes in the surrounding seawater's microbiome. These shared DA taxa make up around 25-30% of these fishes overall DA taxa (M. dor DA taxa total across all 4 region/season comparisons = 42 (so 13/42 = 31%), and P. lat total DA taxa = 73 (so 20/73 = ~27%)). A. xanthopterus is a nice comparison, which has quite a few shared DA taxa with water, but the amount they change differs, such that the relationship between fish and water samples is not significant (r^2 = 0.3, p = 0.392)
