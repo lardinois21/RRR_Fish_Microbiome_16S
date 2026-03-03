@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Most recent update: 
 
+March 3, 2026 - LLL - try to plot temp (& DO?) against fish samples in NMDS
 December 18, 2024 - LLL - trophic group permanova
 August 29, 2024 - LLL
 
@@ -1880,6 +1881,7 @@ plot_ordination(
 
   
 ```
+
 ```{r code for exporting plot above as a pdf}
 ggsave(filename = "TEP Skin Microbiome PCoA Host Species 21-22", path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 12, device='pdf', dpi=700)
 ```
@@ -2035,6 +2037,7 @@ HerbsPerlas3 <- plot_ordination(
 HerbsPerlas3
 
 ```
+
 ```{r save whole dataset pcoa plot}
 ggsave(filename = "Herbivores' Skin Microbiome PCoA Plot 21-22 Perlas Only", plot = HerbsPerlas1, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 14, height = 10, device='pdf', dpi=700)
 
@@ -2042,7 +2045,6 @@ ggsave(filename = "Herbivores' Skin Microbiome PCoA Plot 21-22 Perlas Only Facte
 
 ggsave(filename = "Herbivores' Skin Microbiome PCoA Plot 21-22 Perlas Only with Ellipses", plot = HerbsPerlas3, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 14, height = 10, device='pdf', dpi=700)
 ```
-
 
 ```{r unconstrained ordinations - Coiba}
 
@@ -2112,8 +2114,6 @@ plot_ordination(
   geom_point(colour = "grey90", size = 1.5)
 ```
 
-
-
 ```{r unconstrained ordinations - Coiba - by season}
 
 # Ordinate - Non-upwelling
@@ -2155,6 +2155,7 @@ plot_ordination(
   geom_point(aes(color = species), alpha = 0.7, size = 4) +
   geom_point(colour = "grey90", size = 1.5)
 ```
+
 ```{r unconstrained ordinations - Las Perlas - by season}
 # Ordinate - non-upwelling
 ROHR_06_pcoa_lasperlas_N <- ordinate(
@@ -2197,7 +2198,7 @@ plot_ordination(
 
 ```
 
-
+##NMDS plots
 
 NMDS (Non-metric multidimensional scaling)
 - another ordination technique
@@ -2252,6 +2253,7 @@ plot_ordination(
 
 #still seeing similarly high (0.22) levels of stress
 ```
+
 ```{r NMDS - by region - Las Perlas}
 set.seed(1)
 
@@ -2348,6 +2350,446 @@ cap_plot +
 anova(cap_ord)
 ```
 
+```{r replot with filtered vectors for more visual clarity}
+# METHOD 1: Filter by arrow length (magnitude)
+# Keep only arrows that explain more variance (longer arrows)
+arrow_lengths <- sqrt(arrowmat[, "CAP1"]^2 + arrowmat[, "CAP2"]^2)
+length_threshold <- quantile(arrow_lengths, probs = 0.75)  # Keep top 25%
+arrowmat_filtered <- arrowmat[arrow_lengths >= length_threshold, ]
+
+# METHOD 2: Filter by contribution to specific axes
+# Keep only variables with strong loading on CAP1 or CAP2
+#arrowmat_filtered <- arrowmat[
+#  (abs(arrowmat[, "CAP1"]) > 0.5 | abs(arrowmat[, "CAP2"]) > 0.5), 
+#  ]
+
+# Create data frame from filtered arrows
+arrowdf <- data.frame(labels = rownames(arrowmat_filtered), arrowmat_filtered)
+
+# Define the arrow aesthetic mapping
+arrow_map <- aes(xend = CAP1, 
+    yend = CAP2, 
+    x = 0, 
+    y = 0, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+label_map <- aes(x = 1.3 * CAP1, 
+    y = 1.3 * CAP2, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+arrowhead = arrow(length = unit(0.02, "npc"))
+
+# Make the final plot with filtered arrows
+cap_plot + 
+  geom_segment(
+    mapping = arrow_map, 
+    size = .5, 
+    data = arrowdf, 
+    color = "gray", 
+    arrow = arrowhead
+  ) + 
+  geom_text(
+    mapping = label_map, 
+    size = 4,  
+    data = arrowdf, 
+    show.legend = FALSE
+  )
+```
+```{r load helper package}
+library(phyloseqCompanion) #to extract df
+library(ggrepel) #adjust text positioning
+```
+
+
+```{r test with NMDS instead}
+# Set seed for reproducibility
+set.seed(12345)
+
+# Calculate Bray-Curtis distance
+ROHR_06_bray <- phyloseq::distance(physeq = ROHR_06_obj_clean_prop, method = "bray")
+
+# NMDS ordinate
+nmds_ord <- ordinate(
+    physeq = ROHR_06_obj_clean_prop, 
+    method = "NMDS",
+    distance = ROHR_06_bray,
+    k = 2,  # Number of dimensions (2 for 2D plot)
+    maxit = 1000,  # Maximum iterations
+    trymax = 100  # Number of random starts
+)
+```
+
+```{r plot NMDS with top vectors}
+# NMDS plot - base
+nmds_plot <- plot_ordination(
+  physeq = ROHR_06_obj_clean_prop, 
+  ordination = nmds_ord, 
+    color = "species", 
+    axes = c(1,2)
+) + 
+    aes(shape = region_season) + 
+    geom_point(aes(colour = species), alpha = 0.6, size = 5) + 
+    geom_point(colour = "grey90", size = 1.5) + 
+  scale_colour_manual(values = species_colors, name = "Host Species")
+
+nmds_plot
+
+# Check stress value (lower is better, <0.2 is good)
+print(nmds_ord$stress) #0.2269 (pretty high = not great, but typical for this dataset)
+
+# Fit environmental variables to the ordination
+env_data <- sample.data.frame(ROHR_06_obj_clean_prop)
+
+# Select only specific columns (environmental variables)
+columns_to_keep <- c("species", "region_season", "diet")
+env_data_subset <- env_data[, columns_to_keep, drop = FALSE]
+# str(env_data_subset) #check data types
+env_data_subset <- env_data_subset %>%
+  mutate(across(everything(), ~as.factor(.)))
+
+# Fit only selected environmental variables
+envfit_result <- envfit(nmds_ord, env_data_subset, permutations = 999, na.rm = TRUE)
+
+# Extract factor centroids (for categorical variables)
+arrowmat <- envfit_result$factors$centroids
+
+# Scale arrows to fit nicely on plot (multiply by scaling factor)
+arrow_scale <- 2.5  # Adjust this to make arrows longer/shorter
+arrowmat_scaled <- arrowmat * arrow_scale
+
+# Filter arrows by length (magnitude) - keep top 25%
+arrow_lengths <- sqrt(arrowmat_scaled[, "NMDS1"]^2 + arrowmat_scaled[, "NMDS2"]^2)
+length_threshold <- quantile(arrow_lengths, probs = 0.75)
+arrowmat_filtered <- arrowmat_scaled[arrow_lengths >= length_threshold, ]
+
+# Create data frame from filtered arrows
+arrowdf <- data.frame(labels = rownames(arrowmat_filtered), arrowmat_filtered)
+
+# Define the arrow aesthetic mapping (without label)
+arrow_map <- aes(xend = NMDS1, 
+    yend = NMDS2, 
+    x = 0, 
+    y = 0, 
+    shape = NULL, 
+    color = NULL)
+
+label_map <- aes(x = 1.3 * NMDS1, 
+    y = 1.3 * NMDS2, 
+    label = labels)
+
+arrowhead = arrow(length = unit(0.02, "npc"))
+
+# Make the final plot with filtered arrows
+nmds_plot + 
+  geom_segment(
+    mapping = arrow_map, 
+    size = 0.5, 
+    data = arrowdf, 
+    color = "gray", 
+    arrow = arrowhead,
+    inherit.aes = FALSE
+  ) + 
+  ggrepel::geom_text_repel(
+    mapping = label_map, 
+    size = 4,  
+    data = arrowdf, 
+    show.legend = FALSE,
+    inherit.aes = FALSE,
+    box.padding = 0.5,  # Padding around text boxes
+    point.padding = 0.5,  # Padding around points
+    force = 2,  # Strength of repulsion between overlapping labels
+    max.overlaps = Inf  # Allow all labels (no hidden labels)
+  )
+```
+
+#### 2026-03-03 LLL - testing a constrained ordination with temp & DO
+
+To explicitly show temp and DO data against our fish dataset, we need to integrate this with the metadata for these samples. While we don't have 1-to-1 correspondence between environmental data monitoring sites and fish sampling, we do have at least some data for each gulf matching each day of fish collections. We have several options for this, but I'm thinking the most standard way would be to average by gulf, then match fish to temps based on either (1) a set timepoint (e.g. 9:30 am, since we do morning collections) or (2) a 24-hr or 48-hr temp average. We'll start by testing out the latter option...
+
+```{r read merged temp & DO df}
+Temp_and_DO <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP/Temp_and_DO_merged_21_22.csv", colClasses = c("character", "character","character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+#convert datetime column
+Temp_and_DO$Date_Time <- as.POSIXct(
+  Temp_and_DO$Date_Time, 
+  format = "%Y-%m-%dT%H:%M:%SZ",
+  tz = "UTC"
+)
+```
+
+```{r pull out fish metadata}
+#extract fish metadata
+fish_metadata <- sample.data.frame(ROHR_06_obj_clean_prop)
+#view metadata
+fish_metadata
+
+#filter for only relevant columns
+fish_metadata <- fish_metadata %>% 
+  select(RRR, region, site, date, season, species, region_season, diet)
+```
+
+```{r extract temp and DO data by gulf}
+#extract temp data
+temp <- Temp_and_DO %>% 
+  select(Region, Site, Date_Time, Temp) %>% 
+  rename(
+    region = Region,
+    site = Site
+  ) %>%  #to match fish metadata 
+  filter(!is.na(Temp)) #keep only entries with temp data
+  
+
+#extract DO data
+DO <- Temp_and_DO %>% 
+  select(Region, Site, Date_Time, DO) %>% 
+  rename(
+    region = Region,
+    site = Site
+  ) %>% #to match fish metadata
+  filter(!is.na(DO)) #keep only entries with DO data
+```
+
+```{r 24 hr average temp by gulf for each dataset}
+temp_avg <- temp %>%
+  mutate(date = as.Date(Date_Time)) %>%
+  group_by(region, date) %>%
+  summarise(
+    Avg_Temp = mean(Temp, na.rm = TRUE),
+    SD_Temp = sd(Temp, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  select(region, date, Avg_Temp, SD_Temp)
+
+temp_avg
+```
+
+```{r 24 hr average DO by gulf for each dataset}
+DO_avg <- DO %>%
+  mutate(date = as.Date(Date_Time)) %>%
+  group_by(region, date) %>%
+  summarise(
+    Avg_DO = mean(DO, na.rm = TRUE),
+    SD_DO = sd(DO, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  select(region, date, Avg_DO, SD_DO)
+
+DO_avg
+```
+
+```{r sanity check Temp & DO plots}
+#temp
+ggplot(temp_avg, aes(x = date, y = Avg_Temp, color = region)) +
+  geom_line() +
+  geom_point() +
+  geom_ribbon(aes(ymin = Avg_Temp - SD_Temp, ymax = Avg_Temp + SD_Temp, fill = region), 
+              alpha = 0.2, 
+              color = NA) +
+  labs(
+    title = "24-Hour Average Temperature by Region",
+    x = "Date",
+    y = "Temperature (°C)",
+    color = "Region",
+    fill = "Region"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#DO
+ggplot(DO_avg, aes(x = date, y = Avg_DO, color = region)) +
+  geom_line() +
+  geom_point() +
+  geom_ribbon(aes(ymin = Avg_DO - SD_DO, ymax = Avg_DO + SD_DO, fill = region), 
+              alpha = 0.2, 
+              color = NA) +
+  labs(
+    title = "24-Hour Average Dissolved Oxygen by Region",
+    x = "Date",
+    y = "[DO]",
+    color = "Region",
+    fill = "Region"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+Given the major data gaps in the DO dataset, we'll only merge in the temp data
+
+```{r add temp data to fish metadata}
+fish_metadata <- fish_metadata %>%
+  rownames_to_column(var = "original_rownames") %>%
+  mutate(date = as.Date(date, format = "%m/%d/%Y")) %>% 
+  left_join(
+    temp_avg %>% select(region, date, Avg_Temp),
+    by = c("region" = "region", "date" = "date")
+  ) %>%
+  column_to_rownames(var = "original_rownames")
+```
+
+
+```{r add temp to phyloseq obj metadata}
+#add back to phyloseq obj
+ROHR_06_temp <- phyloseq(
+  otu_table(ROHR_06_obj_clean_prop),
+  tax_table(ROHR_06_obj_clean_prop),
+  sample_data(fish_metadata)
+)
+```
+
+```{r NMDS with temp as vector}
+# Set seed for reproducibility
+set.seed(12340)
+
+# Calculate Bray-Curtis distance
+ROHR_06_bray_temp <- phyloseq::distance(physeq = ROHR_06_temp, method = "bray")
+
+# NMDS ordinate
+nmds_ord_temp <- ordinate(
+    physeq = ROHR_06_temp, 
+    method = "NMDS",
+    distance = ROHR_06_bray_temp,
+    k = 2,  # Number of dimensions (2 for 2D plot)
+    maxit = 1000,  # Maximum iterations
+    trymax = 100  # Number of random starts
+)
+```
+
+```{r prep plot NMDS with top vectors inc TEMP}
+# NMDS plot - base
+nmds_plot_temp <- plot_ordination(
+  physeq = ROHR_06_temp, 
+  ordination = nmds_ord_temp, 
+    color = "species", 
+    axes = c(1,2)
+) + 
+    aes(shape = region_season) + 
+    geom_point(aes(colour = species), alpha = 0.5, size = 5) + 
+    geom_point(colour = "grey90", size = 1.5) + 
+  scale_colour_manual(values = species_colors, name = "Host Species") +
+  scale_shape(name = "Sampling Region & Season")
+
+nmds_plot_temp
+
+# Check stress value (lower is better, <0.2 is good)
+print(nmds_ord_temp$stress) #0.224 (pretty high = not great, but typical for this dataset)
+
+# Fit environmental variables to the ordination
+env_data <- sample.data.frame(ROHR_06_temp)
+
+# Select only specific columns (environmental variables)
+columns_to_keep <- c("species", "region_season", "diet", "Avg_Temp")
+env_data_subset <- env_data[, columns_to_keep, drop = FALSE]
+
+# Convert to factors EXCEPT Avg_Temp (keep as numeric)
+env_data_subset <- env_data_subset %>%
+  mutate(across(-Avg_Temp, ~as.factor(.)),
+         Avg_Temp = as.numeric(Avg_Temp))
+
+# Fit only selected environmental variables
+envfit_result <- envfit(nmds_ord_temp, env_data_subset, permutations = 999, na.rm = TRUE)
+
+# Extract factor centroids (for categorical variables) and vector arrows (for numeric)
+arrowmat <- envfit_result$factors$centroids
+vectormat <- envfit_result$vectors$arrows
+
+# Combine both into one matrix for plotting
+arrowmat_combined <- rbind(arrowmat, vectormat)
+
+# Scale arrows to fit nicely on plot (multiply by scaling factor)
+arrow_scale <- 3  # Adjust this to make arrows longer/shorter
+arrowmat_scaled <- arrowmat_combined * arrow_scale
+
+# Filter arrows by length (magnitude) - keep top 50%
+arrow_lengths <- sqrt(arrowmat_scaled[, "NMDS1"]^2 + arrowmat_scaled[, "NMDS2"]^2)
+length_threshold <- quantile(arrow_lengths, probs = 0.5)
+arrowmat_filtered <- arrowmat_scaled[arrow_lengths >= length_threshold, ]
+
+# Create data frame from filtered arrows
+arrowdf <- data.frame(labels = rownames(arrowmat_filtered), arrowmat_filtered)
+
+# Scale back just the temperature vector so it doesn't go out of bounds
+arrowdf <- arrowdf %>%
+  mutate(
+    NMDS1 = if_else(labels == "Avg_Temp", NMDS1 * 0.5, NMDS1),
+    NMDS2 = if_else(labels == "Avg_Temp", NMDS2 * 0.5, NMDS2)
+  )
+
+#relabel labels
+label_mapping <- c(
+  "speciesAbudefduf concolor" = "A. concolor",
+  "speciesEpinephelus labriformis" = "E. labriformis",
+  "speciesAcanthurus xanthopterus" = "A xanthopterus",
+  "speciesChaetodon humeralis" = "C. humeralis",
+  "speciesAbudefduf troschelii" = "A. troschelii",
+  "speciesJohnrandallia nigrirostris" = "J. nigrirostris",
+  "region_seasonLas Perlas upwelling" = "Las Perlas Upwelling",
+  "dietcarnivore" = "Carnivore",
+  "dietinvertivore" = "Invertivore",
+  "dietomnivore" = "Omnivore",
+  "dietterritorial herbivore" = "Terr. Herbivore",
+  "Avg_Temp" = "Temperature"
+)
+
+#relabel labels
+arrowdf <- arrowdf %>%
+  mutate(labels = recode(labels, !!!label_mapping))
+
+# Define the arrow aesthetic mapping (without label)
+arrow_map <- aes(xend = NMDS1, 
+    yend = NMDS2, 
+    x = 0, 
+    y = 0, 
+    shape = NULL, 
+    color = NULL)
+
+label_map <- aes(x = 1.3 * NMDS1, 
+    y = 1.3 * NMDS2, 
+    label = labels)
+
+arrowhead = arrow(length = unit(0.02, "npc"))
+```
+
+```{r make final NMDS with vectors}
+# Make the final plot with filtered arrows
+NMDS_plot_allfish_temp <- nmds_plot_temp + 
+  geom_segment(
+    mapping = arrow_map, 
+    size = 0.5, 
+    data = arrowdf, 
+    color = "gray", 
+    arrow = arrowhead,
+    inherit.aes = FALSE
+  ) + 
+  ggrepel::geom_text_repel(
+    mapping = label_map, 
+    size = 5,  
+    data = arrowdf, 
+    show.legend = FALSE,
+    inherit.aes = FALSE,
+    box.padding = 0.5,  # Padding around text boxes
+    point.padding = 0.5,  # Padding around points
+    force = 2,  # Strength of repulsion between overlapping labels
+    max.overlaps = Inf,  # Allow all labels (no hidden labels)
+    bg.color = "white",           # Background color
+    bg.r = 0.2,                  # Radius of rounded corners
+    alpha = 1,               # translucency adjust
+    color = "black",               # Text stays opaque black
+    fontface = "italic"           # Italicize text
+  )
+
+NMDS_plot_allfish_temp 
+```
+
+```{r save NMDS w temp vector}
+ggsave(filename = "Skin Microbiome NMDS ALL FISH 21-22 w TEMP VECTORS.pdf", plot = NMDS_plot_allfish_temp, path = "./Intermediate_R_objects/Figs", width = 12, height = 8, device='pdf', dpi=600)
+
+ggsave(filename = "Skin Microbiome NMDS ALL FISH 21-22 w TEMP VECTORS.png", plot = NMDS_plot_allfish_temp, path = "./Intermediate_R_objects/Figs", width = 12, height = 8, device='png', dpi=600)
+```
+
+## STACKED BARPLOTS
 
 Following https://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html
 ```{r prep data visualize most abundant taxa}
