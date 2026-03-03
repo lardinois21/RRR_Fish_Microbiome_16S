@@ -114,6 +114,7 @@ Afuera$Date <- as.Date(Afuera$Date) #this worked!!
 Afuera
 
 ```
+
 ``` {r create a date:time category for Contadora, echo = FALSE}
 #merge date & time into a single, new column
 Contadora <- Contadora %>%
@@ -203,6 +204,7 @@ Uvas$Date <- as.Date(Uvas$Date) #this worked!!
 Uvas
 
 ```
+
 ```{r merge all 6 sites temp data, echo = FALSE}
 temp <- bind_rows(Afuera, Damas, Uvas, Contadora, Saboga, MogoMogo, .id = NULL)
 temp
@@ -1078,6 +1080,7 @@ Dam_DO2_clean <- Dam_DO2_clean %>%
 # Check the updated classes
 str(Dam_DO2_clean)
 ```
+
 ```{r merge both Damas datasets}
 # Stack rows from both datasets
 Dam_DO_merged <- bind_rows(Dam_DO1_clean, Dam_DO2_clean)
@@ -1135,6 +1138,7 @@ ALL_DO <- bind_rows(Dam_DO_30, Sab_DO_clean)
 
 ALL_DO
 ```
+
 ```{r remove unnecessary rows}
 # Select specific columns
 ALL_DO <- ALL_DO %>%
@@ -1320,6 +1324,7 @@ DO2_filtered <- DO2_subset %>%
 print(DO1_filtered)
 print(DO2_filtered)
 ```
+
 ```{r filter for only dates of interest}
 # Define the datetime range
 start_datetime <- as.POSIXct("2021-09-15 12:00:00")
@@ -1370,6 +1375,7 @@ DO_merged <- left_join(DO_Sat_daily, DO_daily)
 # View the result
 print(DO_merged)
 ```
+
 ```{r add a placeholder time to restore "datetime" column}
 # Convert Date column to POSIXct and add placeholder time
 DO_merged <- DO_merged %>%
@@ -1392,6 +1398,7 @@ DO_merged
 setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
 write_csv(DO_merged, "DO_StevePaton_Oct21_May22.csv")
 ```
+
 ```{r read in subsetted df}
 #temporarily set WD to enviro data source files location
 setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
@@ -1575,6 +1582,7 @@ DO_week2 <- ggplot(ALL_DO, aes(Date_Time, DO_Sat, colour = Site)) +
 
 DO_week2
 ```
+
 ```{r code for exporting plot above as a pdf}
 ggsave(filename = "March 10-day Daily DO 21_22.pdf", plot = DO_week, path = '/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_Figures_Draft', width = 16, height = 10, device='pdf', dpi=700)
 ```
@@ -1776,11 +1784,13 @@ combined_df <- combined_df %>%
 
 combined_df
 ```
+
 ```{r save merged temp and DO df}
 #temporarily set WD to enviro data source files location
 setwd("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP")
 write_csv(combined_df, "Temp_and_DO_merged_21_22.csv")
 ```
+
 ```{r read merged temp & DO df}
 combined_df <- read.csv("/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/RRR_HOBO_Environmental_data/StevePaton_EnviroData_Site1_GOP/Temp_and_DO_merged_21_22.csv", colClasses = c("character", "character","character", "POSIXct", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
 ```
@@ -1863,6 +1873,7 @@ temp_DO_combined <- temp_DO_combined +
                      )
 temp_DO_combined
 ```
+
 ```{r add text box labels for temp and DO lines}
 temp_DO_combined2 <- temp_DO_combined +
   annotate("text", x = as.POSIXct("2021-10-05 00:00:00"), y = max(combined_df$Temp, na.rm = TRUE) + 0.5, label = "Temp", hjust = 1, vjust = 1.1, size = 6, color = "black") +  # Top left
