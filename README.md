@@ -1,4 +1,4 @@
-# Host matters: coral reef fish species show distinct skin microbiome responses to abrupt environmental change
+# Host matters: coral reef fish species show distinct skin microbiome responses to upwelling-driven environmental changes
 
 ## TLDR
 Repository for fish skin microbiome analyses (16S), to be included in an upcoming manuscript (Preprint available at: https://doi.org/10.21203/rs.3.rs-8158492/v1)
@@ -39,7 +39,8 @@ Note: Start with scripts #1 & #2, which perform basic metabarcoding data cleanin
 - beta diversity metrics run on full fish dataset (many host species)
 - Bray Curtis, Jaccard, Unifrac, WUnifrac... = different diversity metrics run to assess microbial community composition.
 - PERMANOVAs to test significance of different predictors in explaining microbial community variation across species, regions, and seasons
-- ordinations (PCoAs, NMDS) to visualize microbiome (dis)similarity across groups
+- ordinations (PCoAs, NMDS) to visualize microbiome (dis)similarity across groups 
+  + [NEW] constrained ordinations with species, regions, seasons, diet, AND temperature as predictors
 
 (4) Script_4_Skin_Species_by_Species_B-div.Rmd
 - scripts splits whole dataset into subsets by host species, for both the rarefied and unrarefied datasets
@@ -54,6 +55,10 @@ Note: Start with scripts #1 & #2, which perform basic metabarcoding data cleanin
 
 (7) Script_7_Skin_Figures.Rmd
 - script used to refine and clean manuscript figures, especially the multi-panel plots (some figures coded directly in scripts above)
+
+(8) Script_8_Core_Microbiome_Test.Rmd [beta version]
+- [test] runs an indicator analysis on fish & water datasets (merged) to detect 
+(1) core microbiome across all fish species (fish v. water) and (2) host-specific core microbiome (species-by-species)
 
 ### Water Microbiome Scripts
 Note: first run water microbiome samples through the same pre-processing script (Fish script #1) and/or merge the datasets (fish + water) prior to pre-processing and run everything together
