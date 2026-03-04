@@ -46,7 +46,7 @@ library(sf) #"Support for simple features, a standardized way to encode spatial 
 library(terra) #Spatial data analysis - w/ vector & raster data
 library(dplyr) #working with data frame like objects
 library(spData) #"Diverse spatial datasets for demonstrating, benchmarking and teaching spatial data analysis"
-library(spDataLarge) #Large spatial datasets
+#library(spDataLarge) #Large spatial datasets
 library(tmap)    # for static and interactive maps
 library(leaflet) # for interactive maps
 library(ggplot2) # tidyverse data visualization package
@@ -293,6 +293,7 @@ ggdraw() +
   draw_plot_label(label = c("A", "B", "C"), size = 15,
                   x = c(0, 0, 0.5), y = c(1, 0.6, 0.6))
 ```
+
 ```{r add GPS coordinates of sampling sites to Panama Map (in progress), echo = FALSE}
 ####issue with mapping this, likely because the shapefile is in meters, not coordinates
 ###need to adjust lat/long coordinates of boxes & insets
@@ -436,6 +437,7 @@ ggdraw(pa_map_ggplot) +
     width = 0.5, 
     height = 0.46) #######need to fix arrangement of these
 ```
+
 ```{r tmap test map}
 # Add fill layer to Panama shape
 tm_shape(Panama_map) +
@@ -450,13 +452,15 @@ tm_shape(Panama_map) +
 ```
 Section 9.2.7 - Inset maps (Geocomputation with R)
 
+## JUMP TO HERE FOR PUBLICATION MAPS!!!
+
 ```{r tmap save Panama map w/o boundaries}
 pa_map = tm_shape(Panama_map) + tm_fill()
 pa_map
 
 pa_map +
   tm_compass(type = "8star", size = 3, position = c("right", "top")) + #add compass to map
-  tm_scale_bar(breaks = c(0, 50, 100), text.size = 0.5, position = c("left", "bottom")) #add scale bar
+  tm_scalebar(breaks = c(0, 50, 100), text.size = 0.5, position = c("left", "bottom")) #add scale bar
 ```
 
 ```{r inset w/ tmap & GPS coords, echo = FALSE}
@@ -479,9 +483,10 @@ pa_coiba = st_bbox(c(xmin = -81.951016, xmax = -81.498966,
 pa_coiba_map = tm_shape(Panama_map_latlong, bbox = pa_coiba) + tm_fill()
   
 pa_coiba_map <- pa_coiba_map +
-  tm_scale_bar(breaks = c(0, 10, 20), text.size = 0.75, position = c("right", "bottom")) + #add scale bar
+  tm_scalebar(breaks = c(0, 10, 20), text.size = 0.75, position = c("right", "bottom")) + #add scale bar
     tm_shape(TEP_sampling_sites.sf) + #add circles for GPS coords of fish sampling sites
-  tm_symbols(col = "#CC5500", size = 1, shape = 21)
+  tm_symbols(fill = "#CC5500", size = 1, shape = 21)+
+  tm_layout(frame = TRUE, frame.lwd = 3, frame.color = "#CC5500")
 
 pa_coiba_map
 
@@ -495,20 +500,22 @@ pa_lasperlas = st_bbox(c(xmin = -79.230405, xmax = -78.772893,
 pa_lasperlas_map = tm_shape(Panama_map, bbox = pa_lasperlas) + tm_fill()
 
 pa_lasperlas_map <- pa_lasperlas_map +
-  tm_scale_bar(breaks = c(0, 10, 20), text.size = 0.75, position = c("right", "bottom")) + #add scale bar
+  tm_scalebar(breaks = c(0, 10, 20), text.size = 0.75, position = c("right", "bottom"), width = 500) + #add scale bar
   tm_shape(TEP_sampling_sites.sf) + #add circles for GPS coords of fish sampling sites
-  tm_symbols(col = "#009999", size = 1, shape = 21)
+  tm_symbols(fill = "#009999", size = 1, shape = 21)+
+  tm_layout(frame = TRUE, frame.lwd = 3, frame.color = "#009999")
 
 pa_lasperlas_map
-
 ```
+
 ```{r save inset maps, echo = FALSE}
-## save an image ("plot" mode)
-tmap_save(pa_lasperlas_map, filename = "Las Perlas Map Inset w GPS Coords.png")
+setwd('./Intermediate_R_objects/Figs')
 
 ## save an image ("plot" mode)
-tmap_save(pa_coiba_map, filename = "Coiba Map Inset w GPS Coords.png")
+tmap_save(pa_lasperlas_map, filename = "Las Perlas Map Inset w GPS Coords w colored box.pdf")
 
+## save an image ("plot" mode)
+tmap_save(pa_coiba_map, filename = "Coiba Map Inset w GPS Coords w colored box.pdf")
 ```
 
 ```{r create tmap with GPS coordinates, echo = FALSE}
@@ -521,7 +528,7 @@ pa_map2 = tm_shape(Panama_map_latlong) + tm_fill() +
   tm_shape(pa_coiba) + tm_borders(lwd = 3, col = "#662700", lty = "dotted") + #coiba border
   tm_shape(pa_lasperlas) + tm_borders(lwd = 3, col = "#7F7D9C") + #las perlas border
 tm_compass(type = "8star", size = 3, position = c("right", "top")) + #add compass to map
-  tm_scale_bar(breaks = c(0, 50, 100), text.size = 0.5, position = c("right", "bottom")) #add scale bar
+  tm_scalebar(breaks = c(0, 50, 100), text.size = 0.5, position = c("right", "bottom")) #add scale bar
 
 pa_map2
 
