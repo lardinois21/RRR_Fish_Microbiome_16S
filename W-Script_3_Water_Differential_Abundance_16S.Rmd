@@ -1098,7 +1098,7 @@ mas_1 <- Maaslin2(
 
 ```{r read in maaslin results if not starting from top}
 #filepath to results folder
-results_folder <- "./Intermediate_R_objects/Maaslin_default_output_Water"
+results_folder <- "/Volumes/LLL_one/McGill/Lab_Docs/Fish_Data/Fish_2022/2021-2022_TEP_Fish/16S_Summer_2022/ROHR_08_trimmed/Maaslin_default_output_Water"
 
 # List all TSV files in the folder
 tsv_files <- list.files(path = results_folder, pattern = "\\.tsv$", full.names = TRUE)
@@ -1118,11 +1118,9 @@ significant_results <- maaslin2_results[["significant_results.tsv"]]
 # Preview the first few rows of the 'all_results.tsv'
 head(all_results)
 head(significant_results)
-
 ```
 
 ```{r count unique significant DA taxa per comparison}
-
 # Count the number of "features" for each unique "value"
 feature_counts <- significant_results %>%
   group_by(value) %>%
@@ -1131,7 +1129,6 @@ feature_counts <- significant_results %>%
 
 # View the results
 print(feature_counts)
-
 ```
 
 ```{r within these categories count up and down regulated taxa}
