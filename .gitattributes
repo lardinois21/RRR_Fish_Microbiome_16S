@@ -1,3 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 /Intermediate_R_objects/ROHR_06_obj_newTaxanames_KEY.csv filter=lfs diff=lfs merge=lfs -text
+/Intermediate_R_objects/'Coiba Map Inset w GPS Coords w colored box.pdf' filter=lfs diff=lfs merge=lfs -text
